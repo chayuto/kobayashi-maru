@@ -1,0 +1,29 @@
+{
+  "name": "kobayashi-maru",
+  "version": "1.0.0",
+  "description": "Kobayashi Maru - Endless Simulation / God Game Tower Defense",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [
+    "game",
+    "simulation",
+    "tower-defense",
+    "pixijs",
+    "ecs"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bitecs": "^0.3.40",
+    "gl-matrix": "^3.4.4",
+    "pixi.js": "^8.14.3"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vite": "^7.2.4"
+  }
+}

@@ -1,0 +1,39 @@
+/**
+ * ECS Components for Kobayashi Maru
+ * Using bitecs for high-performance entity management
+ */
+import { defineComponent, Types } from 'bitecs';
+
+// Position component - stores x, y coordinates
+export const Position = defineComponent({
+  x: Types.f32,
+  y: Types.f32
+});
+
+// Velocity component - stores movement direction and speed
+export const Velocity = defineComponent({
+  x: Types.f32,
+  y: Types.f32
+});
+
+// Faction component - identifies which faction an entity belongs to
+export const Faction = defineComponent({
+  id: Types.ui8
+});
+
+// SpriteRef component - reference to the sprite index in the particle container
+export const SpriteRef = defineComponent({
+  index: Types.ui32
+});
+
+// Health component - stores current and max health
+export const Health = defineComponent({
+  current: Types.f32,
+  max: Types.f32
+});
+
+// Shield component - stores shield values
+export const Shield = defineComponent({
+  current: Types.f32,
+  max: Types.f32
+});
