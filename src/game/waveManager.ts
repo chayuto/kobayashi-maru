@@ -2,22 +2,22 @@
  * Wave Manager for Kobayashi Maru
  * Manages wave spawning, progression, and completion detection
  */
-import { FactionId } from '../types/constants';
-import { GAME_CONFIG } from '../types/constants';
-import { 
-  createKlingonShip, 
-  createRomulanShip, 
-  createBorgShip, 
-  createTholianShip, 
-  createSpecies8472Ship 
+import { FactionId, GAME_CONFIG } from '../types/constants';
+import {
+  createKlingonShip,
+  createRomulanShip,
+  createBorgShip,
+  createTholianShip,
+  createSpecies8472Ship
 } from '../ecs/entityFactory';
+import { AudioManager, SoundType } from '../audio';
 import { Velocity, Health, Shield } from '../ecs/components';
 import type { GameWorld } from '../ecs/world';
-import { 
-  WaveConfig, 
-  EnemySpawnConfig, 
-  getWaveConfig, 
-  getDifficultyScale 
+import {
+  WaveConfig,
+  EnemySpawnConfig,
+  getWaveConfig,
+  getDifficultyScale
 } from './waveConfig';
 import { SpawnPoints, SpawnPosition } from './spawnPoints';
 
@@ -80,7 +80,7 @@ export class WaveManager {
   private eventListeners: Map<WaveEventType, WaveEventCallback[]> = new Map();
   private nextWaveTimer: number = 0;
   private autoStartNextWave: boolean = true;
-  
+
   /**
    * Initializes the wave manager with a world
    * @param world - The ECS world to spawn entities into
@@ -94,7 +94,7 @@ export class WaveManager {
     this.activeEnemies.clear();
     this.nextWaveTimer = 0;
   }
-  
+
   /**
    * Starts a specific wave
    * @param waveNumber - The wave number to start (1-indexed)
@@ -104,13 +104,13 @@ export class WaveManager {
       console.error('WaveManager: World not initialized');
       return;
     }
-    
+
     this.currentWave = waveNumber;
     this.waveConfig = getWaveConfig(waveNumber);
     this.state = 'spawning';
     this.activeEnemies.clear();
     this.nextWaveTimer = 0;
-    
+
     // Initialize spawn groups for each enemy configuration
     this.spawnGroups = this.waveConfig.enemies.map(config => ({
       config,
@@ -118,7 +118,7 @@ export class WaveManager {
       timeSinceLastSpawn: config.spawnDelay, // Set equal to delay so condition (>= delay) is immediately true
       spawnPoints: this.createSpawnPoints(config)
     }));
-    
+
     // Emit wave start event
     this.emitEvent({
       type: 'waveStart',
@@ -127,10 +127,13 @@ export class WaveManager {
         totalEnemies: this.getTotalEnemyCount()
       }
     });
-    
+
+    // Play wave start sound
+    AudioManager.getInstance().play(SoundType.WAVE_START, { volume: 0.7 });
+
     console.log(`Wave ${waveNumber} started with ${this.getTotalEnemyCount()} enemies`);
   }
-  
+
   /**
    * Creates spawn points for an enemy configuration
    */
@@ -139,7 +142,7 @@ export class WaveManager {
     spawnPoints.setupFormation(config.count, config.formation ?? 'random');
     return spawnPoints;
   }
-  
+
   /**
    * Updates the wave manager
    * @param deltaTime - Time elapsed since last update (in seconds)
@@ -148,7 +151,7 @@ export class WaveManager {
     if (!this.world || this.state === 'idle') {
       return;
     }
-    
+
     // Handle different states
     switch (this.state) {
       case 'spawning':
@@ -162,7 +165,7 @@ export class WaveManager {
         break;
     }
   }
-  
+
   /**
    * Updates enemy spawning during the spawning phase
    */
@@ -170,15 +173,15 @@ export class WaveManager {
     const deltaMs = deltaTime * 1000;
     let spawnsThisFrame = 0;
     let allSpawningComplete = true;
-    
+
     for (const group of this.spawnGroups) {
       if (group.spawnedCount >= group.config.count) {
         continue; // This group is done spawning
       }
-      
+
       allSpawningComplete = false;
       group.timeSinceLastSpawn += deltaMs;
-      
+
       // Spawn enemies if delay has passed and we haven't hit frame limit
       while (
         group.timeSinceLastSpawn >= group.config.spawnDelay &&
@@ -190,39 +193,39 @@ export class WaveManager {
         spawnsThisFrame++;
       }
     }
-    
+
     // Transition to active state when all enemies are spawned
     if (allSpawningComplete) {
       this.state = 'active';
     }
   }
-  
+
   /**
    * Spawns a single enemy from a spawn group
    */
   private spawnEnemy(group: SpawnGroupState): void {
     if (!this.world) return;
-    
+
     const position = group.spawnPoints.getSpawnPosition();
     const difficultyScale = getDifficultyScale(this.currentWave);
-    
+
     const eid = this.createEnemyByFaction(
       group.config.faction,
       position.x,
       position.y
     );
-    
+
     if (eid !== -1) {
       // Apply difficulty scaling to health and shields
       this.applyDifficultyScaling(eid, difficultyScale);
-      
+
       // Set velocity toward the center (Kobayashi Maru position)
       this.setVelocityTowardCenter(eid, position);
-      
+
       // Track the enemy
       this.activeEnemies.add(eid);
       group.spawnedCount++;
-      
+
       // Emit enemy spawned event
       this.emitEvent({
         type: 'enemySpawned',
@@ -235,13 +238,13 @@ export class WaveManager {
       });
     }
   }
-  
+
   /**
    * Creates an enemy entity based on faction
    */
   private createEnemyByFaction(faction: number, x: number, y: number): number {
     if (!this.world) return -1;
-    
+
     switch (faction) {
       case FactionId.KLINGON:
         return createKlingonShip(this.world, x, y);
@@ -254,11 +257,11 @@ export class WaveManager {
       case FactionId.SPECIES_8472:
         return createSpecies8472Ship(this.world, x, y);
       default:
-        console.warn(`Unknown faction: ${faction}`);
+        console.warn(`Unknown faction: ${faction} `);
         return -1;
     }
   }
-  
+
   /**
    * Applies difficulty scaling to an enemy's stats
    */
@@ -266,34 +269,34 @@ export class WaveManager {
     // Scale health
     Health.current[eid] = Math.floor(Health.current[eid] * scale);
     Health.max[eid] = Math.floor(Health.max[eid] * scale);
-    
+
     // Scale shields
     Shield.current[eid] = Math.floor(Shield.current[eid] * scale);
     Shield.max[eid] = Math.floor(Shield.max[eid] * scale);
   }
-  
+
   /**
    * Sets enemy velocity to move toward the center (Kobayashi Maru)
    */
   private setVelocityTowardCenter(eid: number, position: SpawnPosition): void {
     const centerX = GAME_CONFIG.WORLD_WIDTH / 2;
     const centerY = GAME_CONFIG.WORLD_HEIGHT / 2;
-    
+
     const dx = centerX - position.x;
     const dy = centerY - position.y;
     const distance = Math.sqrt(dx * dx + dy * dy);
-    
+
     if (distance > 0) {
       // Speed range: 50-200 pixels per second, scaled by difficulty
       const baseSpeed = 50 + Math.random() * 150;
       const speedScale = 1 + (this.currentWave - 1) * 0.02; // 2% faster per wave
       const speed = baseSpeed * speedScale;
-      
+
       Velocity.x[eid] = (dx / distance) * speed;
       Velocity.y[eid] = (dy / distance) * speed;
     }
   }
-  
+
   /**
    * Checks if the wave is complete (all enemies defeated)
    * Wave completion is triggered when all active enemies have been removed via removeEnemy()
@@ -306,49 +309,52 @@ export class WaveManager {
       this.completeWave();
     }
   }
-  
+
   /**
    * Updates the wave complete state (handles delay before next wave)
    */
   private updateWaveComplete(deltaTime: number): void {
     if (!this.autoStartNextWave) return;
-    
+
     this.nextWaveTimer += deltaTime * 1000;
-    
+
     if (this.nextWaveTimer >= WAVE_COMPLETE_DELAY) {
       this.startWave(this.currentWave + 1);
     }
   }
-  
+
   /**
    * Marks an enemy as defeated (called externally when enemy dies)
    * @param entityId - The entity ID of the defeated enemy
    */
   removeEnemy(entityId: number): void {
     this.activeEnemies.delete(entityId);
-    
+
     // Check if wave is complete
     if (this.state === 'active' && this.activeEnemies.size === 0) {
       this.completeWave();
     }
   }
-  
+
   /**
    * Completes the current wave
    */
   private completeWave(): void {
     this.state = 'complete';
     this.nextWaveTimer = 0;
-    
+
     // Emit wave complete event
     this.emitEvent({
       type: 'waveComplete',
       waveNumber: this.currentWave
     });
-    
+
+    // Play wave complete sound
+    AudioManager.getInstance().play(SoundType.WAVE_COMPLETE, { volume: 0.7 });
+
     console.log(`Wave ${this.currentWave} complete!`);
   }
-  
+
   /**
    * Checks if the current wave is complete
    * @returns True if the wave is complete
@@ -356,7 +362,7 @@ export class WaveManager {
   isWaveComplete(): boolean {
     return this.state === 'complete' || this.state === 'idle';
   }
-  
+
   /**
    * Gets the current wave number
    * @returns The current wave number
@@ -364,7 +370,7 @@ export class WaveManager {
   getCurrentWave(): number {
     return this.currentWave;
   }
-  
+
   /**
    * Gets the current wave state
    * @returns The current wave state
@@ -372,7 +378,7 @@ export class WaveManager {
   getState(): WaveState {
     return this.state;
   }
-  
+
   /**
    * Gets the total number of enemies in the current wave
    */
@@ -380,14 +386,14 @@ export class WaveManager {
     if (!this.waveConfig) return 0;
     return this.waveConfig.enemies.reduce((sum, e) => sum + e.count, 0);
   }
-  
+
   /**
    * Gets the number of enemies spawned so far
    */
   private getSpawnedCount(): number {
     return this.spawnGroups.reduce((sum, g) => sum + g.spawnedCount, 0);
   }
-  
+
   /**
    * Gets the number of active enemies
    * @returns Number of active enemies
@@ -395,7 +401,7 @@ export class WaveManager {
   getActiveEnemyCount(): number {
     return this.activeEnemies.size;
   }
-  
+
   /**
    * Sets whether to auto-start the next wave
    * @param enabled - Whether to auto-start
@@ -403,7 +409,7 @@ export class WaveManager {
   setAutoStartNextWave(enabled: boolean): void {
     this.autoStartNextWave = enabled;
   }
-  
+
   /**
    * Registers an event listener
    * @param eventType - The event type to listen for
@@ -415,7 +421,7 @@ export class WaveManager {
     }
     this.eventListeners.get(eventType)!.push(callback);
   }
-  
+
   /**
    * Removes an event listener
    * @param eventType - The event type
@@ -430,7 +436,7 @@ export class WaveManager {
       }
     }
   }
-  
+
   /**
    * Emits an event to all registered listeners
    */
@@ -442,7 +448,7 @@ export class WaveManager {
       }
     }
   }
-  
+
   /**
    * Resets the wave manager
    */

@@ -5,6 +5,7 @@
 import { defineQuery, removeEntity, IWorld } from 'bitecs';
 import { Health, Faction } from '../ecs/components';
 import { FactionId } from '../types/constants';
+import { AudioManager, SoundType } from '../audio';
 import { decrementEntityCount } from '../ecs/world';
 
 // Query for entities with Health component
@@ -37,7 +38,18 @@ export function createDamageSystem() {
       // Skip entities that are still alive
       if (currentHealth > 0) continue;
 
+      // Entity destroyed
       const factionId = Faction.id[eid];
+
+      // Play explosion sound
+      const audioManager = AudioManager.getInstance();
+      if (factionId === FactionId.FEDERATION) {
+        // Turret/Player explosion
+        audioManager.play(SoundType.EXPLOSION_LARGE, { volume: 0.7 });
+      } else {
+        // Enemy explosion
+        audioManager.play(SoundType.EXPLOSION_SMALL, { volume: 0.5 });
+      }
 
       // Only process non-Federation entities as enemies
       if (factionId !== FactionId.FEDERATION) {

@@ -3,9 +3,10 @@
  * Handles turret placement logic with mouse/touch input
  */
 import { Application, Graphics, Container } from 'pixi.js';
-import { GAME_CONFIG, TurretType, TURRET_CONFIG } from '../types/constants';
+import { GAME_CONFIG, TURRET_CONFIG, TurretType } from '../types/constants';
 import { Position, Turret } from '../ecs/components';
 import { createTurret } from '../ecs/entityFactory';
+import { AudioManager, SoundType } from '../audio';
 import { ResourceManager } from './resourceManager';
 import type { GameWorld } from '../ecs/world';
 import { defineQuery } from 'bitecs';
@@ -63,20 +64,20 @@ export class PlacementSystem {
     this.world = world;
     this.resourceManager = resourceManager;
     this.listeners = new Map();
-    
+
     // Create preview container
     this.previewContainer = new Container();
     this.previewContainer.visible = false;
     this.app.stage.addChild(this.previewContainer);
-    
+
     // Create ghost sprite (simple circle for now)
     this.ghostSprite = new Graphics();
     this.previewContainer.addChild(this.ghostSprite);
-    
+
     // Create range circle
     this.rangeCircle = new Graphics();
     this.previewContainer.addChild(this.rangeCircle);
-    
+
     // Bind event handlers
     this.boundMouseMove = this.handleMouseMove.bind(this);
     this.boundMouseClick = this.handleMouseClick.bind(this);
@@ -93,14 +94,14 @@ export class PlacementSystem {
     if (this.state === PlacementState.PLACING) {
       this.cancelPlacement();
     }
-    
+
     this.currentTurretType = turretType;
     this.state = PlacementState.PLACING;
     this.previewContainer.visible = true;
-    
+
     // Update ghost appearance
     this.updateGhostAppearance();
-    
+
     // Add event listeners
     const canvas = this.app.canvas;
     if (canvas) {
@@ -110,8 +111,11 @@ export class PlacementSystem {
       canvas.addEventListener('touchend', this.boundTouchEnd);
     }
     document.addEventListener('keydown', this.boundKeyDown);
-    
+
     this.emit('start', { type: 'start', turretType });
+
+    // Play select sound
+    AudioManager.getInstance().play(SoundType.TURRET_SELECT, { volume: 0.5 });
   }
 
   /**
@@ -122,46 +126,53 @@ export class PlacementSystem {
     if (this.state !== PlacementState.PLACING) {
       return -1;
     }
-    
+
     if (!this.isValidPosition) {
-      this.emit('invalid', { 
-        type: 'invalid', 
+      this.emit('invalid', {
+        type: 'invalid',
         turretType: this.currentTurretType,
         x: this.cursorX,
         y: this.cursorY,
         reason: 'Invalid placement position'
       });
+      // Play error sound
+      AudioManager.getInstance().play(SoundType.ERROR_BEEP, { volume: 0.5 });
       return -1;
     }
-    
+
     const config = TURRET_CONFIG[this.currentTurretType];
     if (!this.resourceManager.canAfford(config.cost)) {
-      this.emit('invalid', { 
-        type: 'invalid', 
+      this.emit('invalid', {
+        type: 'invalid',
         turretType: this.currentTurretType,
         x: this.cursorX,
         y: this.cursorY,
         reason: 'Insufficient resources'
       });
+      // Play error sound
+      AudioManager.getInstance().play(SoundType.ERROR_BEEP, { volume: 0.5 });
       return -1;
     }
-    
-    // Spend resources
+
+    // Deduct resources
     this.resourceManager.spendResources(config.cost);
-    
+
+    // Play placement sound
+    AudioManager.getInstance().play(SoundType.TURRET_PLACE, { volume: 0.6 });
+
     // Create turret
     const eid = createTurret(this.world, this.cursorX, this.cursorY, this.currentTurretType);
-    
-    this.emit('placed', { 
-      type: 'placed', 
+
+    this.emit('placed', {
+      type: 'placed',
       turretType: this.currentTurretType,
       x: this.cursorX,
       y: this.cursorY
     });
-    
+
     // Exit placement mode
     this.cancelPlacement();
-    
+
     return eid;
   }
 
@@ -172,10 +183,10 @@ export class PlacementSystem {
     if (this.state === PlacementState.IDLE) {
       return;
     }
-    
+
     this.state = PlacementState.IDLE;
     this.previewContainer.visible = false;
-    
+
     // Remove event listeners
     const canvas = this.app.canvas;
     if (canvas) {
@@ -185,7 +196,7 @@ export class PlacementSystem {
       canvas.removeEventListener('touchend', this.boundTouchEnd);
     }
     document.removeEventListener('keydown', this.boundKeyDown);
-    
+
     this.emit('cancel', { type: 'cancel', turretType: this.currentTurretType });
   }
 
@@ -222,13 +233,13 @@ export class PlacementSystem {
    */
   private updateGhostAppearance(): void {
     const config = TURRET_CONFIG[this.currentTurretType];
-    
+
     // Clear and redraw ghost
     this.ghostSprite.clear();
     this.ghostSprite.circle(0, 0, 16);
     this.ghostSprite.fill({ color: 0x33CC99, alpha: 0.5 });
     this.ghostSprite.stroke({ color: 0x33CC99, width: 2, alpha: 0.8 });
-    
+
     // Clear and redraw range circle
     this.rangeCircle.clear();
     this.rangeCircle.circle(0, 0, config.range);
@@ -240,19 +251,19 @@ export class PlacementSystem {
    */
   private updatePreview(): void {
     this.previewContainer.position.set(this.cursorX, this.cursorY);
-    
+
     // Update validity visual
     const validColor = 0x33CC99;  // Green
     const invalidColor = 0xDD4444; // Red
     const color = this.isValidPosition ? validColor : invalidColor;
     const config = TURRET_CONFIG[this.currentTurretType];
-    
+
     // Update ghost
     this.ghostSprite.clear();
     this.ghostSprite.circle(0, 0, 16);
     this.ghostSprite.fill({ color, alpha: 0.5 });
     this.ghostSprite.stroke({ color, width: 2, alpha: 0.8 });
-    
+
     // Update range circle
     this.rangeCircle.clear();
     this.rangeCircle.circle(0, 0, config.range);
@@ -266,14 +277,14 @@ export class PlacementSystem {
     // Check bounds (with margin)
     const margin = 32;
     if (x < margin || x > GAME_CONFIG.WORLD_WIDTH - margin ||
-        y < margin || y > GAME_CONFIG.WORLD_HEIGHT - margin) {
+      y < margin || y > GAME_CONFIG.WORLD_HEIGHT - margin) {
       return false;
     }
-    
+
     // Check minimum distance from other turrets
     const minDist = GAME_CONFIG.MIN_TURRET_DISTANCE;
     const turretEntities = turretQuery(this.world);
-    
+
     for (const eid of turretEntities) {
       const dx = Position.x[eid] - x;
       const dy = Position.y[eid] - y;
@@ -282,13 +293,13 @@ export class PlacementSystem {
         return false;
       }
     }
-    
+
     // Check if player can afford
     const config = TURRET_CONFIG[this.currentTurretType];
     if (!this.resourceManager.canAfford(config.cost)) {
       return false;
     }
-    
+
     return true;
   }
 
@@ -306,7 +317,7 @@ export class PlacementSystem {
     const canvasHeight = canvas.height || 1;
     const scaleX = GAME_CONFIG.WORLD_WIDTH / canvasWidth;
     const scaleY = GAME_CONFIG.WORLD_HEIGHT / canvasHeight;
-    
+
     return {
       x: (screenX - rect.left) * scaleX,
       y: (screenY - rect.top) * scaleY

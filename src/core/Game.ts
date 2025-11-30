@@ -22,6 +22,7 @@ import { Starfield } from '../rendering/Starfield';
 import { DebugManager } from './DebugManager';
 import { WaveManager, GameState, GameStateType, ScoreManager, HighScoreManager, ResourceManager, PlacementSystem } from '../game';
 import { HUDManager, GameOverScreen, calculateScore } from '../ui';
+import { AudioManager } from '../audio';
 
 // Query for counting turrets
 const turretQuery = defineQuery([Turret]);
@@ -51,6 +52,7 @@ export class Game {
   private scoreManager: ScoreManager;
   private highScoreManager: HighScoreManager;
   private resourceManager: ResourceManager;
+  private audioManager: AudioManager;
   private placementSystem: PlacementSystem | null = null;
   private gameOverScreen: GameOverScreen | null = null;
   private kobayashiMaruId: number = -1;
@@ -74,6 +76,7 @@ export class Game {
     this.scoreManager = new ScoreManager();
     this.highScoreManager = new HighScoreManager();
     this.resourceManager = new ResourceManager();
+    this.audioManager = AudioManager.getInstance();
   }
 
   /**
@@ -101,6 +104,19 @@ export class Game {
     // Handle window resize
     window.addEventListener('resize', this.handleResize.bind(this));
     this.handleResize();
+
+    // Initialize audio on first user interaction
+    const initAudio = () => {
+      this.audioManager.init();
+      this.audioManager.resume();
+      window.removeEventListener('click', initAudio);
+      window.removeEventListener('keydown', initAudio);
+      window.removeEventListener('touchstart', initAudio);
+    };
+
+    window.addEventListener('click', initAudio);
+    window.addEventListener('keydown', initAudio);
+    window.addEventListener('touchstart', initAudio);
 
     this.initialized = true;
     console.log('Kobayashi Maru initialized');

@@ -3,11 +3,12 @@
  * Handles turret firing logic, cooldowns, and damage application
  */
 import { defineQuery, hasComponent, IWorld } from 'bitecs';
-import { Position, Turret, Target, Health, Shield } from '../ecs/components';
+import { Position, Turret, Target, Faction, Health, Shield } from '../ecs/components';
 import { TurretType } from '../types/constants';
+import { AudioManager, SoundType } from '../audio';
 
 // Query for turrets with targets
-const combatQuery = defineQuery([Position, Turret, Target]);
+const combatQuery = defineQuery([Position, Turret, Target, Faction]);
 
 /**
  * Beam visual data for rendering
@@ -53,12 +54,12 @@ export function createCombatSystem() {
 
       // Check fire rate cooldown
       const fireRate = Turret.fireRate[turretEid];
-      
+
       // Skip if fire rate is invalid (0 or negative)
       if (fireRate <= 0) {
         continue;
       }
-      
+
       const cooldown = 1 / fireRate; // Convert shots per second to seconds between shots
       const lastFired = Turret.lastFired[turretEid];
 
@@ -91,6 +92,20 @@ export function createCombatSystem() {
           endY: targetY,
           turretType
         });
+      }
+
+      // Play sound
+      const audioManager = AudioManager.getInstance();
+      switch (turretType) {
+        case TurretType.PHASER_ARRAY:
+          audioManager.play(SoundType.PHASER_FIRE, { volume: 0.4 });
+          break;
+        case TurretType.TORPEDO_LAUNCHER:
+          audioManager.play(SoundType.TORPEDO_FIRE, { volume: 0.6 });
+          break;
+        case TurretType.DISRUPTOR_BANK:
+          audioManager.play(SoundType.DISRUPTOR_FIRE, { volume: 0.5 });
+          break;
       }
 
       // Update last fired time
