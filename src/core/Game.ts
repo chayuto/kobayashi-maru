@@ -14,14 +14,16 @@ import {
   createTholianShip,
   createSpecies8472Ship
 } from '../ecs';
-import { RenderingSystem } from '../rendering';
+import { SpriteManager } from '../rendering';
+import { createRenderSystem } from '../systems';
 import { GAME_CONFIG, LCARS_COLORS } from '../types';
 
 export class Game {
   public app: Application;
   public world: GameWorld;
   private container: HTMLElement;
-  private renderingSystem: RenderingSystem;
+  private spriteManager: SpriteManager;
+  private renderSystem: ReturnType<typeof createRenderSystem> | null = null;
   private initialized: boolean = false;
 
   constructor(containerId: string = 'app') {
@@ -32,7 +34,7 @@ export class Game {
     this.container = container;
     this.app = new Application();
     this.world = createGameWorld();
-    this.renderingSystem = new RenderingSystem(this.app);
+    this.spriteManager = new SpriteManager(this.app);
   }
 
   /**
@@ -65,8 +67,11 @@ export class Game {
     console.log('Kobayashi Maru initialized');
     console.log(`Renderer: ${this.app.renderer.name}`);
     
-    // Initialize rendering system after app is ready
-    this.renderingSystem.init();
+    // Initialize sprite manager after app is ready
+    this.spriteManager.init();
+    
+    // Create the render system with the sprite manager
+    this.renderSystem = createRenderSystem(this.spriteManager);
     
     // Spawn test entities
     this.spawnTestEntities();
@@ -168,8 +173,10 @@ export class Game {
    * Main update loop
    */
   private update(): void {
-    // Update rendering system to sync sprites with ECS data
-    this.renderingSystem.update(this.world);
+    // Run the render system to sync sprites with ECS data
+    if (this.renderSystem) {
+      this.renderSystem(this.world);
+    }
   }
 
   /**
@@ -177,7 +184,7 @@ export class Game {
    */
   destroy(): void {
     window.removeEventListener('resize', this.handleResize.bind(this));
-    this.renderingSystem.destroy();
+    this.spriteManager.destroy();
     this.app.destroy(true);
     this.initialized = false;
   }
