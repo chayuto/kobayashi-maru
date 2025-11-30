@@ -175,7 +175,7 @@ describe('SystemManager', () => {
     });
 
     it('should pass delta to systems with update method and requiresDelta', () => {
-      const mockUpdate = vi.fn((w: IWorld, d: number) => w);
+      const mockUpdate = vi.fn().mockImplementation((w: IWorld) => w);
       const systemWithUpdate = { update: mockUpdate };
       
       systemManager.register('testSystem', systemWithUpdate, 10, { requiresDelta: true });
@@ -185,7 +185,7 @@ describe('SystemManager', () => {
     });
 
     it('should pass delta and gameTime to systems with update method and requiresGameTime', () => {
-      const mockUpdate = vi.fn((w: IWorld, d: number, gt: number) => w);
+      const mockUpdate = vi.fn().mockImplementation((w: IWorld) => w);
       const systemWithUpdate = { update: mockUpdate };
       
       systemManager.register('testSystem', systemWithUpdate, 10, { requiresGameTime: true });

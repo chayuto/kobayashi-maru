@@ -18,19 +18,23 @@ export type SystemFunction = (world: IWorld, delta: number) => IWorld;
 export type ExtendedSystemFunction = (world: IWorld, delta: number, gameTime: number) => IWorld | void;
 
 /**
+ * System function that only takes world (no delta or gameTime needed)
+ */
+export type WorldOnlySystemFunction = (world: IWorld) => IWorld | void;
+
+/**
  * System with update method pattern (for systems that return objects).
  * Used by collision, combat, and damage systems.
+ * The update method is a generic callable that accepts world and optionally delta/gameTime.
  */
 export interface SystemWithUpdate {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  update: (...args: any[]) => IWorld | void;
+  update: (world: IWorld, ...args: number[]) => IWorld | void;
 }
 
 /**
- * Any callable system function (flexible type for various signatures)
+ * Union type for all supported system function signatures
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type AnySystemFunction = (...args: any[]) => IWorld | void;
+export type AnySystemFunction = SystemFunction | ExtendedSystemFunction | WorldOnlySystemFunction;
 
 /**
  * Union type for all supported system types
@@ -175,14 +179,13 @@ export class SystemManager {
             result = system.update(currentWorld);
           }
         } else {
-          // Direct function system
-          const fn = system as AnySystemFunction;
+          // Direct function system - cast based on requirements
           if (entry.requiresGameTime) {
-            result = fn(currentWorld, delta, gameTime);
+            result = (system as ExtendedSystemFunction)(currentWorld, delta, gameTime);
           } else if (entry.requiresDelta) {
-            result = fn(currentWorld, delta);
+            result = (system as SystemFunction)(currentWorld, delta);
           } else {
-            result = fn(currentWorld);
+            result = (system as WorldOnlySystemFunction)(currentWorld);
           }
         }
 
