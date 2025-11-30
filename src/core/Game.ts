@@ -13,7 +13,7 @@ import {
 } from '../ecs';
 import { Health, Shield, Turret, Position, Faction, SpriteRef } from '../ecs/components';
 import { SpriteManager, BeamRenderer, ParticleSystem, HealthBarRenderer, ScreenShake } from '../rendering';
-import { createRenderSystem, createMovementSystem, createCollisionSystem, CollisionSystem, createTargetingSystem, createCombatSystem, createDamageSystem, createAISystem, createProjectileSystem, TargetingSystem, CombatSystem, DamageSystem } from '../systems';
+import { createRenderSystem, createMovementSystem, createCollisionSystem, CollisionSystem, createTargetingSystem, createCombatSystem, createDamageSystem, createAISystem, createProjectileSystem, TargetingSystem, CombatSystem, DamageSystem, SystemManager } from '../systems';
 import { GAME_CONFIG, LCARS_COLORS } from '../types';
 import { SpatialHash } from '../collision';
 
@@ -21,7 +21,7 @@ import { Starfield } from '../rendering/Starfield';
 
 import { DebugManager } from './DebugManager';
 import { PerformanceMonitor } from './PerformanceMonitor';
-import { WaveManager, GameState, GameStateType, ScoreManager, HighScoreManager, ResourceManager, PlacementSystem } from '../game';
+import { WaveManager, GameState, GameStateType, ScoreManager, HighScoreManager, ResourceManager, PlacementManager } from '../game';
 import { HUDManager, GameOverScreen, calculateScore } from '../ui';
 import { AudioManager } from '../audio';
 
@@ -44,6 +44,7 @@ export class Game {
   private damageSystem: DamageSystem | null = null;
   private projectileSystem: ReturnType<typeof createProjectileSystem> | null = null;
   private aiSystem: ReturnType<typeof createAISystem> | null = null;
+  private systemManager: SystemManager;
   private spatialHash: SpatialHash | null = null;
   private debugManager: DebugManager | null = null;
   private hudManager: HUDManager | null = null;
@@ -59,7 +60,7 @@ export class Game {
   private highScoreManager: HighScoreManager;
   private resourceManager: ResourceManager;
   private audioManager: AudioManager;
-  private placementSystem: PlacementSystem | null = null;
+  private placementManager: PlacementManager | null = null;
   private gameOverScreen: GameOverScreen | null = null;
   private kobayashiMaruId: number = -1;
   private initialized: boolean = false;
@@ -85,6 +86,7 @@ export class Game {
     this.highScoreManager = new HighScoreManager();
     this.resourceManager = new ResourceManager();
     this.audioManager = AudioManager.getInstance();
+    this.systemManager = new SystemManager();
   }
 
   /**
@@ -182,19 +184,29 @@ export class Game {
     // Initialize projectile system
     this.projectileSystem = createProjectileSystem(this.spatialHash);
 
-    // Initialize placement system
-    this.placementSystem = new PlacementSystem(this.app, this.world, this.resourceManager);
+    // Register systems with SystemManager in execution order
+    // Lower priority numbers run first
+    this.systemManager.register('collision', this.collisionSystem, 10, { requiresDelta: false });
+    this.systemManager.register('ai', this.aiSystem, 20, { requiresGameTime: true });
+    this.systemManager.register('movement', this.movementSystem, 30);
+    this.systemManager.register('targeting', this.targetingSystem, 40, { requiresDelta: false });
+    this.systemManager.register('combat', this.combatSystem, 50, { requiresGameTime: true });
+    this.systemManager.register('projectile', this.projectileSystem, 60);
+    this.systemManager.register('damage', this.damageSystem, 70, { requiresDelta: false });
+
+    // Initialize placement manager
+    this.placementManager = new PlacementManager(this.app, this.world, this.resourceManager);
 
     // Initialize HUD manager
     if (this.hudManager) {
       this.hudManager.init(this.app);
 
-      // Connect Turret Menu to Placement System
+      // Connect Turret Menu to Placement Manager
       const turretMenu = this.hudManager.getTurretMenu();
-      if (turretMenu && this.placementSystem) {
+      if (turretMenu && this.placementManager) {
         turretMenu.onSelect((turretType) => {
-          if (this.placementSystem) {
-            this.placementSystem.startPlacing(turretType);
+          if (this.placementManager) {
+            this.placementManager.startPlacing(turretType);
           }
         });
       }
@@ -314,54 +326,11 @@ export class Game {
       // Update wave manager to handle spawning
       this.waveManager.update(deltaTime);
 
-      // Run the collision system first to update spatial hash (before other systems need it)
-      if (this.collisionSystem) {
-        this.performanceMonitor.startMeasure('collision');
-        this.collisionSystem.update(this.world);
-        this.performanceMonitor.endMeasure('collision');
-      }
-
-      // Run AI system to update velocities based on behavior
-      if (this.aiSystem) {
-        this.performanceMonitor.startMeasure('ai');
-        this.aiSystem(this.world, deltaTime, this.gameTime);
-        this.performanceMonitor.endMeasure('ai');
-      }
-
-      // Run the movement system to update entity positions
-      if (this.movementSystem) {
-        this.performanceMonitor.startMeasure('movement');
-        this.movementSystem(this.world, deltaTime);
-        this.performanceMonitor.endMeasure('movement');
-      }
-
-      // Run targeting system to find targets for turrets
-      if (this.targetingSystem) {
-        this.performanceMonitor.startMeasure('targeting');
-        this.targetingSystem(this.world);
-        this.performanceMonitor.endMeasure('targeting');
-      }
-
-      // Run combat system to handle turret firing
-      if (this.combatSystem) {
-        this.performanceMonitor.startMeasure('combat');
-        this.combatSystem.update(this.world, deltaTime, this.gameTime);
-        this.performanceMonitor.endMeasure('combat');
-      }
-
-      // Run projectile system to handle active projectiles
-      if (this.projectileSystem) {
-        this.performanceMonitor.startMeasure('projectile');
-        this.projectileSystem(this.world, deltaTime);
-        this.performanceMonitor.endMeasure('projectile');
-      }
-
-      // Run damage system to handle entity destruction
-      if (this.damageSystem) {
-        this.performanceMonitor.startMeasure('damage');
-        this.damageSystem.update(this.world);
-        this.performanceMonitor.endMeasure('damage');
-      }
+      // Run all gameplay systems via SystemManager
+      // Systems run in priority order: collision, ai, movement, targeting, combat, projectile, damage
+      this.performanceMonitor.startMeasure('systems');
+      this.systemManager.run(this.world, deltaTime, this.gameTime);
+      this.performanceMonitor.endMeasure('systems');
 
       // Check for game over (Kobayashi Maru destroyed)
       this.checkGameOver();
@@ -570,8 +539,8 @@ export class Game {
    */
   destroy(): void {
     window.removeEventListener('resize', this.handleResize.bind(this));
-    if (this.placementSystem) {
-      this.placementSystem.destroy();
+    if (this.placementManager) {
+      this.placementManager.destroy();
     }
     if (this.beamRenderer) {
       this.beamRenderer.destroy();
@@ -658,11 +627,11 @@ export class Game {
   }
 
   /**
-   * Get the placement system
-   * @returns The placement system or null if not initialized
+   * Get the placement manager
+   * @returns The placement manager or null if not initialized
    */
-  getPlacementSystem(): PlacementSystem | null {
-    return this.placementSystem;
+  getPlacementManager(): PlacementManager | null {
+    return this.placementManager;
   }
 
   /**
@@ -687,5 +656,13 @@ export class Game {
    */
   getPerformanceMonitor(): PerformanceMonitor {
     return this.performanceMonitor;
+  }
+
+  /**
+   * Get the system manager
+   * @returns The system manager instance for managing ECS systems
+   */
+  getSystemManager(): SystemManager {
+    return this.systemManager;
   }
 }

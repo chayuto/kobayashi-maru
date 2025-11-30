@@ -1,6 +1,8 @@
 /**
- * Placement System for Kobayashi Maru
- * Handles turret placement logic with mouse/touch input
+ * Placement Manager for Kobayashi Maru
+ * Handles turret placement logic with mouse/touch input.
+ * Note: This is a "Manager" not an ECS "System" because it handles
+ * UI/input events and doesn't process entities in bulk.
  */
 import { Application, Graphics, Container } from 'pixi.js';
 import { GAME_CONFIG, TURRET_CONFIG, TurretType } from '../types/constants';
@@ -40,7 +42,7 @@ type PlacementListener = (event: PlacementEvent) => void;
 /**
  * Manages turret placement with visual preview
  */
-export class PlacementSystem {
+export class PlacementManager {
   private app: Application;
   private world: GameWorld;
   private resourceManager: ResourceManager;
