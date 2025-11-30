@@ -15,9 +15,10 @@ import {
   createSpecies8472Ship
 } from '../ecs';
 import { SpriteManager } from '../rendering';
-import { createRenderSystem, createMovementSystem } from '../systems';
+import { createRenderSystem, createMovementSystem, createCollisionSystem, CollisionSystem } from '../systems';
 import { GAME_CONFIG, LCARS_COLORS } from '../types';
 import { Velocity } from '../ecs/components';
+import { SpatialHash } from '../collision';
 
 import { Starfield } from '../rendering/Starfield';
 
@@ -30,6 +31,8 @@ export class Game {
   private spriteManager: SpriteManager;
   private renderSystem: ReturnType<typeof createRenderSystem> | null = null;
   private movementSystem: ReturnType<typeof createMovementSystem> | null = null;
+  private collisionSystem: CollisionSystem | null = null;
+  private spatialHash: SpatialHash | null = null;
   private debugManager: DebugManager | null = null;
   private starfield: Starfield | null = null;
   private initialized: boolean = false;
@@ -90,6 +93,12 @@ export class Game {
 
     // Create the movement system
     this.movementSystem = createMovementSystem();
+
+    // Initialize spatial hash for collision detection
+    // Cell size of 64 (2x typical entity radius of ~32)
+    const cellSize = 64;
+    this.spatialHash = new SpatialHash(cellSize, GAME_CONFIG.WORLD_WIDTH, GAME_CONFIG.WORLD_HEIGHT);
+    this.collisionSystem = createCollisionSystem(this.spatialHash);
 
     // Spawn test entities
     this.spawnTestEntities();
@@ -216,6 +225,11 @@ export class Game {
       this.starfield.update(deltaTime, 0, 50);
     }
 
+    // Run the collision system first to update spatial hash (before other systems need it)
+    if (this.collisionSystem) {
+      this.collisionSystem.update(this.world);
+    }
+
     // Run the movement system to update entity positions
     if (this.movementSystem) {
       this.movementSystem(this.world, deltaTime);
@@ -241,5 +255,21 @@ export class Game {
     this.spriteManager.destroy();
     this.app.destroy(true);
     this.initialized = false;
+  }
+
+  /**
+   * Get the collision system for querying nearby entities
+   * @returns The collision system or null if not initialized
+   */
+  getCollisionSystem(): CollisionSystem | null {
+    return this.collisionSystem;
+  }
+
+  /**
+   * Get the spatial hash for direct access
+   * @returns The spatial hash or null if not initialized
+   */
+  getSpatialHash(): SpatialHash | null {
+    return this.spatialHash;
   }
 }

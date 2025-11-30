@@ -37,3 +37,10 @@ export const Shield = defineComponent({
   current: Types.f32,
   max: Types.f32
 });
+
+// Collider component - stores collision data for spatial hashing
+export const Collider = defineComponent({
+  radius: Types.f32,     // Collision radius for the entity
+  layer: Types.ui8,      // Collision layer (enemies, projectiles, etc.)
+  mask: Types.ui8        // Which layers this entity collides with
+});
