@@ -3,7 +3,7 @@
  * Creates pre-configured entities with appropriate components
  */
 import { addEntity, addComponent } from 'bitecs';
-import { Position, Velocity, Faction, SpriteRef, Health, Shield, Turret } from './components';
+import { Position, Velocity, Faction, SpriteRef, Health, Shield, Turret, Target } from './components';
 import { FactionId, TurretType, TURRET_CONFIG } from '../types/constants';
 import type { GameWorld } from './world';
 import { incrementEntityCount } from './world';
@@ -305,6 +305,10 @@ export function createTurret(world: GameWorld, x: number, y: number, turretType:
   Turret.damage[eid] = config.damage;
   Turret.lastFired[eid] = 0;
   Turret.turretType[eid] = turretType;
+  
+  addComponent(world, Target, eid);
+  Target.entityId[eid] = 0;
+  Target.hasTarget[eid] = 0;
   
   incrementEntityCount();
   return eid;
