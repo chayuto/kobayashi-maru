@@ -12,7 +12,7 @@ export class AudioManager {
     private sfxGain: GainNode | null = null;
     private musicGain: GainNode | null = null;
     private sounds: Map<string, AudioBuffer> = new Map();
-    private enabled: boolean = true;
+    private enabled: boolean = false;  // Start muted by default
     private initialized: boolean = false;
 
     private constructor() {
@@ -47,8 +47,8 @@ export class AudioManager {
             this.musicGain.connect(this.masterGain);
             this.masterGain.connect(this.audioContext.destination);
 
-            // Set default volumes
-            this.masterGain.gain.value = 0.5;
+            // Set default volumes - start muted
+            this.masterGain.gain.value = 0;  // Start muted
             this.sfxGain.gain.value = 1.0;
             this.musicGain.gain.value = 0.8;
 
@@ -154,5 +154,12 @@ export class AudioManager {
      */
     isReady(): boolean {
         return this.initialized && this.audioContext?.state === 'running';
+    }
+
+    /**
+     * Check if audio is currently muted
+     */
+    isMuted(): boolean {
+        return !this.enabled;
     }
 }

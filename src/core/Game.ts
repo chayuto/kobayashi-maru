@@ -418,6 +418,9 @@ export class Game {
 
       // Get turret count
       const turretCount = turretQuery(this.world).length;
+      
+      // Get combat stats
+      const combatStats = this.combatSystem?.getStats();
 
       this.hudManager.update({
         waveNumber: this.waveManager.getCurrentWave(),
@@ -430,7 +433,12 @@ export class Game {
         kobayashiMaruMaxHealth: kmMaxHealth,
         kobayashiMaruShield: kmShield,
         kobayashiMaruMaxShield: kmMaxShield,
-        turretCount: turretCount
+        turretCount: turretCount,
+        // Extended stats
+        totalDamageDealt: combatStats?.totalDamageDealt ?? 0,
+        totalShotsFired: combatStats?.totalShotsFired ?? 0,
+        accuracy: combatStats?.accuracy ?? 0,
+        dps: combatStats?.dps ?? 0
       });
     }
 
@@ -501,6 +509,11 @@ export class Game {
     this.resourceManager.reset();
     this.waveManager.reset();
     this.gameTime = 0;
+    
+    // Reset combat stats
+    if (this.combatSystem) {
+      this.combatSystem.resetStats();
+    }
 
     // Reset game state to MENU then PLAYING (to follow valid state transitions)
     this.gameState.reset();

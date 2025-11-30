@@ -19,4 +19,9 @@ export interface HUDData {
   kobayashiMaruShield: number;
   kobayashiMaruMaxShield: number;
   turretCount: number;
+  // Extended stats
+  totalDamageDealt?: number;
+  totalShotsFired?: number;
+  accuracy?: number;
+  dps?: number;
 }
