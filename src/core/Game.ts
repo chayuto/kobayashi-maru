@@ -19,6 +19,8 @@ import { createRenderSystem, createMovementSystem } from '../systems';
 import { GAME_CONFIG, LCARS_COLORS } from '../types';
 import { Velocity } from '../ecs/components';
 
+import { Starfield } from '../rendering/Starfield';
+
 import { DebugManager } from './DebugManager';
 
 export class Game {
@@ -29,6 +31,7 @@ export class Game {
   private renderSystem: ReturnType<typeof createRenderSystem> | null = null;
   private movementSystem: ReturnType<typeof createMovementSystem> | null = null;
   private debugManager: DebugManager | null = null;
+  private starfield: Starfield | null = null;
   private initialized: boolean = false;
 
   constructor(containerId: string = 'app') {
@@ -41,6 +44,7 @@ export class Game {
     this.world = createGameWorld();
     this.spriteManager = new SpriteManager(this.app);
     this.debugManager = new DebugManager();
+    this.starfield = new Starfield(this.app);
   }
 
   /**
@@ -72,6 +76,11 @@ export class Game {
     this.initialized = true;
     console.log('Kobayashi Maru initialized');
     console.log(`Renderer: ${this.app.renderer.name}`);
+
+    // Initialize starfield
+    if (this.starfield) {
+      this.starfield.init();
+    }
 
     // Initialize sprite manager after app is ready
     this.spriteManager.init();
@@ -200,6 +209,12 @@ export class Game {
   private update(): void {
     // Convert PixiJS ticker delta (in milliseconds) to seconds for frame-independent movement
     const deltaTime = this.app.ticker.deltaMS / 1000;
+
+    // Update starfield
+    if (this.starfield) {
+      // Scroll slowly downwards
+      this.starfield.update(deltaTime, 0, 50);
+    }
 
     // Run the movement system to update entity positions
     if (this.movementSystem) {
