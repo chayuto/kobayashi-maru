@@ -10,7 +10,8 @@ import {
   createBorgShip,
   createTholianShip,
   createSpecies8472Ship,
-  createKobayashiMaru
+  createKobayashiMaru,
+  createTurret
 } from './entityFactory';
 
 // Track entity count externally for reliability
@@ -57,5 +58,6 @@ export {
   createBorgShip,
   createTholianShip,
   createSpecies8472Ship,
-  createKobayashiMaru
+  createKobayashiMaru,
+  createTurret
 };

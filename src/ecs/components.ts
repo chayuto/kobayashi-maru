@@ -44,3 +44,12 @@ export const Collider = defineComponent({
   layer: Types.ui8,      // Collision layer (enemies, projectiles, etc.)
   mask: Types.ui8        // Which layers this entity collides with
 });
+
+// Turret component - stores turret combat data
+export const Turret = defineComponent({
+  range: Types.f32,      // Targeting range in pixels
+  fireRate: Types.f32,   // Shots per second
+  damage: Types.f32,     // Damage per shot
+  lastFired: Types.f32,  // Timestamp of last shot (in seconds)
+  turretType: Types.ui8  // Type of turret (phaser, torpedo, disruptor)
+});
