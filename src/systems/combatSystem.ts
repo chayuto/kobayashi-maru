@@ -53,6 +53,12 @@ export function createCombatSystem() {
 
       // Check fire rate cooldown
       const fireRate = Turret.fireRate[turretEid];
+      
+      // Skip if fire rate is invalid (0 or negative)
+      if (fireRate <= 0) {
+        continue;
+      }
+      
       const cooldown = 1 / fireRate; // Convert shots per second to seconds between shots
       const lastFired = Turret.lastFired[turretEid];
 

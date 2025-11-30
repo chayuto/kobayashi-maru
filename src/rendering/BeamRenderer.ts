@@ -43,6 +43,20 @@ export class BeamRenderer {
   }
 
   /**
+   * Get beam color for a turret type
+   */
+  private getBeamColor(turretType: number): number {
+    switch (turretType) {
+      case TurretType.PHASER_ARRAY:
+        return BEAM_COLORS[TurretType.PHASER_ARRAY];
+      case TurretType.DISRUPTOR_BANK:
+        return BEAM_COLORS[TurretType.DISRUPTOR_BANK];
+      default:
+        return BEAM_COLORS[TurretType.PHASER_ARRAY];
+    }
+  }
+
+  /**
    * Render beam visuals for the current frame
    * @param beams Array of beam visuals to render
    */
@@ -55,17 +69,17 @@ export class BeamRenderer {
     this.graphics.clear();
 
     for (const beam of beams) {
-      const color = BEAM_COLORS[beam.turretType as keyof typeof BEAM_COLORS] ?? BEAM_COLORS[TurretType.PHASER_ARRAY];
+      const color = this.getBeamColor(beam.turretType);
       
-      // Draw main beam line
-      this.graphics.moveTo(beam.startX, beam.startY);
-      this.graphics.lineTo(beam.endX, beam.endY);
-      this.graphics.stroke({ width: 2, color, alpha: 0.9 });
-
-      // Draw glow effect (wider, more transparent line)
+      // Draw glow effect first (wider, more transparent line underneath)
       this.graphics.moveTo(beam.startX, beam.startY);
       this.graphics.lineTo(beam.endX, beam.endY);
       this.graphics.stroke({ width: 6, color, alpha: 0.3 });
+
+      // Draw main beam line on top
+      this.graphics.moveTo(beam.startX, beam.startY);
+      this.graphics.lineTo(beam.endX, beam.endY);
+      this.graphics.stroke({ width: 2, color, alpha: 0.9 });
     }
   }
 

@@ -63,10 +63,10 @@ export function createTargetingSystem(spatialHash: SpatialHash) {
         const dy = Position.y[candidateEid] - turretY;
         const distSq = dx * dx + dy * dy;
 
-        // Check if actually within range (fine-grained check)
+        // Skip if not closer than current closest (closestDistSq starts at range^2)
         if (distSq > closestDistSq) continue;
 
-        // Found a closer enemy
+        // Found a closer enemy within range
         closestEnemy = candidateEid;
         closestDistSq = distSq;
       }
