@@ -9,3 +9,4 @@ export * from './combatSystem';
 export * from './damageSystem';
 export * from './aiSystem';
 export * from './projectileSystem';
+export * from './SystemManager';
