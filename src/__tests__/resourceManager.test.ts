@@ -2,7 +2,7 @@
  * Tests for Resource Manager
  */
 import { describe, it, expect, beforeEach } from 'vitest';
-import { ResourceManager } from '../game/resourceManager';
+import { ResourceManager, ResourceEvent } from '../game/resourceManager';
 import { GAME_CONFIG } from '../types/constants';
 
 describe('ResourceManager', () => {
@@ -88,7 +88,7 @@ describe('ResourceManager', () => {
   describe('events', () => {
     it('should emit change event when adding resources', () => {
       let eventReceived = false;
-      let eventData: { current: number; previous: number } | null = null;
+      let eventData: ResourceEvent | undefined;
 
       resourceManager.setResources(500);
       resourceManager.on('change', (event) => {
@@ -98,8 +98,8 @@ describe('ResourceManager', () => {
 
       resourceManager.addResources(100);
       expect(eventReceived).toBe(true);
-      expect(eventData?.current).toBe(600);
-      expect(eventData?.previous).toBe(500);
+      expect(eventData!.current).toBe(600);
+      expect(eventData!.previous).toBe(500);
     });
 
     it('should emit change event when spending resources', () => {

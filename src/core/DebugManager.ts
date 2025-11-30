@@ -1,3 +1,16 @@
+/**
+ * Game stats data interface for UI updates
+ */
+export interface GameStats {
+    gameState: string;
+    waveNumber: number;
+    waveState: string;
+    timeSurvived: number;
+    enemiesDefeated: number;
+    activeEnemies: number;
+    resources: number;
+}
+
 export class DebugManager {
     private fps: number = 0;
     private entityCount: number = 0;
@@ -6,6 +19,12 @@ export class DebugManager {
     private frameCount: number = 0;
     private fpsElement: HTMLElement | null = null;
     private entityCountElement: HTMLElement | null = null;
+    private gameStateElement: HTMLElement | null = null;
+    private waveElement: HTMLElement | null = null;
+    private timeElement: HTMLElement | null = null;
+    private killsElement: HTMLElement | null = null;
+    private enemiesElement: HTMLElement | null = null;
+    private resourcesElement: HTMLElement | null = null;
     private isVisible: boolean = true;
 
     constructor() {
@@ -16,14 +35,52 @@ export class DebugManager {
         this.container = document.createElement('div');
         this.container.className = 'debug-overlay';
 
+        // Performance section
+        const perfSection = this.createSection('SYSTEM');
         this.fpsElement = document.createElement('div');
         this.fpsElement.textContent = 'FPS: 0';
-
         this.entityCountElement = document.createElement('div');
         this.entityCountElement.textContent = 'Entities: 0';
+        perfSection.appendChild(this.fpsElement);
+        perfSection.appendChild(this.entityCountElement);
 
-        this.container.appendChild(this.fpsElement);
-        this.container.appendChild(this.entityCountElement);
+        // Game state section
+        const stateSection = this.createSection('STATUS');
+        this.gameStateElement = document.createElement('div');
+        this.gameStateElement.textContent = 'State: MENU';
+        this.gameStateElement.className = 'stat-highlight';
+        stateSection.appendChild(this.gameStateElement);
+
+        // Wave section
+        const waveSection = this.createSection('TACTICAL');
+        this.waveElement = document.createElement('div');
+        this.waveElement.textContent = 'Wave: 0 (idle)';
+        this.enemiesElement = document.createElement('div');
+        this.enemiesElement.textContent = 'Active Enemies: 0';
+        waveSection.appendChild(this.waveElement);
+        waveSection.appendChild(this.enemiesElement);
+
+        // Score section
+        const scoreSection = this.createSection('SCORE');
+        this.timeElement = document.createElement('div');
+        this.timeElement.textContent = 'Time: 00:00';
+        this.killsElement = document.createElement('div');
+        this.killsElement.textContent = 'Kills: 0';
+        scoreSection.appendChild(this.timeElement);
+        scoreSection.appendChild(this.killsElement);
+
+        // Resources section
+        const resourceSection = this.createSection('RESOURCES');
+        this.resourcesElement = document.createElement('div');
+        this.resourcesElement.textContent = 'Matter: 0';
+        this.resourcesElement.className = 'stat-resources';
+        resourceSection.appendChild(this.resourcesElement);
+
+        this.container.appendChild(perfSection);
+        this.container.appendChild(stateSection);
+        this.container.appendChild(waveSection);
+        this.container.appendChild(scoreSection);
+        this.container.appendChild(resourceSection);
 
         document.body.appendChild(this.container);
 
@@ -33,6 +90,21 @@ export class DebugManager {
                 this.toggle();
             }
         });
+    }
+
+    /**
+     * Creates a labeled section for grouping stats
+     */
+    private createSection(label: string): HTMLElement {
+        const section = document.createElement('div');
+        section.className = 'debug-section';
+        
+        const header = document.createElement('div');
+        header.className = 'section-header';
+        header.textContent = label;
+        section.appendChild(header);
+        
+        return section;
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -55,6 +127,59 @@ export class DebugManager {
         if (this.entityCountElement) {
             this.entityCountElement.textContent = `Entities: ${this.entityCount}`;
         }
+    }
+
+    /**
+     * Updates all game stats in the UI
+     */
+    public updateGameStats(stats: GameStats): void {
+        if (this.gameStateElement) {
+            this.gameStateElement.textContent = `State: ${stats.gameState}`;
+            // Add color coding for game state
+            this.gameStateElement.className = `stat-highlight ${this.getStateClassName(stats.gameState)}`;
+        }
+        
+        if (this.waveElement) {
+            this.waveElement.textContent = `Wave: ${stats.waveNumber} (${stats.waveState})`;
+        }
+        
+        if (this.timeElement) {
+            this.timeElement.textContent = `Time: ${this.formatTime(stats.timeSurvived)}`;
+        }
+        
+        if (this.killsElement) {
+            this.killsElement.textContent = `Kills: ${stats.enemiesDefeated}`;
+        }
+        
+        if (this.enemiesElement) {
+            this.enemiesElement.textContent = `Active Enemies: ${stats.activeEnemies}`;
+        }
+        
+        if (this.resourcesElement) {
+            this.resourcesElement.textContent = `Matter: ${stats.resources}`;
+        }
+    }
+
+    /**
+     * Maps game state to a CSS class name
+     */
+    private getStateClassName(state: string): string {
+        const stateMap: Record<string, string> = {
+            'MENU': 'state-menu',
+            'PLAYING': 'state-playing',
+            'PAUSED': 'state-paused',
+            'GAME_OVER': 'state-game-over'
+        };
+        return stateMap[state] || 'state-menu';
+    }
+
+    /**
+     * Formats time in seconds to MM:SS format
+     */
+    private formatTime(seconds: number): string {
+        const minutes = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
 
     public toggle(): void {
