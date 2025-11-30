@@ -13,28 +13,40 @@ import {
   createKobayashiMaru
 } from './entityFactory';
 
+// Track entity count externally for reliability
+let entityCounter = 0;
+
 /**
  * Create a new ECS world
  * @returns A new bitecs world instance
  */
 export function createGameWorld(): IWorld {
+  entityCounter = 0;
   return createWorld();
 }
 
 export type GameWorld = IWorld;
 
 /**
+ * Increments the entity counter (called when entities are created)
+ */
+export function incrementEntityCount(): void {
+  entityCounter++;
+}
+
+/**
+ * Decrements the entity counter (called when entities are removed)
+ */
+export function decrementEntityCount(): void {
+  entityCounter--;
+}
+
+/**
  * Gets the current entity count in the world
- * Note: bitECS tracks entities internally, we use a simple approach
- * by checking the world's entitySparseSet size
- * @param world - The ECS world
  * @returns Number of active entities
  */
-export function getEntityCount(world: GameWorld): number {
-  // bitECS stores entity count in world.entitySparseSet.dense.length
-  // We access it safely through the world object
-  const worldObj = world as unknown as { entitySparseSet?: { dense?: number[] } };
-  return worldObj.entitySparseSet?.dense?.length ?? 0;
+export function getEntityCount(): number {
+  return entityCounter;
 }
 
 // Re-export entity creation utilities

@@ -47,7 +47,8 @@ export class EntityPool {
     if (this.available.length > 0) {
       eid = this.available.pop()!;
     } else {
-      // Pool exhausted, create a new entity
+      // Pool exhausted, create a new entity and log warning
+      console.warn('EntityPool: Pool exhausted, creating new entity. Consider increasing pool size.');
       eid = addEntity(this.world);
     }
     

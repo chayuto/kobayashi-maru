@@ -121,7 +121,7 @@ export class Game {
     }
     
     console.log('100 test enemies spawned around edges');
-    console.log(`Total entity count: ${getEntityCount(this.world)}`);
+    console.log(`Total entity count: ${getEntityCount()}`);
   }
 
   /**

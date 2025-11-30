@@ -6,6 +6,10 @@ import { addEntity, addComponent } from 'bitecs';
 import { Position, Velocity, Faction, SpriteRef, Health, Shield } from './components';
 import { FactionId } from '../types/constants';
 import type { GameWorld } from './world';
+import { incrementEntityCount } from './world';
+
+// Placeholder sprite index - will be replaced when sprite system is implemented
+const PLACEHOLDER_SPRITE_INDEX = 0;
 
 /**
  * Creates a Federation ship entity
@@ -29,7 +33,7 @@ export function createFederationShip(world: GameWorld, x: number, y: number): nu
   Faction.id[eid] = FactionId.FEDERATION;
   
   addComponent(world, SpriteRef, eid);
-  SpriteRef.index[eid] = 0;
+  SpriteRef.index[eid] = PLACEHOLDER_SPRITE_INDEX;
   
   addComponent(world, Health, eid);
   Health.current[eid] = 100;
@@ -39,6 +43,7 @@ export function createFederationShip(world: GameWorld, x: number, y: number): nu
   Shield.current[eid] = 50;
   Shield.max[eid] = 50;
   
+  incrementEntityCount();
   return eid;
 }
 
@@ -64,7 +69,7 @@ export function createKlingonShip(world: GameWorld, x: number, y: number): numbe
   Faction.id[eid] = FactionId.KLINGON;
   
   addComponent(world, SpriteRef, eid);
-  SpriteRef.index[eid] = 0;
+  SpriteRef.index[eid] = PLACEHOLDER_SPRITE_INDEX;
   
   addComponent(world, Health, eid);
   Health.current[eid] = 80;
@@ -74,6 +79,7 @@ export function createKlingonShip(world: GameWorld, x: number, y: number): numbe
   Shield.current[eid] = 30;
   Shield.max[eid] = 30;
   
+  incrementEntityCount();
   return eid;
 }
 
@@ -99,7 +105,7 @@ export function createRomulanShip(world: GameWorld, x: number, y: number): numbe
   Faction.id[eid] = FactionId.ROMULAN;
   
   addComponent(world, SpriteRef, eid);
-  SpriteRef.index[eid] = 0;
+  SpriteRef.index[eid] = PLACEHOLDER_SPRITE_INDEX;
   
   addComponent(world, Health, eid);
   Health.current[eid] = 70;
@@ -109,6 +115,7 @@ export function createRomulanShip(world: GameWorld, x: number, y: number): numbe
   Shield.current[eid] = 60;
   Shield.max[eid] = 60;
   
+  incrementEntityCount();
   return eid;
 }
 
@@ -134,7 +141,7 @@ export function createBorgShip(world: GameWorld, x: number, y: number): number {
   Faction.id[eid] = FactionId.BORG;
   
   addComponent(world, SpriteRef, eid);
-  SpriteRef.index[eid] = 0;
+  SpriteRef.index[eid] = PLACEHOLDER_SPRITE_INDEX;
   
   addComponent(world, Health, eid);
   Health.current[eid] = 150;
@@ -144,6 +151,7 @@ export function createBorgShip(world: GameWorld, x: number, y: number): number {
   Shield.current[eid] = 100;
   Shield.max[eid] = 100;
   
+  incrementEntityCount();
   return eid;
 }
 
@@ -169,7 +177,7 @@ export function createTholianShip(world: GameWorld, x: number, y: number): numbe
   Faction.id[eid] = FactionId.THOLIAN;
   
   addComponent(world, SpriteRef, eid);
-  SpriteRef.index[eid] = 0;
+  SpriteRef.index[eid] = PLACEHOLDER_SPRITE_INDEX;
   
   addComponent(world, Health, eid);
   Health.current[eid] = 60;
@@ -179,6 +187,7 @@ export function createTholianShip(world: GameWorld, x: number, y: number): numbe
   Shield.current[eid] = 40;
   Shield.max[eid] = 40;
   
+  incrementEntityCount();
   return eid;
 }
 
@@ -204,7 +213,7 @@ export function createSpecies8472Ship(world: GameWorld, x: number, y: number): n
   Faction.id[eid] = FactionId.SPECIES_8472;
   
   addComponent(world, SpriteRef, eid);
-  SpriteRef.index[eid] = 0;
+  SpriteRef.index[eid] = PLACEHOLDER_SPRITE_INDEX;
   
   addComponent(world, Health, eid);
   Health.current[eid] = 200;
@@ -214,6 +223,7 @@ export function createSpecies8472Ship(world: GameWorld, x: number, y: number): n
   Shield.current[eid] = 0;
   Shield.max[eid] = 0;
   
+  incrementEntityCount();
   return eid;
 }
 
@@ -239,7 +249,7 @@ export function createKobayashiMaru(world: GameWorld, x: number, y: number): num
   Faction.id[eid] = FactionId.FEDERATION;
   
   addComponent(world, SpriteRef, eid);
-  SpriteRef.index[eid] = 0;
+  SpriteRef.index[eid] = PLACEHOLDER_SPRITE_INDEX;
   
   addComponent(world, Health, eid);
   Health.current[eid] = 500;
@@ -249,5 +259,6 @@ export function createKobayashiMaru(world: GameWorld, x: number, y: number): num
   Shield.current[eid] = 200;
   Shield.max[eid] = 200;
   
+  incrementEntityCount();
   return eid;
 }
