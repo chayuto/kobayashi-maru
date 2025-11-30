@@ -8,6 +8,7 @@ import { HUDData } from './types';
 import { HealthBar } from './HealthBar';
 import { GAME_CONFIG } from '../types/constants';
 import { TurretMenu } from './TurretMenu';
+import { AudioManager } from '../audio';
 
 // Wave state color mapping - defined outside class to avoid object creation on each update
 const WAVE_STATE_COLORS: Record<string, number> = {
@@ -37,6 +38,17 @@ export class HUDManager {
   private shieldBar: HealthBar | null = null;
   private statusLabel: Text | null = null;
   private turretMenu: TurretMenu | null = null;
+  
+  // Sound mute button
+  private muteButton: Container | null = null;
+  private muteIcon: Graphics | null = null;
+  private muteLabel: Text | null = null;
+  
+  // Extended stats
+  private statsPanel: Graphics | null = null;
+  private dpsText: Text | null = null;
+  private accuracyText: Text | null = null;
+  private damageText: Text | null = null;
 
   // Background panels
   private topLeftPanel: Graphics | null = null;
@@ -65,6 +77,8 @@ export class HUDManager {
     this.createBottomLeftPanel();
     this.createBottomCenterPanel();
     this.createBottomRightPanel();
+    this.createMuteButton();
+    this.createStatsPanel();
 
     // Create Turret Menu
     this.turretMenu = new TurretMenu();
@@ -286,6 +300,158 @@ export class HUDManager {
   }
 
   /**
+   * Create sound mute button in the top-left corner below the wave panel
+   */
+  private createMuteButton(): void {
+    const padding = UI_STYLES.PADDING;
+    const buttonSize = 40;
+    const x = padding;
+    const y = padding + 100 + padding; // Below wave panel
+
+    // Create button container
+    this.muteButton = new Container();
+    this.muteButton.position.set(x, y);
+    this.muteButton.eventMode = 'static';
+    this.muteButton.cursor = 'pointer';
+
+    // Button background
+    const bg = new Graphics();
+    bg.roundRect(0, 0, buttonSize + 60, buttonSize, 8);
+    bg.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.7 });
+    bg.stroke({ color: UI_STYLES.COLORS.SECONDARY, width: 2 });
+    this.muteButton.addChild(bg);
+
+    // Speaker icon (drawn programmatically)
+    this.muteIcon = new Graphics();
+    this.updateMuteIcon();
+    this.muteIcon.position.set(8, 8);
+    this.muteButton.addChild(this.muteIcon);
+
+    // Label
+    const labelStyle = new TextStyle({
+      fontFamily: UI_STYLES.FONT_FAMILY,
+      fontSize: UI_STYLES.FONT_SIZE_SMALL,
+      fill: UI_STYLES.COLORS.SECONDARY
+    });
+    this.muteLabel = new Text({ text: 'MUTED', style: labelStyle });
+    this.muteLabel.position.set(buttonSize + 2, 12);
+    this.muteButton.addChild(this.muteLabel);
+
+    // Click handler
+    this.muteButton.on('pointerdown', () => {
+      const audioManager = AudioManager.getInstance();
+      audioManager.toggleMute();
+      this.updateMuteIcon();
+    });
+
+    // Hover effects
+    this.muteButton.on('pointerover', () => {
+      bg.stroke({ color: UI_STYLES.COLORS.PRIMARY, width: 3 });
+    });
+    this.muteButton.on('pointerout', () => {
+      bg.stroke({ color: UI_STYLES.COLORS.SECONDARY, width: 2 });
+    });
+
+    this.container.addChild(this.muteButton);
+  }
+
+  /**
+   * Update the mute icon based on current state
+   */
+  private updateMuteIcon(): void {
+    if (!this.muteIcon || !this.muteLabel) return;
+
+    const audioManager = AudioManager.getInstance();
+    const isMuted = audioManager.isMuted();
+    
+    this.muteIcon.clear();
+    
+    // Draw speaker body
+    this.muteIcon.rect(0, 8, 8, 10);
+    this.muteIcon.fill({ color: isMuted ? 0x888888 : UI_STYLES.COLORS.PRIMARY });
+    
+    // Draw speaker cone
+    this.muteIcon.moveTo(8, 8);
+    this.muteIcon.lineTo(16, 2);
+    this.muteIcon.lineTo(16, 24);
+    this.muteIcon.lineTo(8, 18);
+    this.muteIcon.closePath();
+    this.muteIcon.fill({ color: isMuted ? 0x888888 : UI_STYLES.COLORS.PRIMARY });
+    
+    if (isMuted) {
+      // Draw X over speaker
+      this.muteIcon.moveTo(18, 6);
+      this.muteIcon.lineTo(26, 20);
+      this.muteIcon.stroke({ color: UI_STYLES.COLORS.DANGER, width: 3 });
+      this.muteIcon.moveTo(26, 6);
+      this.muteIcon.lineTo(18, 20);
+      this.muteIcon.stroke({ color: UI_STYLES.COLORS.DANGER, width: 3 });
+      this.muteLabel.text = 'MUTED';
+      this.muteLabel.style.fill = 0x888888;
+    } else {
+      // Draw sound waves
+      this.muteIcon.arc(16, 13, 6, -0.8, 0.8, false);
+      this.muteIcon.stroke({ color: UI_STYLES.COLORS.PRIMARY, width: 2 });
+      this.muteIcon.arc(16, 13, 10, -0.6, 0.6, false);
+      this.muteIcon.stroke({ color: UI_STYLES.COLORS.PRIMARY, width: 2 });
+      this.muteLabel.text = 'SOUND';
+      this.muteLabel.style.fill = UI_STYLES.COLORS.SECONDARY;
+    }
+  }
+
+  /**
+   * Create stats panel with extended game statistics
+   */
+  private createStatsPanel(): void {
+    const padding = UI_STYLES.PADDING;
+    const panelWidth = 160;
+    const panelHeight = 90;
+    const x = padding;
+    const y = padding + 100 + padding + 40 + padding; // Below mute button
+
+    // Panel background
+    this.statsPanel = new Graphics();
+    this.statsPanel.roundRect(0, 0, panelWidth, panelHeight, 8);
+    this.statsPanel.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.7 });
+    this.statsPanel.stroke({ color: UI_STYLES.COLORS.PRIMARY, width: 2 });
+    this.statsPanel.position.set(x, y);
+    this.container.addChild(this.statsPanel);
+
+    // Stats header
+    const headerStyle = new TextStyle({
+      fontFamily: UI_STYLES.FONT_FAMILY,
+      fontSize: UI_STYLES.FONT_SIZE_SMALL,
+      fill: UI_STYLES.COLORS.SECONDARY,
+      fontWeight: 'bold'
+    });
+    const header = new Text({ text: 'COMBAT STATS', style: headerStyle });
+    header.position.set(x + 10, y + 8);
+    this.container.addChild(header);
+
+    // Stats text style
+    const statStyle = new TextStyle({
+      fontFamily: UI_STYLES.FONT_FAMILY,
+      fontSize: UI_STYLES.FONT_SIZE_SMALL,
+      fill: UI_STYLES.COLORS.TEXT
+    });
+
+    // DPS text
+    this.dpsText = new Text({ text: 'DPS: 0', style: statStyle });
+    this.dpsText.position.set(x + 10, y + 30);
+    this.container.addChild(this.dpsText);
+
+    // Accuracy text
+    this.accuracyText = new Text({ text: 'ACC: 0%', style: statStyle });
+    this.accuracyText.position.set(x + 10, y + 50);
+    this.container.addChild(this.accuracyText);
+
+    // Total damage text
+    this.damageText = new Text({ text: 'DMG: 0', style: statStyle });
+    this.damageText.position.set(x + 10, y + 70);
+    this.container.addChild(this.damageText);
+  }
+
+  /**
    * Update all HUD elements with new data
    * @param data - HUD data to display
    */
@@ -342,6 +508,29 @@ export class HUDManager {
         this.turretMenu.update(data.resources);
       }
     }
+
+    // Update extended stats
+    if (this.dpsText && data.dps !== undefined) {
+      this.dpsText.text = `DPS: ${data.dps.toFixed(1)}`;
+    }
+    if (this.accuracyText && data.accuracy !== undefined) {
+      this.accuracyText.text = `ACC: ${(data.accuracy * 100).toFixed(0)}%`;
+    }
+    if (this.damageText && data.totalDamageDealt !== undefined) {
+      this.damageText.text = `DMG: ${this.formatNumber(data.totalDamageDealt)}`;
+    }
+  }
+
+  /**
+   * Format large numbers with K/M suffixes
+   */
+  private formatNumber(num: number): string {
+    if (num >= 1000000) {
+      return (num / 1000000).toFixed(1) + 'M';
+    } else if (num >= 1000) {
+      return (num / 1000).toFixed(1) + 'K';
+    }
+    return num.toFixed(0);
   }
 
   /**

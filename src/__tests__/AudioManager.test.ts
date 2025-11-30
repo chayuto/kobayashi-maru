@@ -117,9 +117,9 @@ describe('AudioManager', () => {
         expect(mockAudioContext.createBufferSource).toHaveBeenCalled();
     });
 
-    it('should not play sound if disabled', () => {
+    it('should not play sound if muted (default state)', () => {
         audioManager.init();
-        audioManager.toggleMute(); // Disable
+        // Audio starts muted by default now, no need to toggle
 
         audioManager.play(SoundType.PHASER_FIRE);
 
@@ -134,18 +134,20 @@ describe('AudioManager', () => {
         expect(audioManager.masterGain.gain.value).toBe(0.8);
     });
 
-    it('should toggle mute', () => {
+    it('should toggle mute from default muted state', () => {
         audioManager.init();
 
+        // Starts muted, first toggle unmutes
         const isEnabled = audioManager.toggleMute();
-        expect(isEnabled).toBe(false);
-        // @ts-expect-error - Access private property
-        expect(audioManager.masterGain.gain.value).toBe(0);
-
-        const isEnabledAgain = audioManager.toggleMute();
-        expect(isEnabledAgain).toBe(true);
+        expect(isEnabled).toBe(true);
         // @ts-expect-error - Access private property
         expect(audioManager.masterGain.gain.value).toBe(0.5); // Default volume
+
+        // Second toggle mutes again
+        const isEnabledAgain = audioManager.toggleMute();
+        expect(isEnabledAgain).toBe(false);
+        // @ts-expect-error - Access private property
+        expect(audioManager.masterGain.gain.value).toBe(0);
     });
 
     it('should resume context', async () => {

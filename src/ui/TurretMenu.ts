@@ -24,7 +24,7 @@ export class TurretMenu {
         const padding = UI_STYLES.PADDING;
         const buttonWidth = 180;
         const buttonHeight = 60;
-        const startY = 100; // Below resource display
+        const startY = 0; // Buttons start at top of menu container
 
         // Create a button for each turret type
         Object.values(TurretType).forEach((type, index) => {

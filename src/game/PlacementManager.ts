@@ -314,11 +314,12 @@ export class PlacementManager {
       return { x: 0, y: 0 };
     }
     const rect = canvas.getBoundingClientRect();
-    // Guard against division by zero
-    const canvasWidth = canvas.width || 1;
-    const canvasHeight = canvas.height || 1;
-    const scaleX = GAME_CONFIG.WORLD_WIDTH / canvasWidth;
-    const scaleY = GAME_CONFIG.WORLD_HEIGHT / canvasHeight;
+    // Use displayed size (rect) instead of internal canvas dimensions
+    // This properly handles CSS scaling and device pixel ratio
+    const displayWidth = rect.width || 1;
+    const displayHeight = rect.height || 1;
+    const scaleX = GAME_CONFIG.WORLD_WIDTH / displayWidth;
+    const scaleY = GAME_CONFIG.WORLD_HEIGHT / displayHeight;
 
     return {
       x: (screenX - rect.left) * scaleX,

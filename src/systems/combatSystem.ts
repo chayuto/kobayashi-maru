@@ -24,6 +24,17 @@ export interface BeamVisual {
 }
 
 /**
+ * Combat statistics for HUD display
+ */
+export interface CombatStats {
+  totalDamageDealt: number;
+  totalShotsFired: number;
+  shotsHit: number;
+  dps: number;
+  accuracy: number;
+}
+
+/**
  * Creates the combat system that handles turret firing
  * @param particleSystem - Optional particle system for visual effects
  * @returns A system function that processes turret combat
@@ -31,17 +42,28 @@ export interface BeamVisual {
 export function createCombatSystem(particleSystem?: ParticleSystem) {
   // Store beam visuals for this frame (cleared each update)
   const activeBeams: BeamVisual[] = [];
+  
+  // Combat statistics tracking
+  let totalDamageDealt = 0;
+  let totalShotsFired = 0;
+  let shotsHit = 0;
+  let damageHistory: { time: number; damage: number }[] = [];
+  const DPS_WINDOW = 5; // Calculate DPS over 5 seconds
 
   /**
    * Applies damage to an entity, prioritizing shields over health
+   * @returns The actual damage dealt (for stats tracking)
    */
-  function applyDamage(world: IWorld, entityId: number, damage: number, hitX: number, hitY: number): void {
+  function applyDamage(world: IWorld, entityId: number, damage: number, hitX: number, hitY: number, currentTime: number): number {
+    let actualDamage = 0;
+    
     // Apply damage to shields first if entity has Shield component
     if (hasComponent(world, Shield, entityId)) {
       const currentShield = Shield.current[entityId];
       if (currentShield > 0) {
         const shieldDamage = Math.min(currentShield, damage);
         Shield.current[entityId] = currentShield - shieldDamage;
+        actualDamage += shieldDamage;
         damage -= shieldDamage;
 
         // Shield hit effect
@@ -71,8 +93,20 @@ export function createCombatSystem(particleSystem?: ParticleSystem) {
     // Apply remaining damage to health
     if (damage > 0) {
       const currentHealth = Health.current[entityId];
+      const healthDamage = Math.min(currentHealth, damage);
       Health.current[entityId] = Math.max(0, currentHealth - damage);
+      actualDamage += healthDamage;
     }
+    
+    // Track stats
+    totalDamageDealt += actualDamage;
+    shotsHit++;
+    damageHistory.push({ time: currentTime, damage: actualDamage });
+    
+    // Clean up old damage history entries (keep only last DPS_WINDOW seconds)
+    damageHistory = damageHistory.filter(entry => currentTime - entry.time < DPS_WINDOW);
+    
+    return actualDamage;
   }
 
   function combatSystem(world: IWorld, _deltaTime: number, currentTime: number): IWorld {
@@ -132,11 +166,13 @@ export function createCombatSystem(particleSystem?: ParticleSystem) {
 
       // Apply damage based on weapon type
       if (turretType === TurretType.TORPEDO_LAUNCHER) {
-        // Spawn projectile
+        // Spawn projectile (tracked as shot fired)
+        totalShotsFired++;
         createProjectile(world, turretX, turretY, targetX, targetY, damage, ProjectileType.PHOTON_TORPEDO, targetEid);
       } else {
         // Beam weapons (phaser, disruptor) - instant hit
-        applyDamage(world, targetEid, damage, targetX, targetY);
+        totalShotsFired++;
+        applyDamage(world, targetEid, damage, targetX, targetY, currentTime);
 
         // Store beam visual for rendering
         activeBeams.push({
@@ -173,10 +209,53 @@ export function createCombatSystem(particleSystem?: ParticleSystem) {
 
     return world;
   }
+  
+  /**
+   * Get current combat statistics
+   */
+  function getStats(): CombatStats {
+    // Calculate DPS from damage history
+    const recentDamage = damageHistory.reduce((sum, entry) => sum + entry.damage, 0);
+    // Use the full DPS_WINDOW or actual elapsed time, whichever gives meaningful results
+    const dps = recentDamage / DPS_WINDOW;
+    
+    return {
+      totalDamageDealt,
+      totalShotsFired,
+      shotsHit,
+      dps,
+      accuracy: totalShotsFired > 0 ? shotsHit / totalShotsFired : 0
+    };
+  }
+  
+  /**
+   * Reset all combat statistics (for game restart)
+   */
+  function resetStats(): void {
+    totalDamageDealt = 0;
+    totalShotsFired = 0;
+    shotsHit = 0;
+    damageHistory = [];
+  }
+  
+  /**
+   * Record a projectile hit for stats tracking
+   * Called by projectile system when a projectile hits a target
+   */
+  function recordProjectileHit(damage: number, currentTime: number): void {
+    totalDamageDealt += damage;
+    shotsHit++;
+    damageHistory.push({ time: currentTime, damage });
+    // Clean up old entries
+    damageHistory = damageHistory.filter(entry => currentTime - entry.time < DPS_WINDOW);
+  }
 
   return {
     update: combatSystem,
-    getActiveBeams: () => activeBeams
+    getActiveBeams: () => activeBeams,
+    getStats,
+    resetStats,
+    recordProjectileHit
   };
 }
 
