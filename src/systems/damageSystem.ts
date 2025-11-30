@@ -3,13 +3,14 @@
  * Handles entity destruction when health reaches 0 and returns entities to pool
  */
 import { defineQuery, removeEntity, IWorld } from 'bitecs';
-import { Health, Faction } from '../ecs/components';
+import { Health, Faction, Position } from '../ecs/components';
 import { FactionId } from '../types/constants';
 import { AudioManager, SoundType } from '../audio';
 import { decrementEntityCount } from '../ecs/world';
+import { ParticleSystem, EFFECTS } from '../rendering';
 
 // Query for entities with Health component
-const healthQuery = defineQuery([Health, Faction]);
+const healthQuery = defineQuery([Health, Faction, Position]);
 
 /**
  * Callback type for enemy death events
@@ -18,9 +19,10 @@ export type EnemyDeathCallback = (entityId: number, factionId: number) => void;
 
 /**
  * Creates the damage system that handles entity destruction
+ * @param particleSystem - Optional particle system for explosion effects
  * @returns A system function that processes entity deaths
  */
-export function createDamageSystem() {
+export function createDamageSystem(particleSystem?: ParticleSystem) {
   // Store callbacks for enemy death
   const deathCallbacks: EnemyDeathCallback[] = [];
   // Track entities destroyed this frame
@@ -40,15 +42,33 @@ export function createDamageSystem() {
 
       // Entity destroyed
       const factionId = Faction.id[eid];
+      const x = Position.x[eid];
+      const y = Position.y[eid];
 
-      // Play explosion sound
+      // Play explosion sound and visual effect
       const audioManager = AudioManager.getInstance();
       if (factionId === FactionId.FEDERATION) {
         // Turret/Player explosion
         audioManager.play(SoundType.EXPLOSION_LARGE, { volume: 0.7 });
+
+        if (particleSystem) {
+          particleSystem.spawn({
+            ...EFFECTS.EXPLOSION_LARGE,
+            x,
+            y
+          });
+        }
       } else {
         // Enemy explosion
         audioManager.play(SoundType.EXPLOSION_SMALL, { volume: 0.5 });
+
+        if (particleSystem) {
+          particleSystem.spawn({
+            ...EFFECTS.EXPLOSION_SMALL,
+            x,
+            y
+          });
+        }
       }
 
       // Only process non-Federation entities as enemies

@@ -12,7 +12,7 @@ import {
   decrementEntityCount
 } from '../ecs';
 import { Health, Shield, Turret, Position, Faction, SpriteRef } from '../ecs/components';
-import { SpriteManager, BeamRenderer } from '../rendering';
+import { SpriteManager, BeamRenderer, ParticleSystem, HealthBarRenderer, ScreenShake } from '../rendering';
 import { createRenderSystem, createMovementSystem, createCollisionSystem, CollisionSystem, createTargetingSystem, createCombatSystem, createDamageSystem, createAISystem, createProjectileSystem, TargetingSystem, CombatSystem, DamageSystem } from '../systems';
 import { GAME_CONFIG, LCARS_COLORS } from '../types';
 import { SpatialHash } from '../collision';
@@ -48,6 +48,9 @@ export class Game {
   private hudManager: HUDManager | null = null;
   private starfield: Starfield | null = null;
   private beamRenderer: BeamRenderer | null = null;
+  private particleSystem: ParticleSystem | null = null;
+  private healthBarRenderer: HealthBarRenderer | null = null;
+  private screenShake: ScreenShake | null = null;
   private waveManager: WaveManager;
   private gameState: GameState;
   private scoreManager: ScoreManager;
@@ -59,6 +62,7 @@ export class Game {
   private kobayashiMaruId: number = -1;
   private initialized: boolean = false;
   private gameTime: number = 0; // Total game time in seconds
+  private previousKMHealth: number = 0;
 
   constructor(containerId: string = 'app') {
     const container = document.getElementById(containerId);
@@ -135,6 +139,17 @@ export class Game {
     this.beamRenderer = new BeamRenderer(this.app);
     this.beamRenderer.init();
 
+    // Initialize particle system
+    this.particleSystem = new ParticleSystem();
+    this.particleSystem.init(this.app);
+
+    // Initialize health bar renderer
+    this.healthBarRenderer = new HealthBarRenderer();
+    this.healthBarRenderer.init(this.app);
+
+    // Initialize screen shake
+    this.screenShake = new ScreenShake();
+
     // Create the render system with the sprite manager
     this.renderSystem = createRenderSystem(this.spriteManager);
 
@@ -153,10 +168,10 @@ export class Game {
     this.targetingSystem = createTargetingSystem(this.spatialHash);
 
     // Initialize combat system
-    this.combatSystem = createCombatSystem();
+    this.combatSystem = createCombatSystem(this.particleSystem);
 
     // Initialize damage system
-    this.damageSystem = createDamageSystem();
+    this.damageSystem = createDamageSystem(this.particleSystem);
 
     // Initialize AI system
     this.aiSystem = createAISystem();
@@ -200,6 +215,7 @@ export class Game {
 
     // Spawn Kobayashi Maru at center and store its ID for health monitoring
     this.kobayashiMaruId = createKobayashiMaru(this.world, centerX, centerY);
+    this.previousKMHealth = Health.max[this.kobayashiMaruId];
     console.log('Kobayashi Maru spawned at center');
 
     // Initialize wave manager
@@ -327,6 +343,20 @@ export class Game {
 
       // Check for game over (Kobayashi Maru destroyed)
       this.checkGameOver();
+
+      // Check for damage to Kobayashi Maru for screen shake
+      if (this.kobayashiMaruId !== -1 && this.screenShake) {
+        const currentHealth = Health.current[this.kobayashiMaruId];
+        if (currentHealth < this.previousKMHealth) {
+          // Trigger screen shake
+          this.screenShake.shake(5, 0.3);
+          this.previousKMHealth = currentHealth;
+        }
+        // Update previous health if it increased (healing)
+        if (currentHealth > this.previousKMHealth) {
+          this.previousKMHealth = currentHealth;
+        }
+      }
     }
 
     // Render system always runs to show current state
@@ -337,6 +367,26 @@ export class Game {
     // Render beam visuals
     if (this.beamRenderer && this.combatSystem) {
       this.beamRenderer.render(this.combatSystem.getActiveBeams());
+    }
+
+    // Update particle system
+    if (this.particleSystem) {
+      this.particleSystem.update(deltaTime);
+    }
+
+    // Update health bar renderer
+    if (this.healthBarRenderer) {
+      this.healthBarRenderer.update(this.world);
+    }
+
+    // Update screen shake
+    if (this.screenShake) {
+      const { offsetX, offsetY } = this.screenShake.update(deltaTime);
+      // Apply shake to stage position (reset to 0,0 first if needed, but stage usually stays at 0,0)
+      // We need to be careful not to accumulate offsets if we don't reset.
+      // Since we are setting scale in resize, we should probably add a container for game content if we want to shake everything.
+      // Or just set position.
+      this.app.stage.position.set(offsetX, offsetY);
     }
 
     // Update debug overlay
@@ -498,6 +548,12 @@ export class Game {
     }
     if (this.gameOverScreen) {
       this.gameOverScreen.destroy();
+    }
+    if (this.particleSystem) {
+      this.particleSystem.destroy();
+    }
+    if (this.healthBarRenderer) {
+      this.healthBarRenderer.destroy();
     }
     this.spriteManager.destroy();
     this.app.destroy(true);
