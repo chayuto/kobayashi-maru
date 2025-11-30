@@ -9,7 +9,7 @@ import { HUDManager, HealthBar, UI_STYLES, HUDData } from '../ui';
 // Mock PixiJS Application
 vi.mock('pixi.js', async () => {
   const actual = await vi.importActual('pixi.js') as object;
-  
+
   // Mock Text class
   class MockText {
     text: string = '';
@@ -44,6 +44,11 @@ vi.mock('pixi.js', async () => {
       return child;
     });
     destroy = vi.fn();
+    on = vi.fn();
+    off = vi.fn();
+    emit = vi.fn();
+    eventMode = 'auto';
+    cursor = 'default';
   }
 
   // Mock Application
@@ -218,7 +223,7 @@ describe('HUDManager', () => {
 
     it('should handle all wave states', () => {
       hudManager.init(mockApp);
-      
+
       const states: HUDData['waveState'][] = ['idle', 'spawning', 'active', 'complete'];
       states.forEach(state => {
         expect(() => hudManager.update({ ...mockHUDData, waveState: state })).not.toThrow();
@@ -227,17 +232,17 @@ describe('HUDManager', () => {
 
     it('should handle edge cases for health values', () => {
       hudManager.init(mockApp);
-      
+
       // Zero health
-      expect(() => hudManager.update({ 
-        ...mockHUDData, 
+      expect(() => hudManager.update({
+        ...mockHUDData,
         kobayashiMaruHealth: 0,
         kobayashiMaruMaxHealth: 500
       })).not.toThrow();
 
       // Low health (should trigger danger color)
-      expect(() => hudManager.update({ 
-        ...mockHUDData, 
+      expect(() => hudManager.update({
+        ...mockHUDData,
         kobayashiMaruHealth: 50,
         kobayashiMaruMaxHealth: 500
       })).not.toThrow();
