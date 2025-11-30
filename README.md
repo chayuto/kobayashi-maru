@@ -1,80 +1,161 @@
 # Kobayashi Maru
 
-An endless simulation / "God Game" tower defense where you protect the civilian freighter Kobayashi Maru against infinite, procedurally generating waves of enemies.
+A Star Trek-themed endless tower defense game built with TypeScript, PixiJS, and bitECS.
 
-## Overview
-
-**Genre:** Endless Simulation / "God Game" Tower Defense  
-**Platform:** Browser (WebGL/WebGPU via PixiJS v8)
-
-You act as the Tactical Computer of a starbase or flagship. You don't click to shoot; you program the defense parameters, manage power distribution (EPS grids), and deploy automated drone fleets to protect the Kobayashi Maru.
-
-**Winning Condition:** None. The goal is to endure. The metric of success is Time Survived and Civilian Lives Saved.
-
-## Tech Stack
-
-- **Rendering:** [PixiJS v8](https://pixijs.com/) (WebGPU/WebGL)
-- **ECS:** [bitECS](https://github.com/NateTheGreatt/bitECS) for high-performance entity management
-- **Math:** [gl-matrix](https://glmatrix.net/) for vector operations
-- **Build:** [Vite](https://vitejs.dev/) + TypeScript
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js 18+
-- npm or yarn
-
-### Installation
+## Quick Start
 
 ```bash
-# Install dependencies
 npm install
-
-# Start development server
 npm run dev
-
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
 ```
+
+Open your browser to `http://localhost:5173`
+
+## How to Play
+
+1. Defend the Kobayashi Maru (center ship) from endless enemy waves
+2. Click turret buttons on the right to select turret types
+3. Place turrets by clicking on the battlefield
+4. Earn Matter by defeating enemies (10 per kill)
+5. Survive as long as possible - the game never ends
+
+### Controls
+- **Mouse**: Place turrets, navigate UI
+- **ESC**: Cancel turret placement
+- **Backtick**: Toggle debug overlay
+- **Enter/R**: Restart when game over
+
+## Current Status
+
+**Playability:** Fully Playable  
+**Completeness:** ~85%
+
+### Implemented Features
+- ECS Architecture - bitECS with 5,000+ entity capacity
+- 6 Enemy Factions - Klingon, Romulan, Borg, Tholian, Species 8472
+- 5 AI Behaviors - Direct, Strafe, Flank, Swarm, Hunter
+- 3 Turret Types - Phaser Array, Torpedo Launcher, Disruptor Bank
+- Projectile System - Torpedoes with collision detection
+- Beam Weapons - Instant-hit phasers and disruptors
+- Resource Economy - Earn 10 Matter per enemy kill
+- Wave System - Infinite waves with difficulty scaling
+- Game Over Screen - Score breakdown with restart
+- Audio System - Procedural Web Audio API sounds
+- Visual Effects - Explosions, particles, screen shake, health bars
+- HUD System - Wave info, resources, time, kills, Kobayashi Maru status
+- Turret Menu - Interactive placement UI
+- High Scores - localStorage persistence
+- Debug Overlay - Performance metrics and game stats
+- Starfield Background - Animated space backdrop
+
+### Missing Features
+- No Collision Damage - Enemies don't damage Kobayashi Maru on contact
+- No Pause System - Can't pause (PAUSED state exists but no key binding)
+- No Main Menu - Game starts immediately
+- No Tutorial - No first-time player guidance
+
+### Enemy AI Behaviors
+- **Klingon** (Red Triangle): Direct assault
+- **Romulan** (Green Crescent): Evasive strafing
+- **Borg** (Green Square): Coordinated swarm
+- **Tholian** (Orange Diamond): Flanking maneuvers
+- **Species 8472** (Purple Y): Targets turrets first
+
+### Turret Types
+- **Phaser Array** (100 Matter): 4 shots/sec, 10 damage, 200 range
+- **Torpedo Launcher** (200 Matter): 0.5 shots/sec, 50 damage, 350 range
+- **Disruptor Bank** (150 Matter): 2 shots/sec, 15 damage, 250 range
+
+## Technology Stack
+
+- **TypeScript** - Type-safe JavaScript
+- **PixiJS 8** - WebGPU/WebGL rendering
+- **bitECS** - High-performance ECS
+- **Web Audio API** - Procedural sound generation
+- **Vite** - Fast dev server and build tool
+- **Vitest** - Unit testing framework
 
 ## Project Structure
 
 ```
-kobayashi-maru/
-├── src/
-│   ├── core/           # Core game engine
-│   │   └── Game.ts     # Main game class with PixiJS initialization
-│   ├── ecs/            # Entity Component System
-│   │   ├── components.ts  # bitECS component definitions
-│   │   └── world.ts       # World setup
-│   ├── rendering/      # Rendering utilities
-│   │   └── textures.ts    # Faction texture generation
-│   ├── types/          # TypeScript types and constants
-│   │   └── constants.ts   # Faction colors, game config
-│   └── main.ts         # Application entry point
-├── docs/
-│   └── research/       # Design documents
-├── index.html          # HTML entry point
-├── vite.config.ts      # Vite configuration
-└── tsconfig.json       # TypeScript configuration
+src/
+├── core/           # Game.ts, DebugManager.ts
+├── ecs/            # Components, entity factory, world
+├── systems/        # AI, combat, damage, movement, projectile, targeting
+├── rendering/      # Sprites, beams, particles, effects, screen shake
+├── audio/          # AudioManager, SoundGenerator
+├── ui/             # HUD, GameOverScreen, TurretMenu, HealthBar
+├── game/           # GameState, WaveManager, ScoreManager, ResourceManager
+├── collision/      # SpatialHash for performance
+├── pathfinding/    # Flow field (unused)
+└── __tests__/      # 23 test files
 ```
 
-## Factions
+## Roadmap
 
-| Faction | Shape | Color | Role |
-|---------|-------|-------|------|
-| Federation | Circle | Teal (#33CC99) | Player/Defense |
-| Klingon | Triangle | Red (#DD4444) | Enemy (Basic) |
-| Romulan | Crescent | Lime (#99CC33) | Enemy (Stealth) |
-| Borg | Square | Neon Green (#22EE22) | Enemy (Tank) |
-| Tholian | Diamond | Orange (#FF7700) | Enemy (Control) |
-| Species 8472 | Y-Shape | Lavender (#CC99FF) | Enemy (Boss) |
+### Critical (Blocks Natural Game Over)
+- Collision Damage System - Enemies damage Kobayashi Maru on contact
+
+### High Priority (Polish)
+- Pause System - ESC key to pause/unpause
+- Main Menu - Title screen with start button
+
+### Medium Priority
+- Tutorial Overlay - First-time player guidance
+- Settings Menu - Volume controls
+- Turret Upgrades - Improve placed turrets
+
+## Testing
+
+```bash
+npm test          # Run all tests
+npm run test:watch # Watch mode
+```
+
+**Test Coverage:** 23 test files covering:
+- ECS components and entity factory
+- All game systems (AI, combat, damage, movement, projectile, targeting)
+- Game managers (GameState, WaveManager, ScoreManager, ResourceManager)
+- UI components (HUD, GameOverScreen)
+- Audio system
+- Collision and spatial hashing
+
+## Audio
+
+All sounds are procedurally generated using Web Audio API:
+- Phaser fire (high-pitched beam)
+- Disruptor fire (mid-range pulse)
+- Torpedo fire (low rumble)
+- Small explosions (enemy deaths)
+- Large explosions (turret/Kobayashi Maru)
+- Wave start/complete sounds
+
+## High Scores
+
+Scores are calculated from:
+- Time survived × 10 points/second
+- Enemies defeated × 100 points/kill
+- Wave reached × 500 points/wave
+
+Saved to localStorage with automatic ranking.
+
+## Performance
+
+- **Target:** 60 FPS with 5,000+ entities
+- **Spatial Hashing:** 64px cell size for collision detection
+- **Entity Pooling:** Reuse entities to minimize GC
+- **ParticleContainer:** Batch rendering for particles
+- **WebGPU:** Preferred renderer with WebGL fallback
+
+## Contributing
+
+This project demonstrates:
+- Clean ECS architecture with bitECS
+- High-performance 2D rendering with PixiJS 8
+- Procedural audio generation
+- Comprehensive unit testing
+- TypeScript best practices
 
 ## License
 
-ISC
-
+MIT License - see LICENSE file for details.

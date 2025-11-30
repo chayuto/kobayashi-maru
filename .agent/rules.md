@@ -5,5 +5,6 @@
 - If tests fail, fix them before notifying the user.
 
 ## Docs
+- Keep it professional, no emojis
 - after task put new doc in docs/change_notes/ with name YYYYMMDD_<task_name>.md
 - Planning docs in docs/planning/ For instruction, please consider Agent as coder. 
