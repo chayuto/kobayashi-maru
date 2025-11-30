@@ -11,14 +11,20 @@ import { FactionId } from '../types/constants';
 // Query for active projectiles
 const projectileQuery = defineQuery([Position, Velocity, Projectile, Collider]);
 
+// Callback type for recording projectile hits
+type ProjectileHitCallback = (damage: number, currentTime: number) => void;
+
 /**
  * Creates the projectile system
  * @param spatialHash - Spatial hash for collision detection
  * @returns A system function that updates projectiles
  */
 export function createProjectileSystem(spatialHash: SpatialHash) {
+    let onHitCallback: ProjectileHitCallback | null = null;
+    let gameTime = 0;
 
-    function projectileSystem(world: IWorld, deltaTime: number): IWorld {
+    function projectileSystem(world: IWorld, deltaTime: number, currentTime?: number): IWorld {
+        gameTime = currentTime ?? gameTime + deltaTime;
         const projectiles = projectileQuery(world);
 
         for (const eid of projectiles) {
@@ -75,7 +81,11 @@ export function createProjectileSystem(spatialHash: SpatialHash) {
 
                 if (distSq <= radiusSum * radiusSum) {
                     // Collision!
-                    applyDamage(world, targetEid, damage);
+                    const actualDamage = applyDamage(world, targetEid, damage);
+                    // Record hit for stats
+                    if (onHitCallback && actualDamage > 0) {
+                        onHitCallback(actualDamage, gameTime);
+                    }
                     hit = true;
                     break; // Only hit one target
                 }
@@ -89,8 +99,18 @@ export function createProjectileSystem(spatialHash: SpatialHash) {
 
         return world;
     }
+    
+    /**
+     * Set callback for when projectiles hit targets
+     */
+    function onHit(callback: ProjectileHitCallback): void {
+        onHitCallback = callback;
+    }
 
-    return projectileSystem;
+    return {
+        update: projectileSystem,
+        onHit
+    };
 }
 
 /**

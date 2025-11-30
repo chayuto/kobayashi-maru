@@ -216,10 +216,8 @@ export function createCombatSystem(particleSystem?: ParticleSystem) {
   function getStats(): CombatStats {
     // Calculate DPS from damage history
     const recentDamage = damageHistory.reduce((sum, entry) => sum + entry.damage, 0);
-    const windowTime = Math.min(damageHistory.length > 0 
-      ? Math.max(0.1, damageHistory[damageHistory.length - 1].time - damageHistory[0].time) 
-      : 1, DPS_WINDOW);
-    const dps = damageHistory.length > 0 ? recentDamage / windowTime : 0;
+    // Use the full DPS_WINDOW or actual elapsed time, whichever gives meaningful results
+    const dps = recentDamage / DPS_WINDOW;
     
     return {
       totalDamageDealt,
@@ -239,12 +237,25 @@ export function createCombatSystem(particleSystem?: ParticleSystem) {
     shotsHit = 0;
     damageHistory = [];
   }
+  
+  /**
+   * Record a projectile hit for stats tracking
+   * Called by projectile system when a projectile hits a target
+   */
+  function recordProjectileHit(damage: number, currentTime: number): void {
+    totalDamageDealt += damage;
+    shotsHit++;
+    damageHistory.push({ time: currentTime, damage });
+    // Clean up old entries
+    damageHistory = damageHistory.filter(entry => currentTime - entry.time < DPS_WINDOW);
+  }
 
   return {
     update: combatSystem,
     getActiveBeams: () => activeBeams,
     getStats,
-    resetStats
+    resetStats,
+    recordProjectileHit
   };
 }
 
