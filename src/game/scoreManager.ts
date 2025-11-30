@@ -28,7 +28,9 @@ export class ScoreManager {
    * @param deltaTime - Time elapsed since last update (in seconds)
    */
   update(deltaTime: number): void {
-    this.timeSurvived += deltaTime;
+    if (deltaTime > 0) {
+      this.timeSurvived += deltaTime;
+    }
   }
 
   /**
@@ -58,7 +60,9 @@ export class ScoreManager {
    * @param count - Number of civilians saved
    */
   addCiviliansSaved(count: number): void {
-    this.civiliansSaved += count;
+    if (count > 0) {
+      this.civiliansSaved += count;
+    }
   }
 
   /**

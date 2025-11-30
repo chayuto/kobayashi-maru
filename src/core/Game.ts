@@ -232,7 +232,7 @@ export class Game {
     }
 
     const health = Health.current[this.kobayashiMaruId];
-    if (health <= 0) {
+    if (health === undefined || health <= 0) {
       this.triggerGameOver();
     }
   }

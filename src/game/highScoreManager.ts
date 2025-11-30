@@ -129,7 +129,16 @@ export class HighScoreManager {
       if (stored) {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed)) {
-          this.highScores = parsed;
+          // Validate and filter entries with expected structure
+          this.highScores = parsed.filter((entry): entry is HighScoreEntry => 
+            typeof entry === 'object' &&
+            entry !== null &&
+            typeof entry.timeSurvived === 'number' &&
+            typeof entry.waveReached === 'number' &&
+            typeof entry.enemiesDefeated === 'number' &&
+            typeof entry.civiliansSaved === 'number' &&
+            typeof entry.timestamp === 'number'
+          );
         }
       }
     } catch (error) {
