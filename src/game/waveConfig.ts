@@ -2,9 +2,7 @@
  * Wave Configuration for Kobayashi Maru
  * Defines wave structures, enemy compositions, and difficulty scaling
  */
-import { FactionId } from '../types/constants';
-
-export type FactionIdType = typeof FactionId[keyof typeof FactionId];
+import { FactionId, FactionIdType } from '../types/constants';
 
 export type FormationType = 'random' | 'cluster' | 'v-formation';
 

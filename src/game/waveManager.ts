@@ -115,7 +115,7 @@ export class WaveManager {
     this.spawnGroups = this.waveConfig.enemies.map(config => ({
       config,
       spawnedCount: 0,
-      timeSinceLastSpawn: config.spawnDelay, // Allow immediate first spawn
+      timeSinceLastSpawn: config.spawnDelay, // Set equal to delay so condition (>= delay) is immediately true
       spawnPoints: this.createSpawnPoints(config)
     }));
     
@@ -296,18 +296,14 @@ export class WaveManager {
   
   /**
    * Checks if the wave is complete (all enemies defeated)
+   * Wave completion is triggered when all active enemies have been removed via removeEnemy()
    */
   private checkWaveCompletion(): void {
-    // For now, we track completion by spawned enemies
-    // In a full implementation, this would check if enemies are actually defeated
-    // This is a placeholder that transitions after all enemies are spawned
-    // The actual defeat tracking would require integration with a damage/death system
-    
-    // For demonstration, transition to complete immediately when in active state
-    // In production, you'd check: if (this.activeEnemies.size === 0)
-    if (this.state === 'active') {
-      // Note: Real implementation would track enemy deaths
-      // For now, we stay in active state until enemies are removed
+    // Wave is complete when all enemies have been spawned and all active enemies are defeated
+    // The removeEnemy() method should be called externally when enemies die
+    // This check handles the case where enemies are removed during the active phase
+    if (this.state === 'active' && this.activeEnemies.size === 0) {
+      this.completeWave();
     }
   }
   
