@@ -3,7 +3,17 @@
  * Initializes PixiJS with WebGPU preference and manages the game loop
  */
 import { Application } from 'pixi.js';
-import { createGameWorld, GameWorld } from '../ecs';
+import { 
+  createGameWorld, 
+  GameWorld, 
+  getEntityCount,
+  createKobayashiMaru,
+  createKlingonShip,
+  createRomulanShip,
+  createBorgShip,
+  createTholianShip,
+  createSpecies8472Ship
+} from '../ecs';
 import { GAME_CONFIG, LCARS_COLORS } from '../types';
 
 export class Game {
@@ -51,6 +61,67 @@ export class Game {
     this.initialized = true;
     console.log('Kobayashi Maru initialized');
     console.log(`Renderer: ${this.app.renderer.name}`);
+    
+    // Spawn test entities
+    this.spawnTestEntities();
+  }
+
+  /**
+   * Spawns test entities on game initialization
+   */
+  private spawnTestEntities(): void {
+    const centerX = GAME_CONFIG.WORLD_WIDTH / 2;
+    const centerY = GAME_CONFIG.WORLD_HEIGHT / 2;
+    
+    // Spawn Kobayashi Maru at center
+    createKobayashiMaru(this.world, centerX, centerY);
+    console.log('Kobayashi Maru spawned at center');
+    
+    // Spawn 100 test enemies at random positions around the edges
+    const enemyCreators = [
+      createKlingonShip,
+      createRomulanShip,
+      createBorgShip,
+      createTholianShip,
+      createSpecies8472Ship
+    ];
+    
+    const edgeMargin = 100;
+    const width = GAME_CONFIG.WORLD_WIDTH;
+    const height = GAME_CONFIG.WORLD_HEIGHT;
+    
+    for (let i = 0; i < 100; i++) {
+      // Randomly select which edge to spawn on
+      const edge = Math.floor(Math.random() * 4);
+      let x: number, y: number;
+      
+      switch (edge) {
+        case 0: // Top edge
+          x = Math.random() * width;
+          y = Math.random() * edgeMargin;
+          break;
+        case 1: // Right edge
+          x = width - Math.random() * edgeMargin;
+          y = Math.random() * height;
+          break;
+        case 2: // Bottom edge
+          x = Math.random() * width;
+          y = height - Math.random() * edgeMargin;
+          break;
+        case 3: // Left edge
+        default:
+          x = Math.random() * edgeMargin;
+          y = Math.random() * height;
+          break;
+      }
+      
+      // Randomly select an enemy type
+      const creatorIndex = Math.floor(Math.random() * enemyCreators.length);
+      enemyCreators[creatorIndex](this.world, x, y);
+    }
+    
+    console.log('100 test enemies spawned around edges');
+    console.log(`Total entity count: ${getEntityCount(this.world)}`);
   }
 
   /**
