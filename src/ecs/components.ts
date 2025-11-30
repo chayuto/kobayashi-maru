@@ -53,3 +53,9 @@ export const Turret = defineComponent({
   lastFired: Types.f32,  // Timestamp of last shot (in seconds)
   turretType: Types.ui8  // Type of turret (phaser, torpedo, disruptor)
 });
+
+// Target component - stores current target for turrets
+export const Target = defineComponent({
+  entityId: Types.ui32,  // Current target entity ID
+  hasTarget: Types.ui8   // 0/1 flag indicating if target is valid
+});

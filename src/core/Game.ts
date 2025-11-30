@@ -10,8 +10,8 @@ import {
   createKobayashiMaru
 } from '../ecs';
 import { Health } from '../ecs/components';
-import { SpriteManager } from '../rendering';
-import { createRenderSystem, createMovementSystem, createCollisionSystem, CollisionSystem } from '../systems';
+import { SpriteManager, BeamRenderer } from '../rendering';
+import { createRenderSystem, createMovementSystem, createCollisionSystem, CollisionSystem, createTargetingSystem, createCombatSystem, createDamageSystem, TargetingSystem, CombatSystem, DamageSystem } from '../systems';
 import { GAME_CONFIG, LCARS_COLORS } from '../types';
 import { SpatialHash } from '../collision';
 
@@ -28,9 +28,13 @@ export class Game {
   private renderSystem: ReturnType<typeof createRenderSystem> | null = null;
   private movementSystem: ReturnType<typeof createMovementSystem> | null = null;
   private collisionSystem: CollisionSystem | null = null;
+  private targetingSystem: TargetingSystem | null = null;
+  private combatSystem: CombatSystem | null = null;
+  private damageSystem: DamageSystem | null = null;
   private spatialHash: SpatialHash | null = null;
   private debugManager: DebugManager | null = null;
   private starfield: Starfield | null = null;
+  private beamRenderer: BeamRenderer | null = null;
   private waveManager: WaveManager;
   private gameState: GameState;
   private scoreManager: ScoreManager;
@@ -39,6 +43,7 @@ export class Game {
   private placementSystem: PlacementSystem | null = null;
   private kobayashiMaruId: number = -1;
   private initialized: boolean = false;
+  private gameTime: number = 0; // Total game time in seconds
 
   constructor(containerId: string = 'app') {
     const container = document.getElementById(containerId);
@@ -96,6 +101,10 @@ export class Game {
     // Initialize sprite manager after app is ready
     this.spriteManager.init();
 
+    // Initialize beam renderer
+    this.beamRenderer = new BeamRenderer(this.app);
+    this.beamRenderer.init();
+
     // Create the render system with the sprite manager
     this.renderSystem = createRenderSystem(this.spriteManager);
 
@@ -109,6 +118,15 @@ export class Game {
       GAME_CONFIG.WORLD_HEIGHT
     );
     this.collisionSystem = createCollisionSystem(this.spatialHash);
+
+    // Initialize targeting system
+    this.targetingSystem = createTargetingSystem(this.spatialHash);
+
+    // Initialize combat system
+    this.combatSystem = createCombatSystem();
+
+    // Initialize damage system
+    this.damageSystem = createDamageSystem();
 
     // Initialize placement system
     this.placementSystem = new PlacementSystem(this.app, this.world, this.resourceManager);
@@ -141,6 +159,16 @@ export class Game {
       // Update score manager with wave reached
       this.scoreManager.setWaveReached(event.waveNumber);
     });
+
+    // Set up enemy death callback to update wave manager and score
+    if (this.damageSystem) {
+      this.damageSystem.onEnemyDeath((entityId, factionId) => {
+        // Remove enemy from wave manager tracking
+        this.waveManager.removeEnemy(entityId);
+        // Record kill in score manager
+        this.scoreManager.addKill(factionId);
+      });
+    }
 
     // Start playing and wave 1
     this.gameState.setState(GameStateType.PLAYING);
@@ -197,6 +225,9 @@ export class Game {
 
     // Only run gameplay systems when playing
     if (this.gameState.isPlaying()) {
+      // Update game time
+      this.gameTime += deltaTime;
+
       // Update score manager time
       this.scoreManager.update(deltaTime);
 
@@ -213,6 +244,21 @@ export class Game {
         this.movementSystem(this.world, deltaTime);
       }
 
+      // Run targeting system to find targets for turrets
+      if (this.targetingSystem) {
+        this.targetingSystem(this.world);
+      }
+
+      // Run combat system to handle turret firing
+      if (this.combatSystem) {
+        this.combatSystem.update(this.world, deltaTime, this.gameTime);
+      }
+
+      // Run damage system to handle entity destruction
+      if (this.damageSystem) {
+        this.damageSystem.update(this.world);
+      }
+
       // Check for game over (Kobayashi Maru destroyed)
       this.checkGameOver();
     }
@@ -220,6 +266,11 @@ export class Game {
     // Render system always runs to show current state
     if (this.renderSystem) {
       this.renderSystem(this.world);
+    }
+
+    // Render beam visuals
+    if (this.beamRenderer && this.combatSystem) {
+      this.beamRenderer.render(this.combatSystem.getActiveBeams());
     }
 
     // Update debug overlay
@@ -273,6 +324,9 @@ export class Game {
     window.removeEventListener('resize', this.handleResize.bind(this));
     if (this.placementSystem) {
       this.placementSystem.destroy();
+    }
+    if (this.beamRenderer) {
+      this.beamRenderer.destroy();
     }
     this.spriteManager.destroy();
     this.app.destroy(true);
@@ -349,5 +403,21 @@ export class Game {
    */
   getPlacementSystem(): PlacementSystem | null {
     return this.placementSystem;
+  }
+
+  /**
+   * Get the combat system for access to beam visuals
+   * @returns The combat system or null if not initialized
+   */
+  getCombatSystem(): CombatSystem | null {
+    return this.combatSystem;
+  }
+
+  /**
+   * Get the damage system
+   * @returns The damage system or null if not initialized
+   */
+  getDamageSystem(): DamageSystem | null {
+    return this.damageSystem;
   }
 }

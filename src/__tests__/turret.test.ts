@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createGameWorld, createTurret, getEntityCount } from '../ecs';
-import { Position, Velocity, Faction, Health, Shield, Turret } from '../ecs/components';
+import { Position, Velocity, Faction, Health, Shield, Turret, Target } from '../ecs/components';
 import { TurretType, TURRET_CONFIG, FactionId } from '../types/constants';
 import type { GameWorld } from '../ecs/world';
 
@@ -34,6 +34,8 @@ describe('Turret Component and Factory', () => {
       expect(Turret.damage[eid]).toBe(config.damage);
       expect(Turret.lastFired[eid]).toBe(0);
       expect(Turret.turretType[eid]).toBe(TurretType.PHASER_ARRAY);
+      expect(Target.entityId[eid]).toBe(0);
+      expect(Target.hasTarget[eid]).toBe(0);
     });
 
     it('should create a torpedo launcher with correct stats', () => {
