@@ -9,6 +9,7 @@ import {
   getEntityCount,
   createKobayashiMaru
 } from '../ecs';
+import { Health } from '../ecs/components';
 import { SpriteManager } from '../rendering';
 import { createRenderSystem, createMovementSystem, createCollisionSystem, CollisionSystem } from '../systems';
 import { GAME_CONFIG, LCARS_COLORS } from '../types';
@@ -17,7 +18,7 @@ import { SpatialHash } from '../collision';
 import { Starfield } from '../rendering/Starfield';
 
 import { DebugManager } from './DebugManager';
-import { WaveManager } from '../game';
+import { WaveManager, GameState, GameStateType, ScoreManager, HighScoreManager } from '../game';
 
 export class Game {
   public app: Application;
@@ -31,6 +32,10 @@ export class Game {
   private debugManager: DebugManager | null = null;
   private starfield: Starfield | null = null;
   private waveManager: WaveManager;
+  private gameState: GameState;
+  private scoreManager: ScoreManager;
+  private highScoreManager: HighScoreManager;
+  private kobayashiMaruId: number = -1;
   private initialized: boolean = false;
 
   constructor(containerId: string = 'app') {
@@ -45,6 +50,9 @@ export class Game {
     this.debugManager = new DebugManager();
     this.starfield = new Starfield(this.app);
     this.waveManager = new WaveManager();
+    this.gameState = new GameState();
+    this.scoreManager = new ScoreManager();
+    this.highScoreManager = new HighScoreManager();
   }
 
   /**
@@ -110,8 +118,8 @@ export class Game {
     const centerX = GAME_CONFIG.WORLD_WIDTH / 2;
     const centerY = GAME_CONFIG.WORLD_HEIGHT / 2;
 
-    // Spawn Kobayashi Maru at center
-    createKobayashiMaru(this.world, centerX, centerY);
+    // Spawn Kobayashi Maru at center and store its ID for health monitoring
+    this.kobayashiMaruId = createKobayashiMaru(this.world, centerX, centerY);
     console.log('Kobayashi Maru spawned at center');
 
     // Initialize wave manager
@@ -124,9 +132,12 @@ export class Game {
     
     this.waveManager.on('waveComplete', (event) => {
       console.log(`Wave ${event.waveNumber} complete!`);
+      // Update score manager with wave reached
+      this.scoreManager.setWaveReached(event.waveNumber);
     });
 
-    // Start wave 1
+    // Start playing and wave 1
+    this.gameState.setState(GameStateType.PLAYING);
     this.waveManager.startWave(1);
     console.log(`Total entity count: ${getEntityCount()}`);
   }
@@ -172,26 +183,35 @@ export class Game {
     // Convert PixiJS ticker delta (in milliseconds) to seconds for frame-independent movement
     const deltaTime = this.app.ticker.deltaMS / 1000;
 
-    // Update starfield
+    // Update starfield (always runs regardless of game state)
     if (this.starfield) {
       // Scroll slowly downwards
       this.starfield.update(deltaTime, 0, 50);
     }
 
-    // Update wave manager to handle spawning
-    this.waveManager.update(deltaTime);
+    // Only run gameplay systems when playing
+    if (this.gameState.isPlaying()) {
+      // Update score manager time
+      this.scoreManager.update(deltaTime);
 
-    // Run the collision system first to update spatial hash (before other systems need it)
-    if (this.collisionSystem) {
-      this.collisionSystem.update(this.world);
+      // Update wave manager to handle spawning
+      this.waveManager.update(deltaTime);
+
+      // Run the collision system first to update spatial hash (before other systems need it)
+      if (this.collisionSystem) {
+        this.collisionSystem.update(this.world);
+      }
+
+      // Run the movement system to update entity positions
+      if (this.movementSystem) {
+        this.movementSystem(this.world, deltaTime);
+      }
+
+      // Check for game over (Kobayashi Maru destroyed)
+      this.checkGameOver();
     }
 
-    // Run the movement system to update entity positions
-    if (this.movementSystem) {
-      this.movementSystem(this.world, deltaTime);
-    }
-
-    // Run the render system to sync sprites with ECS data
+    // Render system always runs to show current state
     if (this.renderSystem) {
       this.renderSystem(this.world);
     }
@@ -200,6 +220,43 @@ export class Game {
     if (this.debugManager) {
       this.debugManager.update(this.app.ticker.deltaMS);
       this.debugManager.updateEntityCount(getEntityCount());
+    }
+  }
+
+  /**
+   * Checks if the Kobayashi Maru has been destroyed and triggers game over
+   */
+  private checkGameOver(): void {
+    if (this.kobayashiMaruId === -1) {
+      return;
+    }
+
+    const health = Health.current[this.kobayashiMaruId];
+    if (health === undefined || health <= 0) {
+      this.triggerGameOver();
+    }
+  }
+
+  /**
+   * Triggers the game over state
+   */
+  private triggerGameOver(): void {
+    // Set game state to game over
+    this.gameState.setState(GameStateType.GAME_OVER);
+
+    // Stop wave spawning
+    this.waveManager.setAutoStartNextWave(false);
+
+    // Save final score
+    const finalScore = this.scoreManager.getScoreData();
+    const saved = this.highScoreManager.saveScore(finalScore);
+
+    console.log('Game Over!');
+    console.log(`Time Survived: ${finalScore.timeSurvived.toFixed(2)}s`);
+    console.log(`Wave Reached: ${finalScore.waveReached}`);
+    console.log(`Enemies Defeated: ${finalScore.enemiesDefeated}`);
+    if (saved) {
+      console.log('New high score!');
     }
   }
 
@@ -235,5 +292,37 @@ export class Game {
    */
   getWaveManager(): WaveManager {
     return this.waveManager;
+  }
+
+  /**
+   * Get the game state manager
+   * @returns The game state instance
+   */
+  getGameState(): GameState {
+    return this.gameState;
+  }
+
+  /**
+   * Get the score manager
+   * @returns The score manager instance
+   */
+  getScoreManager(): ScoreManager {
+    return this.scoreManager;
+  }
+
+  /**
+   * Get the high score manager
+   * @returns The high score manager instance
+   */
+  getHighScoreManager(): HighScoreManager {
+    return this.highScoreManager;
+  }
+
+  /**
+   * Records an enemy kill in the score manager
+   * @param factionId - The faction ID of the defeated enemy
+   */
+  recordEnemyKill(factionId: number): void {
+    this.scoreManager.addKill(factionId);
   }
 }
