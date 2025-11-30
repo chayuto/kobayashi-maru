@@ -3,14 +3,15 @@
  * Initializes PixiJS with WebGPU preference and manages the game loop
  */
 import { Application } from 'pixi.js';
-import { defineQuery } from 'bitecs';
+import { defineQuery, removeEntity } from 'bitecs';
 import {
   createGameWorld,
   GameWorld,
   getEntityCount,
-  createKobayashiMaru
+  createKobayashiMaru,
+  decrementEntityCount
 } from '../ecs';
-import { Health, Shield, Turret } from '../ecs/components';
+import { Health, Shield, Turret, Position, Faction, SpriteRef } from '../ecs/components';
 import { SpriteManager, BeamRenderer } from '../rendering';
 import { createRenderSystem, createMovementSystem, createCollisionSystem, CollisionSystem, createTargetingSystem, createCombatSystem, createDamageSystem, TargetingSystem, CombatSystem, DamageSystem } from '../systems';
 import { GAME_CONFIG, LCARS_COLORS } from '../types';
@@ -20,10 +21,13 @@ import { Starfield } from '../rendering/Starfield';
 
 import { DebugManager } from './DebugManager';
 import { WaveManager, GameState, GameStateType, ScoreManager, HighScoreManager, ResourceManager, PlacementSystem } from '../game';
-import { HUDManager } from '../ui';
+import { HUDManager, GameOverScreen, calculateScore } from '../ui';
 
 // Query for counting turrets
 const turretQuery = defineQuery([Turret]);
+
+// Query for all entities (for cleanup during restart)
+const allEntitiesQuery = defineQuery([Position, Faction, SpriteRef]);
 
 export class Game {
   public app: Application;
@@ -47,6 +51,7 @@ export class Game {
   private highScoreManager: HighScoreManager;
   private resourceManager: ResourceManager;
   private placementSystem: PlacementSystem | null = null;
+  private gameOverScreen: GameOverScreen | null = null;
   private kobayashiMaruId: number = -1;
   private initialized: boolean = false;
   private gameTime: number = 0; // Total game time in seconds
@@ -142,6 +147,11 @@ export class Game {
     if (this.hudManager) {
       this.hudManager.init(this.app);
     }
+
+    // Initialize game over screen
+    this.gameOverScreen = new GameOverScreen();
+    this.gameOverScreen.init(this.app);
+    this.gameOverScreen.setOnRestart(() => this.restart());
 
     // Initialize wave manager and spawn Kobayashi Maru
     this.initializeGameplay();
@@ -356,6 +366,10 @@ export class Game {
     // Stop wave spawning
     this.waveManager.setAutoStartNextWave(false);
 
+    // Get previous high score before saving
+    const previousHighScore = this.highScoreManager.getHighestScore();
+    const previousBestScore = previousHighScore ? calculateScore(previousHighScore) : 0;
+
     // Save final score
     const finalScore = this.scoreManager.getScoreData();
     const saved = this.highScoreManager.saveScore(finalScore);
@@ -366,6 +380,61 @@ export class Game {
     console.log(`Enemies Defeated: ${finalScore.enemiesDefeated}`);
     if (saved) {
       console.log('New high score!');
+    }
+
+    // Show game over screen
+    if (this.gameOverScreen) {
+      this.gameOverScreen.show(finalScore, saved, previousBestScore);
+    }
+  }
+
+  /**
+   * Restart the game after game over
+   */
+  restart(): void {
+    // Hide game over screen
+    if (this.gameOverScreen) {
+      this.gameOverScreen.hide();
+    }
+
+    // Clear all existing entities
+    this.clearAllEntities();
+
+    // Reset all managers
+    this.scoreManager.reset();
+    this.resourceManager.reset();
+    this.waveManager.reset();
+    this.gameTime = 0;
+
+    // Reset game state to MENU then PLAYING (to follow valid state transitions)
+    this.gameState.reset();
+
+    // Re-enable auto wave progression
+    this.waveManager.setAutoStartNextWave(true);
+
+    // Re-initialize gameplay (spawn new Kobayashi Maru and start wave 1)
+    this.initializeGameplay();
+
+    console.log('Game restarted');
+  }
+
+  /**
+   * Clear all entities from the world for restart
+   */
+  private clearAllEntities(): void {
+    const entities = allEntitiesQuery(this.world);
+    
+    for (const eid of entities) {
+      removeEntity(this.world, eid);
+      decrementEntityCount();
+    }
+    
+    // Reset Kobayashi Maru tracking
+    this.kobayashiMaruId = -1;
+    
+    // Run render system once to clean up sprites for removed entities
+    if (this.renderSystem) {
+      this.renderSystem(this.world);
     }
   }
 
@@ -382,6 +451,9 @@ export class Game {
     }
     if (this.hudManager) {
       this.hudManager.destroy();
+    }
+    if (this.gameOverScreen) {
+      this.gameOverScreen.destroy();
     }
     this.spriteManager.destroy();
     this.app.destroy(true);
