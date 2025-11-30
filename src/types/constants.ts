@@ -41,7 +41,8 @@ export const GAME_CONFIG = {
   WORLD_HEIGHT: 1080,
   COLLISION_CELL_SIZE: 64,  // Cell size for spatial hash (2x typical entity radius)
   MIN_TURRET_DISTANCE: 64,  // Minimum distance between turrets in pixels
-  INITIAL_RESOURCES: 500    // Starting resource amount
+  INITIAL_RESOURCES: 500,   // Starting resource amount
+  RESOURCE_REWARD: 10       // Resources gained per enemy kill
 } as const;
 
 // Turret type IDs

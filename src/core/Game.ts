@@ -239,6 +239,8 @@ export class Game {
         this.waveManager.removeEnemy(entityId);
         // Record kill in score manager
         this.scoreManager.addKill(factionId);
+        // Award resources
+        this.resourceManager.addResources(GAME_CONFIG.RESOURCE_REWARD);
       });
     }
 
