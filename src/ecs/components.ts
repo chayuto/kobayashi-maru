@@ -59,3 +59,12 @@ export const Target = defineComponent({
   entityId: Types.ui32,  // Current target entity ID
   hasTarget: Types.ui8   // 0/1 flag indicating if target is valid
 });
+
+// AI Behavior component - stores AI state and configuration
+export const AIBehavior = defineComponent({
+  behaviorType: Types.ui8,    // Behavior pattern (0=direct, 1=strafe, 2=flank, etc.)
+  stateTimer: Types.f32,      // Timer for state changes
+  targetX: Types.f32,         // Intermediate target X
+  targetY: Types.f32,         // Intermediate target Y
+  aggression: Types.f32       // How aggressively to pursue (0-1)
+});

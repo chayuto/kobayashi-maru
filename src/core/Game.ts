@@ -13,7 +13,7 @@ import {
 } from '../ecs';
 import { Health, Shield, Turret, Position, Faction, SpriteRef } from '../ecs/components';
 import { SpriteManager, BeamRenderer } from '../rendering';
-import { createRenderSystem, createMovementSystem, createCollisionSystem, CollisionSystem, createTargetingSystem, createCombatSystem, createDamageSystem, TargetingSystem, CombatSystem, DamageSystem } from '../systems';
+import { createRenderSystem, createMovementSystem, createCollisionSystem, CollisionSystem, createTargetingSystem, createCombatSystem, createDamageSystem, createAISystem, TargetingSystem, CombatSystem, DamageSystem } from '../systems';
 import { GAME_CONFIG, LCARS_COLORS } from '../types';
 import { SpatialHash } from '../collision';
 
@@ -40,6 +40,7 @@ export class Game {
   private targetingSystem: TargetingSystem | null = null;
   private combatSystem: CombatSystem | null = null;
   private damageSystem: DamageSystem | null = null;
+  private aiSystem: ReturnType<typeof createAISystem> | null = null;
   private spatialHash: SpatialHash | null = null;
   private debugManager: DebugManager | null = null;
   private hudManager: HUDManager | null = null;
@@ -139,6 +140,9 @@ export class Game {
 
     // Initialize damage system
     this.damageSystem = createDamageSystem();
+
+    // Initialize AI system
+    this.aiSystem = createAISystem();
 
     // Initialize placement system
     this.placementSystem = new PlacementSystem(this.app, this.world, this.resourceManager);
@@ -269,6 +273,11 @@ export class Game {
       // Run the collision system first to update spatial hash (before other systems need it)
       if (this.collisionSystem) {
         this.collisionSystem.update(this.world);
+      }
+
+      // Run AI system to update velocities based on behavior
+      if (this.aiSystem) {
+        this.aiSystem(this.world, deltaTime, this.gameTime);
       }
 
       // Run the movement system to update entity positions

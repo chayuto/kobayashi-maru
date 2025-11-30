@@ -7,3 +7,4 @@ export * from './collisionSystem';
 export * from './targetingSystem';
 export * from './combatSystem';
 export * from './damageSystem';
+export * from './aiSystem';

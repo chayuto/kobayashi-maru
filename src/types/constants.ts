@@ -51,6 +51,17 @@ export const TurretType = {
 
 export type TurretTypeId = typeof TurretType[keyof typeof TurretType];
 
+// AI Behavior Types
+export const AIBehaviorType = {
+  DIRECT: 0,      // Bee-line to target (Klingon default)
+  STRAFE: 1,      // Side-to-side movement while approaching (Romulan)
+  FLANK: 2,       // Circle around to attack from side (Tholian)
+  SWARM: 3,       // Move as group toward nearest threat (Borg)
+  HUNTER: 4       // Aggressive pursuit, targets turrets (Species 8472)
+} as const;
+
+export type AIBehaviorTypeId = typeof AIBehaviorType[keyof typeof AIBehaviorType];
+
 // Turret configuration for each type
 export const TURRET_CONFIG: Record<number, {
   range: number;
