@@ -1,7 +1,7 @@
 /**
  * Tests for ECS components and entity factory
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { 
   createGameWorld,
   getEntityCount,
@@ -17,10 +17,6 @@ import { Position, Velocity, Faction, Health, Shield } from '../ecs/components';
 import { FactionId } from '../types/constants';
 
 describe('ECS World', () => {
-  beforeEach(() => {
-    // Create a fresh world for each test
-  });
-
   it('should create a new world', () => {
     const world = createGameWorld();
     expect(world).toBeDefined();
