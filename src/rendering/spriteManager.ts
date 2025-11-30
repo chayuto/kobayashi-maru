@@ -1,6 +1,6 @@
 /**
  * Sprite Manager for Kobayashi Maru
- * Manages PixiJS ParticleContainer for high-performance rendering of 10,000+ sprites
+ * Manages PixiJS ParticleContainer for high-performance rendering of 5,000+ entities at 60 FPS
  */
 import { Application, Texture, ParticleContainer, Particle } from 'pixi.js';
 import { FactionId } from '../types/constants';
