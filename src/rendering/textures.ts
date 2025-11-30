@@ -3,6 +3,7 @@
  */
 import { Graphics, Texture, RenderTexture, Application } from 'pixi.js';
 import { FACTION_COLORS } from '../types';
+import { TextureCache } from './TextureCache';
 
 // Size of each shape texture
 const SHAPE_SIZE = 16;
@@ -150,16 +151,55 @@ export interface FactionTextures {
 }
 
 /**
- * Create all faction textures
+ * Create all faction textures with caching support
+ * Returns cached textures if available, otherwise creates and caches them
  */
 export function createFactionTextures(app: Application): FactionTextures {
+  const cache = TextureCache.getInstance();
+
+  // Check if all textures are already cached
+  if (cache.has('faction_federation') &&
+      cache.has('faction_klingon') &&
+      cache.has('faction_romulan') &&
+      cache.has('faction_borg') &&
+      cache.has('faction_tholian') &&
+      cache.has('faction_species8472') &&
+      cache.has('faction_projectile')) {
+    return {
+      federation: cache.get('faction_federation')!,
+      klingon: cache.get('faction_klingon')!,
+      romulan: cache.get('faction_romulan')!,
+      borg: cache.get('faction_borg')!,
+      tholian: cache.get('faction_tholian')!,
+      species8472: cache.get('faction_species8472')!,
+      projectile: cache.get('faction_projectile')!
+    };
+  }
+
+  // Create and cache textures
+  const federation = createCircleTexture(app, FACTION_COLORS.FEDERATION);
+  const klingon = createTriangleTexture(app, FACTION_COLORS.KLINGON);
+  const romulan = createCrescentTexture(app, FACTION_COLORS.ROMULAN);
+  const borg = createSquareTexture(app, FACTION_COLORS.BORG);
+  const tholian = createDiamondTexture(app, FACTION_COLORS.THOLIAN);
+  const species8472 = createYShapeTexture(app, FACTION_COLORS.SPECIES_8472);
+  const projectile = createProjectileTexture(app, FACTION_COLORS.PROJECTILE);
+
+  cache.set('faction_federation', federation);
+  cache.set('faction_klingon', klingon);
+  cache.set('faction_romulan', romulan);
+  cache.set('faction_borg', borg);
+  cache.set('faction_tholian', tholian);
+  cache.set('faction_species8472', species8472);
+  cache.set('faction_projectile', projectile);
+
   return {
-    federation: createCircleTexture(app, FACTION_COLORS.FEDERATION),
-    klingon: createTriangleTexture(app, FACTION_COLORS.KLINGON),
-    romulan: createCrescentTexture(app, FACTION_COLORS.ROMULAN),
-    borg: createSquareTexture(app, FACTION_COLORS.BORG),
-    tholian: createDiamondTexture(app, FACTION_COLORS.THOLIAN),
-    species8472: createYShapeTexture(app, FACTION_COLORS.SPECIES_8472),
-    projectile: createProjectileTexture(app, FACTION_COLORS.PROJECTILE)
+    federation,
+    klingon,
+    romulan,
+    borg,
+    tholian,
+    species8472,
+    projectile
   };
 }

@@ -11,6 +11,21 @@ export interface GameStats {
     resources: number;
 }
 
+/**
+ * Performance stats data interface
+ */
+export interface PerformanceStats {
+    fps: number;
+    frameTime: number;
+    renderTime: number;
+    systemTimes: Map<string, number>;
+    entityCount: number;
+    memoryUsed: number;
+}
+
+// Frame budget threshold for highlighting (in ms)
+const BUDGET_THRESHOLD = 2.0;
+
 export class DebugManager {
     private fps: number = 0;
     private entityCount: number = 0;
@@ -19,6 +34,9 @@ export class DebugManager {
     private frameCount: number = 0;
     private fpsElement: HTMLElement | null = null;
     private entityCountElement: HTMLElement | null = null;
+    private frameTimeElement: HTMLElement | null = null;
+    private renderTimeElement: HTMLElement | null = null;
+    private systemTimingsElement: HTMLElement | null = null;
     private gameStateElement: HTMLElement | null = null;
     private waveElement: HTMLElement | null = null;
     private timeElement: HTMLElement | null = null;
@@ -41,8 +59,20 @@ export class DebugManager {
         this.fpsElement.textContent = 'FPS: 0';
         this.entityCountElement = document.createElement('div');
         this.entityCountElement.textContent = 'Entities: 0';
+        this.frameTimeElement = document.createElement('div');
+        this.frameTimeElement.textContent = 'Frame: 0.00ms';
+        this.renderTimeElement = document.createElement('div');
+        this.renderTimeElement.textContent = 'Render: 0.00ms';
         perfSection.appendChild(this.fpsElement);
         perfSection.appendChild(this.entityCountElement);
+        perfSection.appendChild(this.frameTimeElement);
+        perfSection.appendChild(this.renderTimeElement);
+
+        // System timings section
+        const timingsSection = this.createSection('TIMINGS');
+        this.systemTimingsElement = document.createElement('div');
+        this.systemTimingsElement.className = 'system-timings';
+        timingsSection.appendChild(this.systemTimingsElement);
 
         // Game state section
         const stateSection = this.createSection('STATUS');
@@ -77,6 +107,7 @@ export class DebugManager {
         resourceSection.appendChild(this.resourcesElement);
 
         this.container.appendChild(perfSection);
+        this.container.appendChild(timingsSection);
         this.container.appendChild(stateSection);
         this.container.appendChild(waveSection);
         this.container.appendChild(scoreSection);
@@ -126,6 +157,35 @@ export class DebugManager {
         this.entityCount = count;
         if (this.entityCountElement) {
             this.entityCountElement.textContent = `Entities: ${this.entityCount}`;
+        }
+    }
+
+    /**
+     * Updates performance stats in the UI
+     */
+    public updatePerformanceStats(stats: PerformanceStats): void {
+        if (this.frameTimeElement) {
+            const isOverBudget = stats.frameTime > 16.67;
+            this.frameTimeElement.textContent = `Frame: ${stats.frameTime.toFixed(2)}ms`;
+            this.frameTimeElement.style.color = isOverBudget ? '#ff6666' : '';
+        }
+
+        if (this.renderTimeElement) {
+            const isOverBudget = stats.renderTime > 5.0;
+            this.renderTimeElement.textContent = `Render: ${stats.renderTime.toFixed(2)}ms`;
+            this.renderTimeElement.style.color = isOverBudget ? '#ff6666' : '';
+        }
+
+        if (this.systemTimingsElement) {
+            // Build timing display with color coding for systems over budget
+            const timingLines: string[] = [];
+            for (const [name, time] of stats.systemTimes) {
+                const isOverBudget = time > BUDGET_THRESHOLD;
+                const color = isOverBudget ? '#ff6666' : '#99ccff';
+                const indicator = isOverBudget ? '⚠' : '✓';
+                timingLines.push(`<span style="color:${color}">${indicator} ${name}: ${time.toFixed(2)}ms</span>`);
+            }
+            this.systemTimingsElement.innerHTML = timingLines.join('<br>');
         }
     }
 
