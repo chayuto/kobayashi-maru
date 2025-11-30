@@ -5,8 +5,6 @@
 
 export class SpatialHash {
   private cellSize: number;
-  private width: number;
-  private height: number;
   private cols: number;
   private rows: number;
   private cells: Map<number, Set<number>>;
@@ -19,8 +17,6 @@ export class SpatialHash {
    */
   constructor(cellSize: number, width: number, height: number) {
     this.cellSize = cellSize;
-    this.width = width;
-    this.height = height;
     this.cols = Math.ceil(width / cellSize);
     this.rows = Math.ceil(height / cellSize);
     this.cells = new Map();
@@ -36,16 +32,6 @@ export class SpatialHash {
     const clampedCol = Math.max(0, Math.min(col, this.cols - 1));
     const clampedRow = Math.max(0, Math.min(row, this.rows - 1));
     return clampedRow * this.cols + clampedCol;
-  }
-
-  /**
-   * Get the col and row for a position
-   */
-  private getColRow(x: number, y: number): { col: number; row: number } {
-    return {
-      col: Math.floor(x / this.cellSize),
-      row: Math.floor(y / this.cellSize)
-    };
   }
 
   /**
