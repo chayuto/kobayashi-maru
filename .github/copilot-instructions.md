@@ -32,7 +32,7 @@ npm run test:watch  # Run tests in watch mode
 **Important:**
 - Always run `npm ci` before any other commands after cloning
 - The `build` command runs `tsc && vite build` - TypeScript must compile cleanly first
-- All 321 tests must pass before committing (26 test files in `src/__tests__/`)
+- All tests must pass before committing (tests located in `src/__tests__/`)
 - Lint and test run in CI on every PR to `main`
 
 ## Project Structure
@@ -49,7 +49,8 @@ npm run test:watch  # Run tests in watch mode
 │   ├── ui/                # HUD, GameOverScreen, TurretMenu, HealthBar
 │   ├── game/              # GameState, WaveManager, ScoreManager, ResourceManager, PlacementManager
 │   ├── collision/         # SpatialHash for efficient collision detection
-│   ├── types/             # constants.ts (GAME_CONFIG, FACTION_COLORS, TURRET_CONFIG)
+│   ├── pathfinding/       # Flow field pathfinding (costField, flowField, grid)
+│   ├── types/             # constants.ts (GAME_CONFIG, FACTION_COLORS, TURRET_CONFIG, etc.)
 │   ├── services/          # StorageService (localStorage)
 │   ├── utils/             # BinaryHeap utility
 │   └── __tests__/         # All test files
@@ -115,10 +116,10 @@ Tests are in `src/__tests__/` using Vitest with jsdom environment.
 ## Important Configuration Values
 
 From `src/types/constants.ts`:
-- World size: 1920x1080
-- Collision cell size: 64px
-- Initial resources: 500
-- Resource per kill: 10
+- `GAME_CONFIG.WORLD_WIDTH/HEIGHT`: 1920x1080
+- `GAME_CONFIG.COLLISION_CELL_SIZE`: 64px
+- `GAME_CONFIG.INITIAL_RESOURCES`: 500
+- `GAME_CONFIG.RESOURCE_REWARD`: 10 (per enemy kill)
 
 ## Trust These Instructions
 
