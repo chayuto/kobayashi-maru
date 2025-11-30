@@ -35,6 +35,9 @@ export const FRAME_BUDGET = {
 // Rolling average window size
 const AVERAGE_WINDOW_SIZE = 60;
 
+// Memory update interval (ms)
+const MEMORY_UPDATE_INTERVAL = 1000;
+
 /**
  * PerformanceMonitor class
  * Tracks detailed performance metrics for each game system
@@ -43,11 +46,13 @@ export class PerformanceMonitor {
   private metrics: PerformanceMetrics;
   private systemTimings: Map<string, number[]>;
   private systemStartTimes: Map<string, number>;
+  private systemBudgets: Map<string, number>;
   private frameStartTime: number = 0;
   private frameTimes: number[] = [];
   private renderStartTime: number = 0;
   private renderTimes: number[] = [];
   private budgetWarnings: Map<string, boolean> = new Map();
+  private lastMemoryUpdate: number = 0;
 
   constructor() {
     this.metrics = {
@@ -61,6 +66,36 @@ export class PerformanceMonitor {
     };
     this.systemTimings = new Map();
     this.systemStartTimes = new Map();
+    this.systemBudgets = new Map();
+    
+    // Pre-compute budget lookups
+    this.initializeBudgets();
+  }
+
+  /**
+   * Pre-compute budget lookups to avoid repeated toUpperCase() calls
+   */
+  private initializeBudgets(): void {
+    const systems = ['movement', 'collision', 'ai', 'combat', 'targeting', 'projectile', 'damage', 'rendering'];
+    for (const system of systems) {
+      const budgetKey = system.toUpperCase() as keyof typeof FRAME_BUDGET;
+      this.systemBudgets.set(system, FRAME_BUDGET[budgetKey] ?? FRAME_BUDGET.OTHER);
+    }
+  }
+
+  /**
+   * Gets the budget for a system name
+   */
+  private getBudget(systemName: string): number {
+    // Check cached budget first
+    const cached = this.systemBudgets.get(systemName);
+    if (cached !== undefined) return cached;
+    
+    // Compute and cache for new system names
+    const budgetKey = systemName.toUpperCase() as keyof typeof FRAME_BUDGET;
+    const budget = FRAME_BUDGET[budgetKey] ?? FRAME_BUDGET.OTHER;
+    this.systemBudgets.set(systemName, budget);
+    return budget;
   }
 
   /**
@@ -96,9 +131,8 @@ export class PerformanceMonitor {
     // Update current metric
     this.metrics.systemTimes.set(systemName, elapsed);
 
-    // Check budget (case-insensitive match)
-    const budgetKey = systemName.toUpperCase() as keyof typeof FRAME_BUDGET;
-    const budget = FRAME_BUDGET[budgetKey] ?? FRAME_BUDGET.OTHER;
+    // Check budget using cached lookup
+    const budget = this.getBudget(systemName);
     if (elapsed > budget && !this.budgetWarnings.get(systemName)) {
       this.budgetWarnings.set(systemName, true);
       console.warn(`Performance: ${systemName} exceeded budget (${elapsed.toFixed(2)}ms > ${budget}ms)`);
@@ -171,15 +205,28 @@ export class PerformanceMonitor {
   }
 
   /**
+   * Updates memory usage if enough time has passed
+   */
+  private updateMemoryIfNeeded(): void {
+    const now = performance.now();
+    if (now - this.lastMemoryUpdate < MEMORY_UPDATE_INTERVAL) {
+      return;
+    }
+    
+    const perfMemory = (performance as unknown as { memory?: { usedJSHeapSize: number } }).memory;
+    if (perfMemory) {
+      this.metrics.memoryUsed = perfMemory.usedJSHeapSize / (1024 * 1024);
+    }
+    this.lastMemoryUpdate = now;
+  }
+
+  /**
    * Gets current performance metrics
    * @returns Current metrics snapshot
    */
   getMetrics(): PerformanceMetrics {
-    // Update memory if available
-    const perfMemory = (performance as unknown as { memory?: { usedJSHeapSize: number } }).memory;
-    if (perfMemory) {
-      this.metrics.memoryUsed = perfMemory.usedJSHeapSize / (1024 * 1024); // Convert to MB
-    }
+    // Update memory periodically, not every call
+    this.updateMemoryIfNeeded();
     return { ...this.metrics, systemTimes: new Map(this.metrics.systemTimes) };
   }
 
@@ -196,9 +243,8 @@ export class PerformanceMonitor {
       avgSystemTimes.set(name, this.calculateAverage(timings));
     }
 
-    // Update memory if available
-    const perfMemory = (performance as unknown as { memory?: { usedJSHeapSize: number } }).memory;
-    const memoryUsed = perfMemory ? perfMemory.usedJSHeapSize / (1024 * 1024) : 0;
+    // Update memory periodically
+    this.updateMemoryIfNeeded();
 
     return {
       fps: avgFrameTime > 0 ? 1000 / avgFrameTime : 0,
@@ -207,7 +253,7 @@ export class PerformanceMonitor {
       systemTimes: avgSystemTimes,
       entityCount: this.metrics.entityCount,
       drawCalls: this.metrics.drawCalls,
-      memoryUsed
+      memoryUsed: this.metrics.memoryUsed
     };
   }
 
@@ -227,8 +273,7 @@ export class PerformanceMonitor {
     
     console.group('System Timings (avg):');
     for (const [name, time] of avg.systemTimes) {
-      const budgetKey = name.toUpperCase() as keyof typeof FRAME_BUDGET;
-      const budget = FRAME_BUDGET[budgetKey] ?? FRAME_BUDGET.OTHER;
+      const budget = this.getBudget(name);
       const status = time > budget ? '⚠️' : '✓';
       console.log(`  ${status} ${name}: ${time.toFixed(2)}ms (budget: ${budget}ms)`);
     }
@@ -244,8 +289,7 @@ export class PerformanceMonitor {
     const result: Array<{ name: string; time: number; budget: number; overBudget: boolean }> = [];
     
     for (const [name, time] of this.metrics.systemTimes) {
-      const budgetKey = name.toUpperCase() as keyof typeof FRAME_BUDGET;
-      const budget = FRAME_BUDGET[budgetKey] ?? FRAME_BUDGET.OTHER;
+      const budget = this.getBudget(name);
       result.push({
         name,
         time,
@@ -266,6 +310,7 @@ export class PerformanceMonitor {
     this.systemTimings.clear();
     this.systemStartTimes.clear();
     this.budgetWarnings.clear();
+    this.lastMemoryUpdate = 0;
     this.metrics = {
       fps: 0,
       frameTime: 0,

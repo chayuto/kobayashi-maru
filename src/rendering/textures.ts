@@ -150,6 +150,17 @@ export interface FactionTextures {
   projectile: Texture;
 }
 
+// Texture cache keys for each faction
+const TEXTURE_KEYS = {
+  federation: 'faction_federation',
+  klingon: 'faction_klingon',
+  romulan: 'faction_romulan',
+  borg: 'faction_borg',
+  tholian: 'faction_tholian',
+  species8472: 'faction_species8472',
+  projectile: 'faction_projectile'
+} as const;
+
 /**
  * Create all faction textures with caching support
  * Returns cached textures if available, otherwise creates and caches them
@@ -157,22 +168,18 @@ export interface FactionTextures {
 export function createFactionTextures(app: Application): FactionTextures {
   const cache = TextureCache.getInstance();
 
-  // Check if all textures are already cached
-  if (cache.has('faction_federation') &&
-      cache.has('faction_klingon') &&
-      cache.has('faction_romulan') &&
-      cache.has('faction_borg') &&
-      cache.has('faction_tholian') &&
-      cache.has('faction_species8472') &&
-      cache.has('faction_projectile')) {
+  // Check if all textures are already cached using defined keys
+  const allCached = Object.values(TEXTURE_KEYS).every(key => cache.has(key));
+  
+  if (allCached) {
     return {
-      federation: cache.get('faction_federation')!,
-      klingon: cache.get('faction_klingon')!,
-      romulan: cache.get('faction_romulan')!,
-      borg: cache.get('faction_borg')!,
-      tholian: cache.get('faction_tholian')!,
-      species8472: cache.get('faction_species8472')!,
-      projectile: cache.get('faction_projectile')!
+      federation: cache.get(TEXTURE_KEYS.federation)!,
+      klingon: cache.get(TEXTURE_KEYS.klingon)!,
+      romulan: cache.get(TEXTURE_KEYS.romulan)!,
+      borg: cache.get(TEXTURE_KEYS.borg)!,
+      tholian: cache.get(TEXTURE_KEYS.tholian)!,
+      species8472: cache.get(TEXTURE_KEYS.species8472)!,
+      projectile: cache.get(TEXTURE_KEYS.projectile)!
     };
   }
 
@@ -185,13 +192,13 @@ export function createFactionTextures(app: Application): FactionTextures {
   const species8472 = createYShapeTexture(app, FACTION_COLORS.SPECIES_8472);
   const projectile = createProjectileTexture(app, FACTION_COLORS.PROJECTILE);
 
-  cache.set('faction_federation', federation);
-  cache.set('faction_klingon', klingon);
-  cache.set('faction_romulan', romulan);
-  cache.set('faction_borg', borg);
-  cache.set('faction_tholian', tholian);
-  cache.set('faction_species8472', species8472);
-  cache.set('faction_projectile', projectile);
+  cache.set(TEXTURE_KEYS.federation, federation);
+  cache.set(TEXTURE_KEYS.klingon, klingon);
+  cache.set(TEXTURE_KEYS.romulan, romulan);
+  cache.set(TEXTURE_KEYS.borg, borg);
+  cache.set(TEXTURE_KEYS.tholian, tholian);
+  cache.set(TEXTURE_KEYS.species8472, species8472);
+  cache.set(TEXTURE_KEYS.projectile, projectile);
 
   return {
     federation,
