@@ -3,3 +3,4 @@
  */
 export * from './renderSystem';
 export * from './movementSystem';
+export * from './collisionSystem';
