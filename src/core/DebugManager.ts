@@ -136,7 +136,7 @@ export class DebugManager {
         if (this.gameStateElement) {
             this.gameStateElement.textContent = `State: ${stats.gameState}`;
             // Add color coding for game state
-            this.gameStateElement.className = `stat-highlight state-${stats.gameState.toLowerCase().replace('_', '-')}`;
+            this.gameStateElement.className = `stat-highlight ${this.getStateClassName(stats.gameState)}`;
         }
         
         if (this.waveElement) {
@@ -144,9 +144,7 @@ export class DebugManager {
         }
         
         if (this.timeElement) {
-            const minutes = Math.floor(stats.timeSurvived / 60);
-            const seconds = Math.floor(stats.timeSurvived % 60);
-            this.timeElement.textContent = `Time: ${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            this.timeElement.textContent = `Time: ${this.formatTime(stats.timeSurvived)}`;
         }
         
         if (this.killsElement) {
@@ -160,6 +158,28 @@ export class DebugManager {
         if (this.resourcesElement) {
             this.resourcesElement.textContent = `Matter: ${stats.resources}`;
         }
+    }
+
+    /**
+     * Maps game state to a CSS class name
+     */
+    private getStateClassName(state: string): string {
+        const stateMap: Record<string, string> = {
+            'MENU': 'state-menu',
+            'PLAYING': 'state-playing',
+            'PAUSED': 'state-paused',
+            'GAME_OVER': 'state-game-over'
+        };
+        return stateMap[state] || 'state-menu';
+    }
+
+    /**
+     * Formats time in seconds to MM:SS format
+     */
+    private formatTime(seconds: number): string {
+        const minutes = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
 
     public toggle(): void {
