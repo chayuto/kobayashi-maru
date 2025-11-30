@@ -3,7 +3,7 @@
  * @vitest-environment jsdom
  */
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { Container, Application, Graphics, Text } from 'pixi.js';
+import { Container, Application } from 'pixi.js';
 import { HUDManager, HealthBar, UI_STYLES, HUDData } from '../ui';
 
 // Mock PixiJS Application

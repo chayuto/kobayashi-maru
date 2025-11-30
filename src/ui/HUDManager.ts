@@ -8,6 +8,14 @@ import { HUDData } from './types';
 import { HealthBar } from './HealthBar';
 import { GAME_CONFIG } from '../types/constants';
 
+// Wave state color mapping - defined outside class to avoid object creation on each update
+const WAVE_STATE_COLORS: Record<string, number> = {
+  'idle': UI_STYLES.COLORS.SECONDARY,
+  'spawning': UI_STYLES.COLORS.DANGER,
+  'active': UI_STYLES.COLORS.PRIMARY,
+  'complete': UI_STYLES.COLORS.HEALTH
+};
+
 /**
  * HUDManager class - manages all HUD display elements
  */
@@ -279,13 +287,7 @@ export class HUDManager {
     if (this.waveStateText) {
       this.waveStateText.text = data.waveState.toUpperCase();
       // Color-code wave state
-      const stateColors: Record<string, number> = {
-        'idle': UI_STYLES.COLORS.SECONDARY,
-        'spawning': UI_STYLES.COLORS.DANGER,
-        'active': UI_STYLES.COLORS.PRIMARY,
-        'complete': UI_STYLES.COLORS.HEALTH
-      };
-      this.waveStateText.style.fill = stateColors[data.waveState] || UI_STYLES.COLORS.SECONDARY;
+      this.waveStateText.style.fill = WAVE_STATE_COLORS[data.waveState] || UI_STYLES.COLORS.SECONDARY;
     }
     if (this.enemyCountText) {
       this.enemyCountText.text = `Enemies: ${data.activeEnemies}`;
