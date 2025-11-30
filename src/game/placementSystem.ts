@@ -102,11 +102,13 @@ export class PlacementSystem {
     this.updateGhostAppearance();
     
     // Add event listeners
-    const canvas = this.app.canvas as HTMLCanvasElement;
-    canvas.addEventListener('mousemove', this.boundMouseMove);
-    canvas.addEventListener('click', this.boundMouseClick);
-    canvas.addEventListener('touchmove', this.boundTouchMove);
-    canvas.addEventListener('touchend', this.boundTouchEnd);
+    const canvas = this.app.canvas;
+    if (canvas) {
+      canvas.addEventListener('mousemove', this.boundMouseMove);
+      canvas.addEventListener('click', this.boundMouseClick);
+      canvas.addEventListener('touchmove', this.boundTouchMove, { passive: false });
+      canvas.addEventListener('touchend', this.boundTouchEnd);
+    }
     document.addEventListener('keydown', this.boundKeyDown);
     
     this.emit('start', { type: 'start', turretType });
@@ -175,11 +177,13 @@ export class PlacementSystem {
     this.previewContainer.visible = false;
     
     // Remove event listeners
-    const canvas = this.app.canvas as HTMLCanvasElement;
-    canvas.removeEventListener('mousemove', this.boundMouseMove);
-    canvas.removeEventListener('click', this.boundMouseClick);
-    canvas.removeEventListener('touchmove', this.boundTouchMove);
-    canvas.removeEventListener('touchend', this.boundTouchEnd);
+    const canvas = this.app.canvas;
+    if (canvas) {
+      canvas.removeEventListener('mousemove', this.boundMouseMove);
+      canvas.removeEventListener('click', this.boundMouseClick);
+      canvas.removeEventListener('touchmove', this.boundTouchMove);
+      canvas.removeEventListener('touchend', this.boundTouchEnd);
+    }
     document.removeEventListener('keydown', this.boundKeyDown);
     
     this.emit('cancel', { type: 'cancel', turretType: this.currentTurretType });
@@ -292,10 +296,16 @@ export class PlacementSystem {
    * Convert screen coordinates to world coordinates
    */
   private screenToWorld(screenX: number, screenY: number): { x: number; y: number } {
-    const canvas = this.app.canvas as HTMLCanvasElement;
+    const canvas = this.app.canvas;
+    if (!canvas) {
+      return { x: 0, y: 0 };
+    }
     const rect = canvas.getBoundingClientRect();
-    const scaleX = GAME_CONFIG.WORLD_WIDTH / canvas.width;
-    const scaleY = GAME_CONFIG.WORLD_HEIGHT / canvas.height;
+    // Guard against division by zero
+    const canvasWidth = canvas.width || 1;
+    const canvasHeight = canvas.height || 1;
+    const scaleX = GAME_CONFIG.WORLD_WIDTH / canvasWidth;
+    const scaleY = GAME_CONFIG.WORLD_HEIGHT / canvasHeight;
     
     return {
       x: (screenX - rect.left) * scaleX,
@@ -325,6 +335,7 @@ export class PlacementSystem {
    * Handle touch move events
    */
   private handleTouchMove(e: TouchEvent): void {
+    e.preventDefault(); // Prevent default browser behaviors like scrolling
     if (e.touches.length > 0) {
       const touch = e.touches[0];
       const pos = this.screenToWorld(touch.clientX, touch.clientY);
