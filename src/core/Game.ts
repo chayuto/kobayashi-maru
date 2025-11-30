@@ -7,22 +7,17 @@ import {
   createGameWorld,
   GameWorld,
   getEntityCount,
-  createKobayashiMaru,
-  createKlingonShip,
-  createRomulanShip,
-  createBorgShip,
-  createTholianShip,
-  createSpecies8472Ship
+  createKobayashiMaru
 } from '../ecs';
 import { SpriteManager } from '../rendering';
 import { createRenderSystem, createMovementSystem, createCollisionSystem, CollisionSystem } from '../systems';
 import { GAME_CONFIG, LCARS_COLORS } from '../types';
-import { Velocity } from '../ecs/components';
 import { SpatialHash } from '../collision';
 
 import { Starfield } from '../rendering/Starfield';
 
 import { DebugManager } from './DebugManager';
+import { WaveManager } from '../game';
 
 export class Game {
   public app: Application;
@@ -35,6 +30,7 @@ export class Game {
   private spatialHash: SpatialHash | null = null;
   private debugManager: DebugManager | null = null;
   private starfield: Starfield | null = null;
+  private waveManager: WaveManager;
   private initialized: boolean = false;
 
   constructor(containerId: string = 'app') {
@@ -48,6 +44,7 @@ export class Game {
     this.spriteManager = new SpriteManager(this.app);
     this.debugManager = new DebugManager();
     this.starfield = new Starfield(this.app);
+    this.waveManager = new WaveManager();
   }
 
   /**
@@ -102,14 +99,14 @@ export class Game {
     );
     this.collisionSystem = createCollisionSystem(this.spatialHash);
 
-    // Spawn test entities
-    this.spawnTestEntities();
+    // Initialize wave manager and spawn Kobayashi Maru
+    this.initializeGameplay();
   }
 
   /**
-   * Spawns test entities on game initialization
+   * Initializes gameplay elements (Kobayashi Maru and wave system)
    */
-  private spawnTestEntities(): void {
+  private initializeGameplay(): void {
     const centerX = GAME_CONFIG.WORLD_WIDTH / 2;
     const centerY = GAME_CONFIG.WORLD_HEIGHT / 2;
 
@@ -117,66 +114,20 @@ export class Game {
     createKobayashiMaru(this.world, centerX, centerY);
     console.log('Kobayashi Maru spawned at center');
 
-    // Spawn 100 test enemies at random positions around the edges
-    const enemyCreators = [
-      createKlingonShip,
-      createRomulanShip,
-      createBorgShip,
-      createTholianShip,
-      createSpecies8472Ship
-    ];
+    // Initialize wave manager
+    this.waveManager.init(this.world);
+    
+    // Set up wave event listeners
+    this.waveManager.on('waveStart', (event) => {
+      console.log(`Wave ${event.waveNumber} started with ${event.data?.totalEnemies} enemies`);
+    });
+    
+    this.waveManager.on('waveComplete', (event) => {
+      console.log(`Wave ${event.waveNumber} complete!`);
+    });
 
-    const edgeMargin = 100;
-    const width = GAME_CONFIG.WORLD_WIDTH;
-    const height = GAME_CONFIG.WORLD_HEIGHT;
-
-    // Speed range in pixels per second (50-200 as per technical notes)
-    const minSpeed = 50;
-    const maxSpeed = 200;
-
-    for (let i = 0; i < 100; i++) {
-      // Randomly select which edge to spawn on
-      const edge = Math.floor(Math.random() * 4);
-      let x: number, y: number;
-
-      switch (edge) {
-        case 0: // Top edge
-          x = Math.random() * width;
-          y = Math.random() * edgeMargin;
-          break;
-        case 1: // Right edge
-          x = width - Math.random() * edgeMargin;
-          y = Math.random() * height;
-          break;
-        case 2: // Bottom edge
-          x = Math.random() * width;
-          y = height - Math.random() * edgeMargin;
-          break;
-        case 3: // Left edge
-        default:
-          x = Math.random() * edgeMargin;
-          y = Math.random() * height;
-          break;
-      }
-
-      // Randomly select an enemy type
-      const creatorIndex = Math.floor(Math.random() * enemyCreators.length);
-      const eid = enemyCreators[creatorIndex](this.world, x, y);
-
-      // Calculate velocity pointing toward center
-      const dx = centerX - x;
-      const dy = centerY - y;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-
-      // Normalize and apply random speed
-      if (distance > 0) {
-        const speed = minSpeed + Math.random() * (maxSpeed - minSpeed);
-        Velocity.x[eid] = (dx / distance) * speed;
-        Velocity.y[eid] = (dy / distance) * speed;
-      }
-    }
-
-    console.log('100 test enemies spawned around edges with velocities toward center');
+    // Start wave 1
+    this.waveManager.startWave(1);
     console.log(`Total entity count: ${getEntityCount()}`);
   }
 
@@ -227,6 +178,9 @@ export class Game {
       this.starfield.update(deltaTime, 0, 50);
     }
 
+    // Update wave manager to handle spawning
+    this.waveManager.update(deltaTime);
+
     // Run the collision system first to update spatial hash (before other systems need it)
     if (this.collisionSystem) {
       this.collisionSystem.update(this.world);
@@ -273,5 +227,13 @@ export class Game {
    */
   getSpatialHash(): SpatialHash | null {
     return this.spatialHash;
+  }
+
+  /**
+   * Get the wave manager for external control
+   * @returns The wave manager instance
+   */
+  getWaveManager(): WaveManager {
+    return this.waveManager;
   }
 }
