@@ -3,9 +3,9 @@ import { createGameWorld, GameWorld } from '../ecs';
 import { createProjectileSystem } from '../systems/projectileSystem';
 import { createProjectile } from '../ecs/entityFactory';
 import { SpatialHash } from '../collision';
-import { Position, Velocity, Projectile, Health, Faction, Collider } from '../ecs/components';
+import { Position, Projectile, Health, Faction, Collider } from '../ecs/components';
 import { ProjectileType, FactionId } from '../types/constants';
-import { addEntity, addComponent, removeEntity, hasComponent } from 'bitecs';
+import { addEntity, addComponent, hasComponent } from 'bitecs';
 
 describe('Projectile System', () => {
     let world: GameWorld;
