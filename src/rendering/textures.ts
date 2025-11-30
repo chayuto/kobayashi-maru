@@ -3,6 +3,7 @@
  */
 import { Graphics, Texture, RenderTexture, Application } from 'pixi.js';
 import { FACTION_COLORS } from '../types';
+import { TextureCache } from './TextureCache';
 
 // Size of each shape texture
 const SHAPE_SIZE = 16;
@@ -149,17 +150,63 @@ export interface FactionTextures {
   projectile: Texture;
 }
 
+// Texture cache keys for each faction
+const TEXTURE_KEYS = {
+  federation: 'faction_federation',
+  klingon: 'faction_klingon',
+  romulan: 'faction_romulan',
+  borg: 'faction_borg',
+  tholian: 'faction_tholian',
+  species8472: 'faction_species8472',
+  projectile: 'faction_projectile'
+} as const;
+
 /**
- * Create all faction textures
+ * Create all faction textures with caching support
+ * Returns cached textures if available, otherwise creates and caches them
  */
 export function createFactionTextures(app: Application): FactionTextures {
+  const cache = TextureCache.getInstance();
+
+  // Check if all textures are already cached using defined keys
+  const allCached = Object.values(TEXTURE_KEYS).every(key => cache.has(key));
+  
+  if (allCached) {
+    return {
+      federation: cache.get(TEXTURE_KEYS.federation)!,
+      klingon: cache.get(TEXTURE_KEYS.klingon)!,
+      romulan: cache.get(TEXTURE_KEYS.romulan)!,
+      borg: cache.get(TEXTURE_KEYS.borg)!,
+      tholian: cache.get(TEXTURE_KEYS.tholian)!,
+      species8472: cache.get(TEXTURE_KEYS.species8472)!,
+      projectile: cache.get(TEXTURE_KEYS.projectile)!
+    };
+  }
+
+  // Create and cache textures
+  const federation = createCircleTexture(app, FACTION_COLORS.FEDERATION);
+  const klingon = createTriangleTexture(app, FACTION_COLORS.KLINGON);
+  const romulan = createCrescentTexture(app, FACTION_COLORS.ROMULAN);
+  const borg = createSquareTexture(app, FACTION_COLORS.BORG);
+  const tholian = createDiamondTexture(app, FACTION_COLORS.THOLIAN);
+  const species8472 = createYShapeTexture(app, FACTION_COLORS.SPECIES_8472);
+  const projectile = createProjectileTexture(app, FACTION_COLORS.PROJECTILE);
+
+  cache.set(TEXTURE_KEYS.federation, federation);
+  cache.set(TEXTURE_KEYS.klingon, klingon);
+  cache.set(TEXTURE_KEYS.romulan, romulan);
+  cache.set(TEXTURE_KEYS.borg, borg);
+  cache.set(TEXTURE_KEYS.tholian, tholian);
+  cache.set(TEXTURE_KEYS.species8472, species8472);
+  cache.set(TEXTURE_KEYS.projectile, projectile);
+
   return {
-    federation: createCircleTexture(app, FACTION_COLORS.FEDERATION),
-    klingon: createTriangleTexture(app, FACTION_COLORS.KLINGON),
-    romulan: createCrescentTexture(app, FACTION_COLORS.ROMULAN),
-    borg: createSquareTexture(app, FACTION_COLORS.BORG),
-    tholian: createDiamondTexture(app, FACTION_COLORS.THOLIAN),
-    species8472: createYShapeTexture(app, FACTION_COLORS.SPECIES_8472),
-    projectile: createProjectileTexture(app, FACTION_COLORS.PROJECTILE)
+    federation,
+    klingon,
+    romulan,
+    borg,
+    tholian,
+    species8472,
+    projectile
   };
 }

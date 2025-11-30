@@ -20,6 +20,7 @@ import { SpatialHash } from '../collision';
 import { Starfield } from '../rendering/Starfield';
 
 import { DebugManager } from './DebugManager';
+import { PerformanceMonitor } from './PerformanceMonitor';
 import { WaveManager, GameState, GameStateType, ScoreManager, HighScoreManager, ResourceManager, PlacementSystem } from '../game';
 import { HUDManager, GameOverScreen, calculateScore } from '../ui';
 import { AudioManager } from '../audio';
@@ -51,6 +52,7 @@ export class Game {
   private particleSystem: ParticleSystem | null = null;
   private healthBarRenderer: HealthBarRenderer | null = null;
   private screenShake: ScreenShake | null = null;
+  private performanceMonitor: PerformanceMonitor;
   private waveManager: WaveManager;
   private gameState: GameState;
   private scoreManager: ScoreManager;
@@ -76,6 +78,7 @@ export class Game {
     this.debugManager = new DebugManager();
     this.hudManager = new HUDManager();
     this.starfield = new Starfield(this.app);
+    this.performanceMonitor = new PerformanceMonitor();
     this.waveManager = new WaveManager();
     this.gameState = new GameState();
     this.scoreManager = new ScoreManager();
@@ -288,6 +291,9 @@ export class Game {
    * Main update loop
    */
   private update(): void {
+    // Start frame timing
+    this.performanceMonitor.startFrame();
+
     // Convert PixiJS ticker delta (in milliseconds) to seconds for frame-independent movement
     const deltaTime = this.app.ticker.deltaMS / 1000;
 
@@ -310,37 +316,51 @@ export class Game {
 
       // Run the collision system first to update spatial hash (before other systems need it)
       if (this.collisionSystem) {
+        this.performanceMonitor.startMeasure('collision');
         this.collisionSystem.update(this.world);
+        this.performanceMonitor.endMeasure('collision');
       }
 
       // Run AI system to update velocities based on behavior
       if (this.aiSystem) {
+        this.performanceMonitor.startMeasure('ai');
         this.aiSystem(this.world, deltaTime, this.gameTime);
+        this.performanceMonitor.endMeasure('ai');
       }
 
       // Run the movement system to update entity positions
       if (this.movementSystem) {
+        this.performanceMonitor.startMeasure('movement');
         this.movementSystem(this.world, deltaTime);
+        this.performanceMonitor.endMeasure('movement');
       }
 
       // Run targeting system to find targets for turrets
       if (this.targetingSystem) {
+        this.performanceMonitor.startMeasure('targeting');
         this.targetingSystem(this.world);
+        this.performanceMonitor.endMeasure('targeting');
       }
 
       // Run combat system to handle turret firing
       if (this.combatSystem) {
+        this.performanceMonitor.startMeasure('combat');
         this.combatSystem.update(this.world, deltaTime, this.gameTime);
+        this.performanceMonitor.endMeasure('combat');
       }
 
       // Run projectile system to handle active projectiles
       if (this.projectileSystem) {
+        this.performanceMonitor.startMeasure('projectile');
         this.projectileSystem(this.world, deltaTime);
+        this.performanceMonitor.endMeasure('projectile');
       }
 
       // Run damage system to handle entity destruction
       if (this.damageSystem) {
+        this.performanceMonitor.startMeasure('damage');
         this.damageSystem.update(this.world);
+        this.performanceMonitor.endMeasure('damage');
       }
 
       // Check for game over (Kobayashi Maru destroyed)
@@ -362,6 +382,7 @@ export class Game {
     }
 
     // Render system always runs to show current state
+    this.performanceMonitor.startRender();
     if (this.renderSystem) {
       this.renderSystem(this.world);
     }
@@ -380,6 +401,7 @@ export class Game {
     if (this.healthBarRenderer) {
       this.healthBarRenderer.update(this.world);
     }
+    this.performanceMonitor.endRender();
 
     // Update screen shake
     if (this.screenShake) {
@@ -390,6 +412,9 @@ export class Game {
       // Or just set position.
       this.app.stage.position.set(offsetX, offsetY);
     }
+
+    // Update performance monitor entity count
+    this.performanceMonitor.setEntityCount(getEntityCount());
 
     // Update debug overlay
     if (this.debugManager) {
@@ -406,6 +431,9 @@ export class Game {
         activeEnemies: this.waveManager.getActiveEnemyCount(),
         resources: this.resourceManager.getResources()
       });
+
+      // Update performance stats
+      this.debugManager.updatePerformanceStats(this.performanceMonitor.getMetrics());
     }
 
     // Update HUD
@@ -436,6 +464,9 @@ export class Game {
         turretCount: turretCount
       });
     }
+
+    // End frame timing
+    this.performanceMonitor.endFrame();
   }
 
   /**
@@ -648,5 +679,13 @@ export class Game {
    */
   getDamageSystem(): DamageSystem | null {
     return this.damageSystem;
+  }
+
+  /**
+   * Get the performance monitor
+   * @returns The performance monitor instance
+   */
+  getPerformanceMonitor(): PerformanceMonitor {
+    return this.performanceMonitor;
   }
 }

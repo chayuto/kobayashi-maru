@@ -7,3 +7,4 @@ export * from './ParticleSystem';
 export * from './effectPresets';
 export * from './HealthBarRenderer';
 export * from './ScreenShake';
+export * from './TextureCache';

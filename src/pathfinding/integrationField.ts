@@ -1,5 +1,14 @@
 import { Grid } from './grid';
 import { CostField } from './costField';
+import { BinaryHeap } from '../utils/BinaryHeap';
+
+/**
+ * Node for the priority queue used in Dijkstra's algorithm
+ */
+interface PathNode {
+    index: number;
+    cost: number;
+}
 
 export class IntegrationField {
     private values: Uint32Array;
@@ -18,6 +27,7 @@ export class IntegrationField {
 
     /**
      * Calculates the integration field using Dijkstra's algorithm
+     * Uses a binary heap for O(log n) priority queue operations
      * @param goalX World X coordinate of the goal
      * @param goalY World Y coordinate of the goal
      * @param costField The cost field to use for traversal costs
@@ -27,23 +37,18 @@ export class IntegrationField {
 
         const goalIndex = this.grid.getCellIndex(goalX, goalY);
 
-        // Open list for Dijkstra's (simplified priority queue)
-        // For performance in JS, a simple array or a proper MinHeap can be used.
-        // Given the grid size (approx 2000 cells), a simple array queue might be acceptable,
-        // but a proper queue is better. For now, we'll use a standard array and sort,
-        // or just a simple queue if we assume uniform edge weights (BFS) but we have variable costs.
-        // Let's implement a basic array-based open list for simplicity first.
-
-        const openList: number[] = [goalIndex];
+        // Use binary heap for efficient priority queue operations - O(log n) vs O(n log n) for sort
+        const openList = new BinaryHeap<PathNode>((a, b) => a.cost - b.cost);
+        openList.push({ index: goalIndex, cost: 0 });
         this.values[goalIndex] = 0;
 
-        while (openList.length > 0) {
-            // Sort to simulate priority queue (inefficient for large sets, but simple)
-            // Optimization: Use a proper binary heap if performance becomes an issue
-            openList.sort((a, b) => this.values[a] - this.values[b]);
-
-            const currentIndex = openList.shift()!;
+        while (!openList.isEmpty()) {
+            const current = openList.pop()!;
+            const currentIndex = current.index;
             const currentCost = this.values[currentIndex];
+
+            // Skip if we've already found a better path
+            if (current.cost > currentCost) continue;
 
             const neighbors = this.grid.getNeighbors(currentIndex);
 
@@ -56,10 +61,8 @@ export class IntegrationField {
                 const newCost = currentCost + traversalCost;
 
                 if (newCost < this.values[neighborIndex]) {
-                    if (this.values[neighborIndex] === IntegrationField.MAX_COST) {
-                        openList.push(neighborIndex);
-                    }
                     this.values[neighborIndex] = newCost;
+                    openList.push({ index: neighborIndex, cost: newCost });
                 }
             }
         }
