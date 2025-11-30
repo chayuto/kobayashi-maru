@@ -35,7 +35,8 @@ export class DebugManager {
         });
     }
 
-    public update(deltaTime: number): void {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    public update(_deltaTime: number): void {
         this.frameCount++;
         const currentTime = performance.now();
 
