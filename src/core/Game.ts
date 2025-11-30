@@ -15,8 +15,9 @@ import {
   createSpecies8472Ship
 } from '../ecs';
 import { SpriteManager } from '../rendering';
-import { createRenderSystem } from '../systems';
+import { createRenderSystem, createMovementSystem } from '../systems';
 import { GAME_CONFIG, LCARS_COLORS } from '../types';
+import { Velocity } from '../ecs/components';
 
 export class Game {
   public app: Application;
@@ -24,6 +25,7 @@ export class Game {
   private container: HTMLElement;
   private spriteManager: SpriteManager;
   private renderSystem: ReturnType<typeof createRenderSystem> | null = null;
+  private movementSystem: ReturnType<typeof createMovementSystem> | null = null;
   private initialized: boolean = false;
 
   constructor(containerId: string = 'app') {
@@ -73,6 +75,9 @@ export class Game {
     // Create the render system with the sprite manager
     this.renderSystem = createRenderSystem(this.spriteManager);
     
+    // Create the movement system
+    this.movementSystem = createMovementSystem();
+    
     // Spawn test entities
     this.spawnTestEntities();
   }
@@ -101,6 +106,10 @@ export class Game {
     const width = GAME_CONFIG.WORLD_WIDTH;
     const height = GAME_CONFIG.WORLD_HEIGHT;
     
+    // Speed range in pixels per second (50-200 as per technical notes)
+    const minSpeed = 50;
+    const maxSpeed = 200;
+    
     for (let i = 0; i < 100; i++) {
       // Randomly select which edge to spawn on
       const edge = Math.floor(Math.random() * 4);
@@ -128,10 +137,22 @@ export class Game {
       
       // Randomly select an enemy type
       const creatorIndex = Math.floor(Math.random() * enemyCreators.length);
-      enemyCreators[creatorIndex](this.world, x, y);
+      const eid = enemyCreators[creatorIndex](this.world, x, y);
+      
+      // Calculate velocity pointing toward center
+      const dx = centerX - x;
+      const dy = centerY - y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      // Normalize and apply random speed
+      if (distance > 0) {
+        const speed = minSpeed + Math.random() * (maxSpeed - minSpeed);
+        Velocity.x[eid] = (dx / distance) * speed;
+        Velocity.y[eid] = (dy / distance) * speed;
+      }
     }
     
-    console.log('100 test enemies spawned around edges');
+    console.log('100 test enemies spawned around edges with velocities toward center');
     console.log(`Total entity count: ${getEntityCount()}`);
   }
 
@@ -173,6 +194,14 @@ export class Game {
    * Main update loop
    */
   private update(): void {
+    // Convert PixiJS ticker delta (in milliseconds) to seconds for frame-independent movement
+    const deltaTime = this.app.ticker.deltaMS / 1000;
+    
+    // Run the movement system to update entity positions
+    if (this.movementSystem) {
+      this.movementSystem(this.world, deltaTime);
+    }
+    
     // Run the render system to sync sprites with ECS data
     if (this.renderSystem) {
       this.renderSystem(this.world);
