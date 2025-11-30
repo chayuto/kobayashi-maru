@@ -18,7 +18,7 @@ import { SpatialHash } from '../collision';
 import { Starfield } from '../rendering/Starfield';
 
 import { DebugManager } from './DebugManager';
-import { WaveManager, GameState, GameStateType, ScoreManager, HighScoreManager } from '../game';
+import { WaveManager, GameState, GameStateType, ScoreManager, HighScoreManager, ResourceManager, PlacementSystem } from '../game';
 
 export class Game {
   public app: Application;
@@ -35,6 +35,8 @@ export class Game {
   private gameState: GameState;
   private scoreManager: ScoreManager;
   private highScoreManager: HighScoreManager;
+  private resourceManager: ResourceManager;
+  private placementSystem: PlacementSystem | null = null;
   private kobayashiMaruId: number = -1;
   private initialized: boolean = false;
 
@@ -53,6 +55,7 @@ export class Game {
     this.gameState = new GameState();
     this.scoreManager = new ScoreManager();
     this.highScoreManager = new HighScoreManager();
+    this.resourceManager = new ResourceManager();
   }
 
   /**
@@ -106,6 +109,9 @@ export class Game {
       GAME_CONFIG.WORLD_HEIGHT
     );
     this.collisionSystem = createCollisionSystem(this.spatialHash);
+
+    // Initialize placement system
+    this.placementSystem = new PlacementSystem(this.app, this.world, this.resourceManager);
 
     // Initialize wave manager and spawn Kobayashi Maru
     this.initializeGameplay();
@@ -265,6 +271,9 @@ export class Game {
    */
   destroy(): void {
     window.removeEventListener('resize', this.handleResize.bind(this));
+    if (this.placementSystem) {
+      this.placementSystem.destroy();
+    }
     this.spriteManager.destroy();
     this.app.destroy(true);
     this.initialized = false;
@@ -324,5 +333,21 @@ export class Game {
    */
   recordEnemyKill(factionId: number): void {
     this.scoreManager.addKill(factionId);
+  }
+
+  /**
+   * Get the resource manager
+   * @returns The resource manager instance
+   */
+  getResourceManager(): ResourceManager {
+    return this.resourceManager;
+  }
+
+  /**
+   * Get the placement system
+   * @returns The placement system or null if not initialized
+   */
+  getPlacementSystem(): PlacementSystem | null {
+    return this.placementSystem;
   }
 }
