@@ -33,7 +33,7 @@ const VALID_TRANSITIONS: Record<GameStateType, GameStateType[]> = {
   [GameStateType.MENU]: [GameStateType.PLAYING],
   [GameStateType.PLAYING]: [GameStateType.PAUSED, GameStateType.GAME_OVER],
   [GameStateType.PAUSED]: [GameStateType.PLAYING, GameStateType.MENU],
-  [GameStateType.GAME_OVER]: [GameStateType.MENU]
+  [GameStateType.GAME_OVER]: [GameStateType.MENU, GameStateType.PLAYING]
 };
 
 /**

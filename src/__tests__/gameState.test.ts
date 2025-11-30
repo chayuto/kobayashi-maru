@@ -102,12 +102,13 @@ describe('GameState', () => {
       expect(gameState.getState()).toBe(GameStateType.PLAYING);
     });
 
-    it('should not allow GAME_OVER -> PLAYING directly', () => {
+    it('should allow GAME_OVER -> PLAYING for restart', () => {
       gameState.setState(GameStateType.PLAYING);
       gameState.setState(GameStateType.GAME_OVER);
       const result = gameState.setState(GameStateType.PLAYING);
-      expect(result).toBe(false);
-      expect(gameState.getState()).toBe(GameStateType.GAME_OVER);
+      expect(result).toBe(true);
+      expect(gameState.getState()).toBe(GameStateType.PLAYING);
+      expect(gameState.isPlaying()).toBe(true);
     });
   });
 
