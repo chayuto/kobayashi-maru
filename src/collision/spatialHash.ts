@@ -72,11 +72,17 @@ export class SpatialHash {
   }
 
   /**
-   * Get all entities within a circular radius from a point
+   * Get all entities within a circular radius from a point.
+   * 
+   * Note: This is a broad-phase query that returns all entities in cells that could 
+   * contain entities within the radius. The result may include false positives 
+   * (entities in overlapping cells but outside the actual radius).
+   * Callers should perform fine-grained distance checks if exact collision is needed.
+   * 
    * @param x Center X position
    * @param y Center Y position
    * @param radius Search radius
-   * @returns Array of entity IDs within the radius
+   * @returns Array of entity IDs that may be within the radius (broad-phase candidates)
    */
   query(x: number, y: number, radius: number): number[] {
     const result: number[] = [];
@@ -105,9 +111,6 @@ export class SpatialHash {
       }
     }
 
-    // Note: This returns all entities in cells that could contain entities within radius
-    // The caller should perform fine-grained distance checks if needed
-    // For basic spatial partitioning, returning cell contents is sufficient
     return result;
   }
 

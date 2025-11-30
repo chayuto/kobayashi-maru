@@ -36,5 +36,6 @@ export const GAME_CONFIG = {
   TARGET_FPS: 60,
   INITIAL_ENTITY_COUNT: 5000,
   WORLD_WIDTH: 1920,
-  WORLD_HEIGHT: 1080
+  WORLD_HEIGHT: 1080,
+  COLLISION_CELL_SIZE: 64  // Cell size for spatial hash (2x typical entity radius)
 } as const;

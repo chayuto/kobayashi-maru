@@ -95,9 +95,11 @@ export class Game {
     this.movementSystem = createMovementSystem();
 
     // Initialize spatial hash for collision detection
-    // Cell size of 64 (2x typical entity radius of ~32)
-    const cellSize = 64;
-    this.spatialHash = new SpatialHash(cellSize, GAME_CONFIG.WORLD_WIDTH, GAME_CONFIG.WORLD_HEIGHT);
+    this.spatialHash = new SpatialHash(
+      GAME_CONFIG.COLLISION_CELL_SIZE,
+      GAME_CONFIG.WORLD_WIDTH,
+      GAME_CONFIG.WORLD_HEIGHT
+    );
     this.collisionSystem = createCollisionSystem(this.spatialHash);
 
     // Spawn test entities

@@ -4,7 +4,7 @@
  */
 import { defineQuery, defineSystem, IWorld } from 'bitecs';
 import { Position } from '../ecs/components';
-import { SpatialHash } from '../collision';
+import { SpatialHash } from '../collision/spatialHash';
 
 // Query for all entities with Position (for spatial queries)
 const positionQuery = defineQuery([Position]);
