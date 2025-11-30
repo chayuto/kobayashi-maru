@@ -25,26 +25,13 @@ export function createMovementSystem() {
       Position.x[eid] += Velocity.x[eid] * delta;
       Position.y[eid] += Velocity.y[eid] * delta;
       
-      // Boundary handling - wrap around to opposite edge
-      let x = Position.x[eid];
-      let y = Position.y[eid];
+      // Boundary handling - wrap around to opposite edge using robust modulo
+      // The formula ((value % size) + size) % size handles both positive and negative values
+      const x = Position.x[eid];
+      const y = Position.y[eid];
       
-      // Wrap horizontally
-      if (x < 0) {
-        x = worldWidth + (x % worldWidth);
-      } else if (x >= worldWidth) {
-        x = x % worldWidth;
-      }
-      
-      // Wrap vertically
-      if (y < 0) {
-        y = worldHeight + (y % worldHeight);
-      } else if (y >= worldHeight) {
-        y = y % worldHeight;
-      }
-      
-      Position.x[eid] = x;
-      Position.y[eid] = y;
+      Position.x[eid] = ((x % worldWidth) + worldWidth) % worldWidth;
+      Position.y[eid] = ((y % worldHeight) + worldHeight) % worldHeight;
     }
     
     return world;
