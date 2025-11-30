@@ -9,7 +9,8 @@ export const FACTION_COLORS = {
   ROMULAN: 0x99CC33,     // Lime
   BORG: 0x22EE22,        // Neon Green
   THOLIAN: 0xFF7700,     // Orange
-  SPECIES_8472: 0xCC99FF // Lavender
+  SPECIES_8472: 0xCC99FF, // Lavender
+  PROJECTILE: 0xFF6600   // Orange-red (Photon Torpedo)
 } as const;
 
 // LCARS UI colors
@@ -26,7 +27,8 @@ export const FactionId = {
   ROMULAN: 2,
   BORG: 3,
   THOLIAN: 4,
-  SPECIES_8472: 5
+  SPECIES_8472: 5,
+  PROJECTILE: 99 // Special faction for rendering projectiles
 } as const;
 
 export type FactionIdType = typeof FactionId[keyof typeof FactionId];
@@ -98,5 +100,41 @@ export const TURRET_CONFIG: Record<number, {
     health: 60,
     shield: 30,
     name: 'Disruptor Bank'
+  }
+};
+
+// Projectile Types
+export const ProjectileType = {
+  PHOTON_TORPEDO: 0,
+  QUANTUM_TORPEDO: 1,  // Future: higher damage, faster
+  DISRUPTOR_BOLT: 2    // Future: for enemy projectiles
+} as const;
+
+export type ProjectileTypeId = typeof ProjectileType[keyof typeof ProjectileType];
+
+// Projectile configuration
+export const PROJECTILE_CONFIG: Record<number, {
+  speed: number;
+  lifetime: number;
+  size: number;
+  color: number;
+}> = {
+  [ProjectileType.PHOTON_TORPEDO]: {
+    speed: 400,    // Pixels per second
+    lifetime: 5,   // 5 seconds max
+    size: 8,       // Visual size
+    color: 0xFF6600 // Orange-red
+  },
+  [ProjectileType.QUANTUM_TORPEDO]: {
+    speed: 500,
+    lifetime: 6,
+    size: 9,
+    color: 0x00CCFF // Blue-white
+  },
+  [ProjectileType.DISRUPTOR_BOLT]: {
+    speed: 350,
+    lifetime: 4,
+    size: 6,
+    color: 0x00FF00 // Green
   }
 };

@@ -124,17 +124,17 @@ for (const eid of nearby) {
 ```
 
 ## Acceptance Criteria
-- [ ] Torpedo launcher fires visible projectiles
-- [ ] Projectiles travel toward target position
-- [ ] Projectiles deal damage on impact
-- [ ] Projectiles despawn after lifetime expires
-- [ ] Projectiles despawn on collision
-- [ ] Projectile visuals are rendered
-- [ ] Performance handles many projectiles (100+)
-- [ ] Projectile speed is configurable
-- [ ] Unit tests cover projectile lifecycle
-- [ ] No TypeScript compilation errors
-- [ ] All existing tests continue to pass
+- [x] Torpedo launcher fires visible projectiles
+- [x] Projectiles travel toward target position
+- [x] Projectiles deal damage on impact
+- [x] Projectiles despawn after lifetime expires
+- [x] Projectiles despawn on collision
+- [x] Projectile visuals are rendered
+- [x] Performance handles many projectiles (100+)
+- [x] Projectile speed is configurable
+- [x] Unit tests cover projectile lifecycle
+- [x] No TypeScript compilation errors
+- [x] All existing tests continue to pass
 
 ## Files to Create
 - `src/systems/projectileSystem.ts`

@@ -56,7 +56,8 @@ export class SpriteManager {
       [FactionId.ROMULAN, this.textures.romulan],
       [FactionId.BORG, this.textures.borg],
       [FactionId.THOLIAN, this.textures.tholian],
-      [FactionId.SPECIES_8472, this.textures.species8472]
+      [FactionId.SPECIES_8472, this.textures.species8472],
+      [FactionId.PROJECTILE, this.textures.projectile]
     ];
 
     for (const [factionId, texture] of factionTextures) {
@@ -96,6 +97,8 @@ export class SpriteManager {
         return this.textures.tholian;
       case FactionId.SPECIES_8472:
         return this.textures.species8472;
+      case FactionId.PROJECTILE:
+        return this.textures.projectile;
       default:
         return this.textures.federation;
     }
@@ -182,19 +185,19 @@ export class SpriteManager {
     const entry = this.particles.get(index);
     if (entry) {
       const { particle, factionId } = entry;
-      
+
       // Remove from container
       const container = this.containers.get(factionId);
       if (container) {
         container.removeParticle(particle);
       }
-      
+
       // Return to pool
       const pool = this.particlePool.get(factionId);
       if (pool) {
         pool.push(particle);
       }
-      
+
       this.particles.delete(index);
     }
   }

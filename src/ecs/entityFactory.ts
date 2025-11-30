@@ -3,8 +3,8 @@
  * Creates pre-configured entities with appropriate components
  */
 import { addEntity, addComponent } from 'bitecs';
-import { Position, Velocity, Faction, SpriteRef, Health, Shield, Turret, Target, AIBehavior } from './components';
-import { FactionId, TurretType, TURRET_CONFIG, AIBehaviorType } from '../types/constants';
+import { Position, Velocity, Faction, SpriteRef, Health, Shield, Turret, Target, AIBehavior, Projectile, Collider } from './components';
+import { FactionId, TurretType, TURRET_CONFIG, AIBehaviorType, ProjectileType, PROJECTILE_CONFIG } from '../types/constants';
 import type { GameWorld } from './world';
 import { incrementEntityCount } from './world';
 
@@ -339,6 +339,74 @@ export function createTurret(world: GameWorld, x: number, y: number, turretType:
   addComponent(world, Target, eid);
   Target.entityId[eid] = 0;
   Target.hasTarget[eid] = 0;
+
+  incrementEntityCount();
+  return eid;
+}
+
+/**
+ * Creates a projectile entity
+ * @param world - The ECS world
+ * @param x - Starting X position
+ * @param y - Starting Y position
+ * @param targetX - Target X position
+ * @param targetY - Target Y position
+ * @param damage - Damage to deal on impact
+ * @param projectileType - Type of projectile
+ * @param targetEntityId - Optional target entity ID for homing
+ * @returns Entity ID
+ */
+export function createProjectile(
+  world: GameWorld,
+  x: number,
+  y: number,
+  targetX: number,
+  targetY: number,
+  damage: number,
+  projectileType: number,
+  targetEntityId: number = 0
+): number {
+  const eid = addEntity(world);
+
+  addComponent(world, Position, eid);
+  Position.x[eid] = x;
+  Position.y[eid] = y;
+
+  addComponent(world, Velocity, eid);
+  // Velocity will be set by the projectile system or caller
+  Velocity.x[eid] = 0;
+  Velocity.y[eid] = 0;
+
+  addComponent(world, Projectile, eid);
+  Projectile.damage[eid] = damage;
+  Projectile.projectileType[eid] = projectileType;
+  Projectile.targetEntityId[eid] = targetEntityId;
+
+  // Set config based on type
+  const config = PROJECTILE_CONFIG[projectileType] || PROJECTILE_CONFIG[ProjectileType.PHOTON_TORPEDO];
+  Projectile.speed[eid] = config.speed;
+  Projectile.lifetime[eid] = config.lifetime;
+
+  // Calculate initial velocity
+  const dx = targetX - x;
+  const dy = targetY - y;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+
+  if (dist > 0) {
+    Velocity.x[eid] = (dx / dist) * config.speed;
+    Velocity.y[eid] = (dy / dist) * config.speed;
+  }
+
+  addComponent(world, Faction, eid);
+  Faction.id[eid] = FactionId.PROJECTILE; // Projectiles belong to Federation for now
+
+  addComponent(world, SpriteRef, eid);
+  SpriteRef.index[eid] = PLACEHOLDER_SPRITE_INDEX; // Will be handled by sprite manager
+
+  addComponent(world, Collider, eid);
+  Collider.radius[eid] = config.size;
+  Collider.layer[eid] = 2; // Projectile layer (need to define layers properly later)
+  Collider.mask[eid] = 1;  // Collides with enemies (layer 1)
 
   incrementEntityCount();
   return eid;

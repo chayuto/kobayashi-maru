@@ -13,7 +13,7 @@ import {
 } from '../ecs';
 import { Health, Shield, Turret, Position, Faction, SpriteRef } from '../ecs/components';
 import { SpriteManager, BeamRenderer } from '../rendering';
-import { createRenderSystem, createMovementSystem, createCollisionSystem, CollisionSystem, createTargetingSystem, createCombatSystem, createDamageSystem, createAISystem, TargetingSystem, CombatSystem, DamageSystem } from '../systems';
+import { createRenderSystem, createMovementSystem, createCollisionSystem, CollisionSystem, createTargetingSystem, createCombatSystem, createDamageSystem, createAISystem, createProjectileSystem, TargetingSystem, CombatSystem, DamageSystem } from '../systems';
 import { GAME_CONFIG, LCARS_COLORS } from '../types';
 import { SpatialHash } from '../collision';
 
@@ -41,6 +41,7 @@ export class Game {
   private targetingSystem: TargetingSystem | null = null;
   private combatSystem: CombatSystem | null = null;
   private damageSystem: DamageSystem | null = null;
+  private projectileSystem: ReturnType<typeof createProjectileSystem> | null = null;
   private aiSystem: ReturnType<typeof createAISystem> | null = null;
   private spatialHash: SpatialHash | null = null;
   private debugManager: DebugManager | null = null;
@@ -159,6 +160,9 @@ export class Game {
 
     // Initialize AI system
     this.aiSystem = createAISystem();
+
+    // Initialize projectile system
+    this.projectileSystem = createProjectileSystem(this.spatialHash);
 
     // Initialize placement system
     this.placementSystem = new PlacementSystem(this.app, this.world, this.resourceManager);
@@ -309,6 +313,11 @@ export class Game {
       // Run combat system to handle turret firing
       if (this.combatSystem) {
         this.combatSystem.update(this.world, deltaTime, this.gameTime);
+      }
+
+      // Run projectile system to handle active projectiles
+      if (this.projectileSystem) {
+        this.projectileSystem(this.world, deltaTime);
       }
 
       // Run damage system to handle entity destruction

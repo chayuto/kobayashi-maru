@@ -4,7 +4,8 @@
  */
 import { defineQuery, hasComponent, IWorld } from 'bitecs';
 import { Position, Turret, Target, Faction, Health, Shield } from '../ecs/components';
-import { TurretType } from '../types/constants';
+import { TurretType, ProjectileType } from '../types/constants';
+import { createProjectile } from '../ecs/entityFactory';
 import { AudioManager, SoundType } from '../audio';
 
 // Query for turrets with targets
@@ -77,9 +78,8 @@ export function createCombatSystem() {
 
       // Apply damage based on weapon type
       if (turretType === TurretType.TORPEDO_LAUNCHER) {
-        // Projectile weapons - TODO: spawn projectile entity
-        // For now, instant hit with damage
-        applyDamage(world, targetEid, damage);
+        // Spawn projectile
+        createProjectile(world, turretX, turretY, targetX, targetY, damage, ProjectileType.PHOTON_TORPEDO, targetEid);
       } else {
         // Beam weapons (phaser, disruptor) - instant hit
         applyDamage(world, targetEid, damage);

@@ -8,3 +8,4 @@ export * from './targetingSystem';
 export * from './combatSystem';
 export * from './damageSystem';
 export * from './aiSystem';
+export * from './projectileSystem';

@@ -68,3 +68,12 @@ export const AIBehavior = defineComponent({
   targetY: Types.f32,         // Intermediate target Y
   aggression: Types.f32       // How aggressively to pursue (0-1)
 });
+
+// Projectile component - for torpedoes and other moving weapons
+export const Projectile = defineComponent({
+  damage: Types.f32,        // Damage on impact
+  speed: Types.f32,         // Pixels per second
+  lifetime: Types.f32,      // Max seconds before despawn
+  targetEntityId: Types.ui32, // Target entity (for homing, optional)
+  projectileType: Types.ui8 // Type (torpedo, etc.)
+});
