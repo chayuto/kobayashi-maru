@@ -45,7 +45,7 @@ const mockAudioContext = {
 
 describe('AudioManager', () => {
     let audioManager: AudioManager;
-    let mockAudioContextConstructor: ReturnType<typeof vi.fn>;
+    let mockAudioContextConstructor: () => void;
 
     beforeEach(() => {
         // Setup mock constructor spy
