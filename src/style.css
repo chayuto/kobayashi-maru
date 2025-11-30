@@ -1,0 +1,13 @@
+.debug-overlay {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 10px;
+  border-radius: 5px;
+  font-family: monospace;
+  font-size: 14px;
+  pointer-events: none; /* Allow clicks to pass through */
+  z-index: 1000; /* Ensure it's on top */
+}

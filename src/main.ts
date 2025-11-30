@@ -5,6 +5,7 @@
  * where you protect the civilian freighter Kobayashi Maru
  * against infinite waves of enemies.
  */
+import './style.css';
 import { Game } from './core';
 
 // Global game instance
@@ -16,15 +17,15 @@ let game: Game | null = null;
 async function main(): Promise<void> {
   try {
     console.log('Starting Kobayashi Maru...');
-    
+
     game = new Game('app');
     await game.init();
     game.start();
-    
+
     console.log('Kobayashi Maru ready. Engage!');
   } catch (error) {
     console.error('Failed to initialize Kobayashi Maru:', error);
-    
+
     // Display error message to user
     const appElement = document.getElementById('app');
     if (appElement) {
