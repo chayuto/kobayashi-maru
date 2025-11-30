@@ -3,13 +3,14 @@
  * Initializes PixiJS with WebGPU preference and manages the game loop
  */
 import { Application } from 'pixi.js';
+import { defineQuery } from 'bitecs';
 import {
   createGameWorld,
   GameWorld,
   getEntityCount,
   createKobayashiMaru
 } from '../ecs';
-import { Health } from '../ecs/components';
+import { Health, Shield, Turret } from '../ecs/components';
 import { SpriteManager, BeamRenderer } from '../rendering';
 import { createRenderSystem, createMovementSystem, createCollisionSystem, CollisionSystem, createTargetingSystem, createCombatSystem, createDamageSystem, TargetingSystem, CombatSystem, DamageSystem } from '../systems';
 import { GAME_CONFIG, LCARS_COLORS } from '../types';
@@ -19,6 +20,10 @@ import { Starfield } from '../rendering/Starfield';
 
 import { DebugManager } from './DebugManager';
 import { WaveManager, GameState, GameStateType, ScoreManager, HighScoreManager, ResourceManager, PlacementSystem } from '../game';
+import { HUDManager } from '../ui';
+
+// Query for counting turrets
+const turretQuery = defineQuery([Turret]);
 
 export class Game {
   public app: Application;
@@ -33,6 +38,7 @@ export class Game {
   private damageSystem: DamageSystem | null = null;
   private spatialHash: SpatialHash | null = null;
   private debugManager: DebugManager | null = null;
+  private hudManager: HUDManager | null = null;
   private starfield: Starfield | null = null;
   private beamRenderer: BeamRenderer | null = null;
   private waveManager: WaveManager;
@@ -55,6 +61,7 @@ export class Game {
     this.world = createGameWorld();
     this.spriteManager = new SpriteManager(this.app);
     this.debugManager = new DebugManager();
+    this.hudManager = new HUDManager();
     this.starfield = new Starfield(this.app);
     this.waveManager = new WaveManager();
     this.gameState = new GameState();
@@ -130,6 +137,11 @@ export class Game {
 
     // Initialize placement system
     this.placementSystem = new PlacementSystem(this.app, this.world, this.resourceManager);
+
+    // Initialize HUD manager
+    if (this.hudManager) {
+      this.hudManager.init(this.app);
+    }
 
     // Initialize wave manager and spawn Kobayashi Maru
     this.initializeGameplay();
@@ -289,6 +301,35 @@ export class Game {
         resources: this.resourceManager.getResources()
       });
     }
+
+    // Update HUD
+    if (this.hudManager) {
+      // Get Kobayashi Maru status
+      let kmHealth = 0, kmMaxHealth = 0, kmShield = 0, kmMaxShield = 0;
+      if (this.kobayashiMaruId !== -1) {
+        kmHealth = Health.current[this.kobayashiMaruId] ?? 0;
+        kmMaxHealth = Health.max[this.kobayashiMaruId] ?? 0;
+        kmShield = Shield.current[this.kobayashiMaruId] ?? 0;
+        kmMaxShield = Shield.max[this.kobayashiMaruId] ?? 0;
+      }
+
+      // Get turret count
+      const turretCount = turretQuery(this.world).length;
+
+      this.hudManager.update({
+        waveNumber: this.waveManager.getCurrentWave(),
+        waveState: this.waveManager.getState(),
+        activeEnemies: this.waveManager.getActiveEnemyCount(),
+        resources: this.resourceManager.getResources(),
+        timeSurvived: this.scoreManager.getTimeSurvived(),
+        enemiesDefeated: this.scoreManager.getEnemiesDefeated(),
+        kobayashiMaruHealth: kmHealth,
+        kobayashiMaruMaxHealth: kmMaxHealth,
+        kobayashiMaruShield: kmShield,
+        kobayashiMaruMaxShield: kmMaxShield,
+        turretCount: turretCount
+      });
+    }
   }
 
   /**
@@ -338,6 +379,9 @@ export class Game {
     }
     if (this.beamRenderer) {
       this.beamRenderer.destroy();
+    }
+    if (this.hudManager) {
+      this.hudManager.destroy();
     }
     this.spriteManager.destroy();
     this.app.destroy(true);
