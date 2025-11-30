@@ -277,6 +277,17 @@ export class Game {
     if (this.debugManager) {
       this.debugManager.update(this.app.ticker.deltaMS);
       this.debugManager.updateEntityCount(getEntityCount());
+      
+      // Update game stats
+      this.debugManager.updateGameStats({
+        gameState: this.gameState.getState(),
+        waveNumber: this.waveManager.getCurrentWave(),
+        waveState: this.waveManager.getState(),
+        timeSurvived: this.scoreManager.getTimeSurvived(),
+        enemiesDefeated: this.scoreManager.getEnemiesDefeated(),
+        activeEnemies: this.waveManager.getActiveEnemyCount(),
+        resources: this.resourceManager.getResources()
+      });
     }
   }
 

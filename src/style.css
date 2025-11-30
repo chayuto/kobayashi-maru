@@ -2,12 +2,59 @@
   position: absolute;
   top: 10px;
   left: 10px;
-  background-color: rgba(0, 0, 0, 0.7);
-  color: white;
-  padding: 10px;
-  border-radius: 5px;
-  font-family: monospace;
-  font-size: 14px;
+  background-color: rgba(0, 0, 0, 0.85);
+  color: #99CCFF; /* LCARS Galaxy Blue */
+  padding: 12px;
+  border-radius: 8px;
+  border: 2px solid #FF9900; /* LCARS Golden Orange */
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
   pointer-events: none; /* Allow clicks to pass through */
   z-index: 1000; /* Ensure it's on top */
+  min-width: 180px;
+}
+
+.debug-section {
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #FF9900;
+}
+
+.debug-section:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.section-header {
+  color: #FF9900; /* LCARS Golden Orange */
+  font-weight: bold;
+  font-size: 11px;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+
+.stat-highlight {
+  font-weight: bold;
+}
+
+.state-menu {
+  color: #99CCFF; /* Galaxy Blue */
+}
+
+.state-playing {
+  color: #33CC99; /* Federation Teal */
+}
+
+.state-paused {
+  color: #FFCC00; /* Yellow */
+}
+
+.state-game-over {
+  color: #DD4444; /* Klingon Red */
+}
+
+.stat-resources {
+  color: #22EE22; /* Borg Neon Green */
+  font-weight: bold;
 }

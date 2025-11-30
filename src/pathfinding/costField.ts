@@ -2,10 +2,8 @@ import { Grid } from './grid';
 
 export class CostField {
     private costs: Uint8Array;
-    private grid: Grid;
 
     constructor(grid: Grid) {
-        this.grid = grid;
         this.costs = new Uint8Array(grid.getSize());
         this.reset();
     }
