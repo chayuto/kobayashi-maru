@@ -146,6 +146,16 @@ export class Game {
     // Initialize HUD manager
     if (this.hudManager) {
       this.hudManager.init(this.app);
+
+      // Connect Turret Menu to Placement System
+      const turretMenu = this.hudManager.getTurretMenu();
+      if (turretMenu && this.placementSystem) {
+        turretMenu.onSelect((turretType) => {
+          if (this.placementSystem) {
+            this.placementSystem.startPlacing(turretType);
+          }
+        });
+      }
     }
 
     // Initialize game over screen
@@ -170,12 +180,12 @@ export class Game {
 
     // Initialize wave manager
     this.waveManager.init(this.world);
-    
+
     // Set up wave event listeners
     this.waveManager.on('waveStart', (event) => {
       console.log(`Wave ${event.waveNumber} started with ${event.data?.totalEnemies} enemies`);
     });
-    
+
     this.waveManager.on('waveComplete', (event) => {
       console.log(`Wave ${event.waveNumber} complete!`);
       // Update score manager with wave reached
@@ -299,7 +309,7 @@ export class Game {
     if (this.debugManager) {
       this.debugManager.update(this.app.ticker.deltaMS);
       this.debugManager.updateEntityCount(getEntityCount());
-      
+
       // Update game stats
       this.debugManager.updateGameStats({
         gameState: this.gameState.getState(),
@@ -423,15 +433,15 @@ export class Game {
    */
   private clearAllEntities(): void {
     const entities = allEntitiesQuery(this.world);
-    
+
     for (const eid of entities) {
       removeEntity(this.world, eid);
       decrementEntityCount();
     }
-    
+
     // Reset Kobayashi Maru tracking
     this.kobayashiMaruId = -1;
-    
+
     // Run render system once to clean up sprites for removed entities
     if (this.renderSystem) {
       this.renderSystem(this.world);

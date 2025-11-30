@@ -7,6 +7,7 @@ import { UI_STYLES } from './styles';
 import { HUDData } from './types';
 import { HealthBar } from './HealthBar';
 import { GAME_CONFIG } from '../types/constants';
+import { TurretMenu } from './TurretMenu';
 
 // Wave state color mapping - defined outside class to avoid object creation on each update
 const WAVE_STATE_COLORS: Record<string, number> = {
@@ -35,6 +36,7 @@ export class HUDManager {
   private healthBar: HealthBar | null = null;
   private shieldBar: HealthBar | null = null;
   private statusLabel: Text | null = null;
+  private turretMenu: TurretMenu | null = null;
 
   // Background panels
   private topLeftPanel: Graphics | null = null;
@@ -53,16 +55,26 @@ export class HUDManager {
    */
   init(app: Application): void {
     this.app = app;
-    
+
     // Add HUD container to stage (on top of everything)
     this.app.stage.addChild(this.container);
-    
+
     // Create all HUD elements
     this.createTopLeftPanel();
     this.createTopRightPanel();
     this.createBottomLeftPanel();
     this.createBottomCenterPanel();
     this.createBottomRightPanel();
+
+    // Create Turret Menu
+    this.turretMenu = new TurretMenu();
+    // Position below the top right panel (resources)
+    // Top right panel height is 60, padding is 16. 
+    // Let's give it some extra space.
+    const menuX = GAME_CONFIG.WORLD_WIDTH - 180 - UI_STYLES.PADDING;
+    const menuY = UI_STYLES.PADDING + 60 + UI_STYLES.PADDING;
+    this.turretMenu.setPosition(menuX, menuY);
+    this.container.addChild(this.turretMenu.container);
   }
 
   /**
@@ -70,7 +82,7 @@ export class HUDManager {
    */
   private createTopLeftPanel(): void {
     const padding = UI_STYLES.PADDING;
-    
+
     // Panel background
     this.topLeftPanel = new Graphics();
     this.topLeftPanel.roundRect(0, 0, 200, 100, 8);
@@ -118,7 +130,7 @@ export class HUDManager {
     const padding = UI_STYLES.PADDING;
     const panelWidth = 180;
     const x = GAME_CONFIG.WORLD_WIDTH - panelWidth - padding;
-    
+
     // Panel background
     this.topRightPanel = new Graphics();
     this.topRightPanel.roundRect(0, 0, panelWidth, 60, 8);
@@ -155,7 +167,7 @@ export class HUDManager {
   private createBottomLeftPanel(): void {
     const padding = UI_STYLES.PADDING;
     const y = GAME_CONFIG.WORLD_HEIGHT - 80 - padding;
-    
+
     // Panel background
     this.bottomLeftPanel = new Graphics();
     this.bottomLeftPanel.roundRect(0, 0, 180, 80, 8);
@@ -193,7 +205,7 @@ export class HUDManager {
     const panelHeight = 90;
     const x = (GAME_CONFIG.WORLD_WIDTH - panelWidth) / 2;
     const y = GAME_CONFIG.WORLD_HEIGHT - panelHeight - UI_STYLES.PADDING;
-    
+
     // Panel background
     this.bottomCenterPanel = new Graphics();
     this.bottomCenterPanel.roundRect(0, 0, panelWidth, panelHeight, 8);
@@ -242,7 +254,7 @@ export class HUDManager {
     const panelWidth = 140;
     const x = GAME_CONFIG.WORLD_WIDTH - panelWidth - padding;
     const y = GAME_CONFIG.WORLD_HEIGHT - 60 - padding;
-    
+
     // Panel background
     this.bottomRightPanel = new Graphics();
     this.bottomRightPanel.roundRect(0, 0, panelWidth, 60, 8);
@@ -313,8 +325,8 @@ export class HUDManager {
     if (this.healthBar) {
       this.healthBar.update(data.kobayashiMaruHealth, data.kobayashiMaruMaxHealth);
       // Change color to danger if health is low
-      const healthPercent = data.kobayashiMaruMaxHealth > 0 
-        ? data.kobayashiMaruHealth / data.kobayashiMaruMaxHealth 
+      const healthPercent = data.kobayashiMaruMaxHealth > 0
+        ? data.kobayashiMaruHealth / data.kobayashiMaruMaxHealth
         : 0;
       if (healthPercent < 0.25) {
         this.healthBar.setColor(UI_STYLES.COLORS.DANGER);
@@ -326,6 +338,9 @@ export class HUDManager {
     // Update turret count
     if (this.turretCountText) {
       this.turretCountText.text = data.turretCount.toString();
+      if (this.turretMenu) {
+        this.turretMenu.update(data.resources);
+      }
     }
   }
 
@@ -374,5 +389,12 @@ export class HUDManager {
       this.shieldBar.destroy();
     }
     this.container.destroy({ children: true });
+  }
+
+  /**
+   * Get the turret menu instance
+   */
+  getTurretMenu(): TurretMenu | null {
+    return this.turretMenu;
   }
 }
