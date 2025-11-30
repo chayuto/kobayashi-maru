@@ -14,12 +14,14 @@ import {
   createTholianShip,
   createSpecies8472Ship
 } from '../ecs';
+import { RenderingSystem } from '../rendering';
 import { GAME_CONFIG, LCARS_COLORS } from '../types';
 
 export class Game {
   public app: Application;
   public world: GameWorld;
   private container: HTMLElement;
+  private renderingSystem: RenderingSystem;
   private initialized: boolean = false;
 
   constructor(containerId: string = 'app') {
@@ -30,6 +32,7 @@ export class Game {
     this.container = container;
     this.app = new Application();
     this.world = createGameWorld();
+    this.renderingSystem = new RenderingSystem(this.app);
   }
 
   /**
@@ -61,6 +64,9 @@ export class Game {
     this.initialized = true;
     console.log('Kobayashi Maru initialized');
     console.log(`Renderer: ${this.app.renderer.name}`);
+    
+    // Initialize rendering system after app is ready
+    this.renderingSystem.init();
     
     // Spawn test entities
     this.spawnTestEntities();
@@ -162,8 +168,8 @@ export class Game {
    * Main update loop
    */
   private update(): void {
-    // Game update logic will be added here
-    // This will include ECS system updates
+    // Update rendering system to sync sprites with ECS data
+    this.renderingSystem.update(this.world);
   }
 
   /**
@@ -171,6 +177,7 @@ export class Game {
    */
   destroy(): void {
     window.removeEventListener('resize', this.handleResize.bind(this));
+    this.renderingSystem.destroy();
     this.app.destroy(true);
     this.initialized = false;
   }
