@@ -2,6 +2,8 @@
  * Score Manager for Kobayashi Maru
  * Tracks gameplay metrics including time survived, wave reached, and enemies defeated
  */
+import { EventBus } from '../core/EventBus';
+import { GameEventType, EnemyKilledPayload, WaveCompletedPayload } from '../types/events';
 
 /**
  * Score data interface
@@ -15,6 +17,7 @@ export interface ScoreData {
 
 /**
  * ScoreManager class - tracks all gameplay metrics
+ * Automatically subscribes to EventBus events for ENEMY_KILLED and WAVE_COMPLETED
  */
 export class ScoreManager {
   private timeSurvived: number = 0;
@@ -22,6 +25,51 @@ export class ScoreManager {
   private enemiesDefeated: number = 0;
   private civiliansSaved: number = 0;
   private killsByFaction: Map<number, number> = new Map();
+  private eventBus: EventBus;
+  private boundHandleEnemyKilled: (payload: EnemyKilledPayload) => void;
+  private boundHandleWaveCompleted: (payload: WaveCompletedPayload) => void;
+
+  constructor() {
+    this.eventBus = EventBus.getInstance();
+    
+    // Bind handlers to preserve 'this' context
+    this.boundHandleEnemyKilled = this.handleEnemyKilled.bind(this);
+    this.boundHandleWaveCompleted = this.handleWaveCompleted.bind(this);
+    
+    // Subscribe to events
+    this.subscribeToEvents();
+  }
+
+  /**
+   * Subscribe to EventBus events
+   */
+  private subscribeToEvents(): void {
+    this.eventBus.on(GameEventType.ENEMY_KILLED, this.boundHandleEnemyKilled);
+    this.eventBus.on(GameEventType.WAVE_COMPLETED, this.boundHandleWaveCompleted);
+  }
+
+  /**
+   * Unsubscribe from EventBus events
+   * Call this when destroying the ScoreManager
+   */
+  unsubscribe(): void {
+    this.eventBus.off(GameEventType.ENEMY_KILLED, this.boundHandleEnemyKilled);
+    this.eventBus.off(GameEventType.WAVE_COMPLETED, this.boundHandleWaveCompleted);
+  }
+
+  /**
+   * Handle ENEMY_KILLED event
+   */
+  private handleEnemyKilled(payload: EnemyKilledPayload): void {
+    this.addKill(payload.factionId);
+  }
+
+  /**
+   * Handle WAVE_COMPLETED event
+   */
+  private handleWaveCompleted(payload: WaveCompletedPayload): void {
+    this.setWaveReached(payload.waveNumber);
+  }
 
   /**
    * Updates the time survived

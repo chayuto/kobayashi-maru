@@ -3,12 +3,18 @@
  * Manages player resources used for turret placement
  */
 import { GAME_CONFIG } from '../types/constants';
+import { GameEventType } from '../types/events';
+import { EventBus } from '../core/EventBus';
 
 /**
  * Event types emitted by the resource manager
+ * @deprecated Use GameEventType from '../types/events' instead
  */
 export type ResourceEventType = 'change' | 'insufficient';
 
+/**
+ * @deprecated Use EventBus for event handling
+ */
 export interface ResourceEvent {
   type: ResourceEventType;
   current: number;
@@ -24,10 +30,12 @@ type ResourceListener = (event: ResourceEvent) => void;
 export class ResourceManager {
   private resources: number;
   private listeners: Map<ResourceEventType, ResourceListener[]>;
+  private eventBus: EventBus;
 
   constructor(initialResources: number = GAME_CONFIG.INITIAL_RESOURCES) {
     this.resources = initialResources;
     this.listeners = new Map();
+    this.eventBus = EventBus.getInstance();
   }
 
   /**
@@ -44,6 +52,8 @@ export class ResourceManager {
   setResources(amount: number): void {
     const previous = this.resources;
     this.resources = Math.max(0, amount);
+    const changeAmount = this.resources - previous;
+    this.emitResourceUpdate(changeAmount);
     this.emit('change', { type: 'change', current: this.resources, previous });
   }
 
@@ -55,6 +65,7 @@ export class ResourceManager {
     if (amount <= 0) return;
     const previous = this.resources;
     this.resources += amount;
+    this.emitResourceUpdate(amount);
     this.emit('change', { type: 'change', current: this.resources, previous, amount });
   }
 
@@ -76,6 +87,7 @@ export class ResourceManager {
     }
     const previous = this.resources;
     this.resources -= amount;
+    this.emitResourceUpdate(-amount);
     this.emit('change', { type: 'change', current: this.resources, previous, amount: -amount });
     return true;
   }
@@ -93,6 +105,7 @@ export class ResourceManager {
    * Register an event listener
    * @param eventType - Type of event to listen for
    * @param listener - Callback function
+   * @deprecated Use EventBus.on(GameEventType.RESOURCE_UPDATED) instead
    */
   on(eventType: ResourceEventType, listener: ResourceListener): void {
     if (!this.listeners.has(eventType)) {
@@ -105,6 +118,7 @@ export class ResourceManager {
    * Remove an event listener
    * @param eventType - Type of event
    * @param listener - Callback to remove
+   * @deprecated Use EventBus.off(GameEventType.RESOURCE_UPDATED) instead
    */
   off(eventType: ResourceEventType, listener: ResourceListener): void {
     const listeners = this.listeners.get(eventType);
@@ -117,7 +131,7 @@ export class ResourceManager {
   }
 
   /**
-   * Emit an event to all listeners
+   * Emit an event to all listeners (local event system)
    * @param eventType - Type of event
    * @param event - Event data
    */
@@ -129,11 +143,23 @@ export class ResourceManager {
   }
 
   /**
+   * Emit resource update via global EventBus
+   * @param amount - The change amount (positive for gain, negative for spend)
+   */
+  private emitResourceUpdate(amount: number): void {
+    this.eventBus.emit(GameEventType.RESOURCE_UPDATED, {
+      current: this.resources,
+      amount
+    });
+  }
+
+  /**
    * Reset resources to initial amount
    */
   reset(): void {
     const previous = this.resources;
     this.resources = GAME_CONFIG.INITIAL_RESOURCES;
+    this.emitResourceUpdate(this.resources - previous);
     this.emit('change', { type: 'change', current: this.resources, previous });
   }
 }
