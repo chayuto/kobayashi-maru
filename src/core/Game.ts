@@ -90,7 +90,7 @@ export class Game {
   private killCount: number = 0;
   // God mode and slow mode settings
   private godModeEnabled: boolean = false;
-  private slowModeEnabled: boolean = false;
+  private slowModeEnabled: boolean = true; // Default to slow mode (0.5x speed)
 
   constructor(containerId: string = 'app') {
     const container = document.getElementById(containerId);
