@@ -70,7 +70,14 @@ export const GAME_CONFIG = {
   ENEMY_COLLISION_RADIUS: 40,   // Collision radius for enemy-ship collision
   ENEMY_COLLISION_DAMAGE: 25,   // Damage dealt by enemy on collision
   // Slow mode settings
-  SLOW_MODE_MULTIPLIER: 0.5     // Speed multiplier when slow mode is enabled
+  SLOW_MODE_MULTIPLIER: 0.5,    // Speed multiplier when slow mode is enabled
+  // Orbit behavior settings
+  ORBIT_RADIUS: 300,            // Distance to orbit around target (pixels)
+  ORBIT_SPEED: 50,              // Slow orbit speed (pixels per second)
+  ORBIT_APPROACH_SPEED: 40,     // Slow approach speed until orbit distance
+  // Collision radii for entities
+  KOBAYASHI_MARU_RADIUS: 40,    // Collision radius for Kobayashi Maru
+  TURRET_RADIUS: 20             // Collision radius for turrets
 } as const;
 
 // Turret type IDs

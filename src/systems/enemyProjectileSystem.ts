@@ -6,7 +6,7 @@ import { defineQuery, hasComponent, IWorld, removeEntity } from 'bitecs';
 import { Position, Velocity, Projectile, Collider, Health, Shield, Faction, Turret } from '../ecs/components';
 import { SpatialHash } from '../collision';
 import { decrementEntityCount } from '../ecs/world';
-import { FactionId } from '../types/constants';
+import { FactionId, GAME_CONFIG } from '../types/constants';
 
 // Query for enemy projectiles
 const enemyProjectileQuery = defineQuery([Position, Velocity, Projectile, Collider, Faction]);
@@ -55,26 +55,21 @@ export function createEnemyProjectileSystem(
         // Skip self
         if (targetEid === eid) continue;
 
-        // Check if target is valid and has health
-        if (!hasComponent(world, Health, targetEid)) continue;
-        if (Health.current[targetEid] <= 0) continue;
+        // Check if target has health component and is alive (early filtering)
+        if (!hasComponent(world, Health, targetEid) || Health.current[targetEid] <= 0) continue;
 
         // Check faction (only hit Federation entities)
-        if (hasComponent(world, Faction, targetEid)) {
-          const targetFaction = Faction.id[targetEid];
-          // Only hit Federation entities (Kobayashi Maru and turrets)
-          if (targetFaction !== FactionId.FEDERATION) continue;
-        } else {
+        if (!hasComponent(world, Faction, targetEid) || Faction.id[targetEid] !== FactionId.FEDERATION) {
           continue;
         }
 
         // Simple circle collision check
         const targetX = Position.x[targetEid];
         const targetY = Position.y[targetEid];
-        // Turrets have radius of about 20, Kobayashi Maru has larger radius
+        // Use configured collision radii for Kobayashi Maru and turrets
         const targetRadius = hasComponent(world, Collider, targetEid) 
           ? Collider.radius[targetEid] 
-          : (hasComponent(world, Turret, targetEid) ? 20 : 40);
+          : (hasComponent(world, Turret, targetEid) ? GAME_CONFIG.TURRET_RADIUS : GAME_CONFIG.KOBAYASHI_MARU_RADIUS);
 
         const dx = x - targetX;
         const dy = y - targetY;

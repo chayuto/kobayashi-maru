@@ -115,9 +115,9 @@ describe('AI System', () => {
         expect(Velocity.x[eid]).toBeGreaterThan(0);
         expect(Velocity.y[eid]).toBeGreaterThan(0);
 
-        // Speed should be slow (approach speed is 40)
+        // Speed should be slow (approach speed from config)
         const speed = Math.sqrt(Velocity.x[eid] * Velocity.x[eid] + Velocity.y[eid] * Velocity.y[eid]);
-        expect(speed).toBeCloseTo(40, 1);
+        expect(speed).toBeCloseTo(GAME_CONFIG.ORBIT_APPROACH_SPEED, 1);
     });
 
     it('should orbit around target for Orbit behavior when at orbit distance', () => {
@@ -127,10 +127,10 @@ describe('AI System', () => {
         addComponent(world, AIBehavior, eid);
         addComponent(world, Faction, eid);
 
-        // Position at orbit distance (300 pixels from center)
+        // Position at orbit distance from center
         const centerX = GAME_CONFIG.WORLD_WIDTH / 2;
         const centerY = GAME_CONFIG.WORLD_HEIGHT / 2;
-        Position.x[eid] = centerX + 300; // At orbit radius
+        Position.x[eid] = centerX + GAME_CONFIG.ORBIT_RADIUS; // At orbit radius
         Position.y[eid] = centerY;
         Velocity.x[eid] = 0;
         Velocity.y[eid] = 0;

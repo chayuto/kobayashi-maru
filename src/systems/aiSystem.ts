@@ -13,11 +13,6 @@ const aiQuery = defineQuery([Position, Velocity, AIBehavior, Faction]);
 // Query for turrets (for Hunter behavior)
 const turretQuery = defineQuery([Position, Turret]);
 
-// Orbit behavior constants
-const ORBIT_RADIUS = 300;      // Distance to orbit around target
-const ORBIT_SPEED = 50;        // Slow orbit speed (pixels per second)
-const APPROACH_SPEED = 40;     // Slow approach speed until orbit distance
-
 /**
  * Creates the AI system
  * @returns The system update function
@@ -255,14 +250,18 @@ function updateOrbitBehavior(eid: number, posX: number, posY: number, targetX: n
     // Determine orbit direction based on entity ID (some clockwise, some counter-clockwise)
     const orbitDirection = (eid % 2 === 0) ? 1 : -1;
 
-    if (dist > ORBIT_RADIUS + 20) {
+    const orbitRadius = GAME_CONFIG.ORBIT_RADIUS;
+    const orbitSpeed = GAME_CONFIG.ORBIT_SPEED;
+    const approachSpeed = GAME_CONFIG.ORBIT_APPROACH_SPEED;
+
+    if (dist > orbitRadius + 20) {
         // Phase 1: Approach slowly until reaching orbit distance
         // Move directly toward target at slow speed
         const dirX = dx / dist;
         const dirY = dy / dist;
 
-        Velocity.x[eid] = dirX * APPROACH_SPEED;
-        Velocity.y[eid] = dirY * APPROACH_SPEED;
+        Velocity.x[eid] = dirX * approachSpeed;
+        Velocity.y[eid] = dirY * approachSpeed;
     } else {
         // Phase 2: Orbit around target at fixed distance
         // Calculate tangent direction for circular motion
@@ -274,14 +273,14 @@ function updateOrbitBehavior(eid: number, posX: number, posY: number, targetX: n
         const tangentY = dirX * orbitDirection;
 
         // Also add slight inward/outward correction to maintain orbit radius
-        const radiusError = dist - ORBIT_RADIUS;
+        const radiusError = dist - orbitRadius;
         const correctionStrength = 0.3;
 
         // Add slight oscillation for more interesting movement
         const oscillation = Math.sin(gameTime * 0.5 + eid) * 0.1;
 
         // Combine tangent motion with radius correction
-        Velocity.x[eid] = (tangentX + dirX * radiusError * correctionStrength * 0.1 + oscillation * -dirY) * ORBIT_SPEED;
-        Velocity.y[eid] = (tangentY + dirY * radiusError * correctionStrength * 0.1 + oscillation * dirX) * ORBIT_SPEED;
+        Velocity.x[eid] = (tangentX + dirX * radiusError * correctionStrength * 0.1 + oscillation * -dirY) * orbitSpeed;
+        Velocity.y[eid] = (tangentY + dirY * radiusError * correctionStrength * 0.1 + oscillation * dirX) * orbitSpeed;
     }
 }
