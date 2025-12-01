@@ -12,7 +12,7 @@ import {
   decrementEntityCount
 } from '../ecs';
 import { Health, Shield, Turret, Position, Faction, SpriteRef } from '../ecs/components';
-import { SpriteManager, BeamRenderer, ParticleSystem, HealthBarRenderer, ScreenShake } from '../rendering';
+import { SpriteManager, BeamRenderer, ParticleSystem, HealthBarRenderer, ScreenShake, PlacementRenderer } from '../rendering';
 import { createRenderSystem, createMovementSystem, createCollisionSystem, CollisionSystem, createTargetingSystem, createCombatSystem, createDamageSystem, createAISystem, createProjectileSystem, TargetingSystem, CombatSystem, DamageSystem, SystemManager } from '../systems';
 import { GAME_CONFIG, LCARS_COLORS, GameEventType, EnemyKilledPayload } from '../types';
 import { SpatialHash } from '../collision';
@@ -63,6 +63,7 @@ export class Game {
   private audioManager: AudioManager;
   private eventBus: EventBus;
   private placementManager: PlacementManager | null = null;
+  private placementRenderer: PlacementRenderer | null = null;
   private gameOverScreen: GameOverScreen | null = null;
   private kobayashiMaruId: number = -1;
   private initialized: boolean = false;
@@ -202,8 +203,11 @@ export class Game {
     this.systemManager.register('projectile', this.projectileSystem, 60);
     this.systemManager.register('damage', this.damageSystem, 70, { requiresDelta: false });
 
-    // Initialize placement manager
-    this.placementManager = new PlacementManager(this.app, this.world, this.resourceManager);
+    // Initialize placement manager (pure logic)
+    this.placementManager = new PlacementManager(this.world, this.resourceManager);
+
+    // Initialize placement renderer (visual feedback)
+    this.placementRenderer = new PlacementRenderer(this.app, this.placementManager);
 
     // Initialize HUD manager
     if (this.hudManager) {
@@ -556,6 +560,9 @@ export class Game {
     // Unsubscribe from EventBus
     this.eventBus.off(GameEventType.ENEMY_KILLED, this.boundHandleEnemyKilled);
     this.scoreManager.unsubscribe();
+    if (this.placementRenderer) {
+      this.placementRenderer.destroy();
+    }
     if (this.placementManager) {
       this.placementManager.destroy();
     }

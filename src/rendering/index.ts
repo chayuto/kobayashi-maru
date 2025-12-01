@@ -8,3 +8,4 @@ export * from './effectPresets';
 export * from './HealthBarRenderer';
 export * from './ScreenShake';
 export * from './TextureCache';
+export * from './PlacementRenderer';
