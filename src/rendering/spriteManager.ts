@@ -3,7 +3,7 @@
  * Manages PixiJS ParticleContainer for high-performance rendering of 5,000+ entities at 60 FPS
  */
 import { Application, Texture, ParticleContainer, Particle } from 'pixi.js';
-import { FactionId } from '../types/constants';
+import { SpriteType } from '../types/constants';
 import { createFactionTextures, FactionTextures } from './textures';
 
 // Maximum number of particles supported
@@ -17,7 +17,7 @@ export class SpriteManager {
   private app: Application;
   private textures: FactionTextures | null = null;
   private containers: Map<number, ParticleContainer> = new Map();
-  private particles: Map<number, { particle: Particle; factionId: number }> = new Map();
+  private particles: Map<number, { particle: Particle; spriteType: number }> = new Map();
   private particlePool: Map<number, Particle[]> = new Map();
   private nextParticleIndex: number = 1; // Start at 1, 0 is reserved for "unset"
   private initialized: boolean = false;
@@ -37,30 +37,33 @@ export class SpriteManager {
     // Create faction textures
     this.textures = createFactionTextures(this.app);
 
-    // Create a ParticleContainer for each faction to handle different textures
-    this.createFactionContainers();
+    // Create a ParticleContainer for each sprite type to handle different textures
+    this.createSpriteContainers();
 
     this.initialized = true;
     console.log('SpriteManager initialized with ParticleContainer');
   }
 
   /**
-   * Create ParticleContainers for each faction
+   * Create ParticleContainers for each sprite type
    */
-  private createFactionContainers(): void {
+  private createSpriteContainers(): void {
     if (!this.textures) return;
 
     const factionTextures: Array<[number, Texture]> = [
-      [FactionId.FEDERATION, this.textures.federation],
-      [FactionId.KLINGON, this.textures.klingon],
-      [FactionId.ROMULAN, this.textures.romulan],
-      [FactionId.BORG, this.textures.borg],
-      [FactionId.THOLIAN, this.textures.tholian],
-      [FactionId.SPECIES_8472, this.textures.species8472],
-      [FactionId.PROJECTILE, this.textures.projectile]
+      [SpriteType.FEDERATION, this.textures.federation],
+      [SpriteType.KLINGON, this.textures.klingon],
+      [SpriteType.ROMULAN, this.textures.romulan],
+      [SpriteType.BORG, this.textures.borg],
+      [SpriteType.THOLIAN, this.textures.tholian],
+      [SpriteType.SPECIES_8472, this.textures.species8472],
+      [SpriteType.PROJECTILE, this.textures.projectile],
+      [SpriteType.TURRET_PHASER, this.textures.turretPhaser],
+      [SpriteType.TURRET_TORPEDO, this.textures.turretTorpedo],
+      [SpriteType.TURRET_DISRUPTOR, this.textures.turretDisruptor]
     ];
 
-    for (const [factionId, texture] of factionTextures) {
+    for (const [spriteType, texture] of factionTextures) {
       const container = new ParticleContainer({
         dynamicProperties: {
           position: true,
@@ -70,48 +73,54 @@ export class SpriteManager {
         }
       });
       container.texture = texture;
-      this.containers.set(factionId, container);
-      this.particlePool.set(factionId, []);
+      this.containers.set(spriteType, container);
+      this.particlePool.set(spriteType, []);
       this.app.stage.addChild(container);
     }
   }
 
   /**
-   * Get texture for a faction
+   * Get texture for a sprite type
    */
-  private getTextureForFaction(factionId: number): Texture | null {
+  private getTextureForType(spriteType: number): Texture | null {
     if (!this.textures) {
       return null;
     }
 
-    switch (factionId) {
-      case FactionId.FEDERATION:
+    switch (spriteType) {
+      case SpriteType.FEDERATION:
         return this.textures.federation;
-      case FactionId.KLINGON:
+      case SpriteType.KLINGON:
         return this.textures.klingon;
-      case FactionId.ROMULAN:
+      case SpriteType.ROMULAN:
         return this.textures.romulan;
-      case FactionId.BORG:
+      case SpriteType.BORG:
         return this.textures.borg;
-      case FactionId.THOLIAN:
+      case SpriteType.THOLIAN:
         return this.textures.tholian;
-      case FactionId.SPECIES_8472:
+      case SpriteType.SPECIES_8472:
         return this.textures.species8472;
-      case FactionId.PROJECTILE:
+      case SpriteType.PROJECTILE:
         return this.textures.projectile;
+      case SpriteType.TURRET_PHASER:
+        return this.textures.turretPhaser;
+      case SpriteType.TURRET_TORPEDO:
+        return this.textures.turretTorpedo;
+      case SpriteType.TURRET_DISRUPTOR:
+        return this.textures.turretDisruptor;
       default:
         return this.textures.federation;
     }
   }
 
   /**
-   * Create a particle for an entity with the correct faction texture
-   * @param factionId - The faction ID to determine texture
+   * Create a particle for an entity with the correct texture
+   * @param spriteType - The sprite type to determine texture
    * @param x - Initial X position
    * @param y - Initial Y position
    * @returns The particle index for referencing this particle
    */
-  createSprite(factionId: number, x: number = 0, y: number = 0): number {
+  createSprite(spriteType: number, x: number = 0, y: number = 0): number {
     if (!this.initialized || !this.textures) {
       console.warn('SpriteManager not initialized');
       return 0;
@@ -122,24 +131,24 @@ export class SpriteManager {
       return 0;
     }
 
-    // Get the container for this faction
-    const container = this.containers.get(factionId);
+    // Get the container for this sprite type
+    const container = this.containers.get(spriteType);
     if (!container) {
-      console.warn(`SpriteManager: No container for faction ${factionId}`);
+      console.warn(`SpriteManager: No container for sprite type ${spriteType}`);
       return 0;
     }
 
     let particle: Particle;
-    const pool = this.particlePool.get(factionId);
+    const pool = this.particlePool.get(spriteType);
 
     // Try to get a particle from the pool
     if (pool && pool.length > 0) {
       particle = pool.pop()!;
     } else {
       // Pool exhausted, create new particle
-      const texture = this.getTextureForFaction(factionId);
+      const texture = this.getTextureForType(spriteType);
       if (!texture) {
-        console.warn('SpriteManager: No texture for faction');
+        console.warn('SpriteManager: No texture for sprite type');
         return 0;
       }
       particle = new Particle({
@@ -158,7 +167,7 @@ export class SpriteManager {
 
     // Store particle with index
     const index = this.nextParticleIndex++;
-    this.particles.set(index, { particle, factionId });
+    this.particles.set(index, { particle, spriteType });
 
     return index;
   }
@@ -184,16 +193,16 @@ export class SpriteManager {
   removeSprite(index: number): void {
     const entry = this.particles.get(index);
     if (entry) {
-      const { particle, factionId } = entry;
+      const { particle, spriteType } = entry;
 
       // Remove from container
-      const container = this.containers.get(factionId);
+      const container = this.containers.get(spriteType);
       if (container) {
         container.removeParticle(particle);
       }
 
       // Return to pool
-      const pool = this.particlePool.get(factionId);
+      const pool = this.particlePool.get(spriteType);
       if (pool) {
         pool.push(particle);
       }

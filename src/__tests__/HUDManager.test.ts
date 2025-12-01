@@ -33,6 +33,11 @@ vi.mock('pixi.js', async () => {
     stroke = vi.fn().mockReturnThis();
     circle = vi.fn().mockReturnThis();
     destroy = vi.fn();
+    children: unknown[] = [];
+    addChild = vi.fn((child) => {
+      this.children.push(child);
+      return child;
+    });
   }
 
   // Mock Container class

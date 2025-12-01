@@ -4,7 +4,7 @@
  * Subscribes to PlacementManager events to render ghost sprite and range circle.
  */
 import { Application, Graphics, Container } from 'pixi.js';
-import { GAME_CONFIG, TURRET_CONFIG } from '../types/constants';
+import { GAME_CONFIG, TURRET_CONFIG, TurretType } from '../types/constants';
 import { PlacementManager, PlacementEvent } from '../game/PlacementManager';
 
 /**
@@ -123,12 +123,33 @@ export class PlacementRenderer {
   /**
    * Update the ghost sprite appearance based on turret type
    */
+  /**
+   * Update the ghost sprite appearance based on turret type
+   */
   private updateGhostAppearance(turretType: number): void {
     const config = TURRET_CONFIG[turretType];
 
     // Clear and redraw ghost
     this.ghostSprite.clear();
-    this.ghostSprite.circle(0, 0, 16);
+
+    // Draw shape based on turret type
+    switch (turretType) {
+      case TurretType.PHASER_ARRAY:
+        // Hexagon
+        this.drawPolygon(this.ghostSprite, 6, 16);
+        break;
+      case TurretType.TORPEDO_LAUNCHER:
+        // Octagon
+        this.drawPolygon(this.ghostSprite, 8, 16);
+        break;
+      case TurretType.DISRUPTOR_BANK:
+        // Pentagon (rotated)
+        this.drawPolygon(this.ghostSprite, 5, 16, -Math.PI / 2);
+        break;
+      default:
+        this.ghostSprite.circle(0, 0, 16);
+    }
+
     this.ghostSprite.fill({ color: 0x33CC99, alpha: 0.5 });
     this.ghostSprite.stroke({ color: 0x33CC99, width: 2, alpha: 0.8 });
 
@@ -136,6 +157,18 @@ export class PlacementRenderer {
     this.rangeCircle.clear();
     this.rangeCircle.circle(0, 0, config.range);
     this.rangeCircle.stroke({ color: 0x33CC99, width: 1, alpha: 0.3 });
+  }
+
+  /**
+   * Helper to draw regular polygons
+   */
+  private drawPolygon(graphics: Graphics, sides: number, radius: number, rotation: number = 0): void {
+    const points: number[] = [];
+    for (let i = 0; i < sides; i++) {
+      const angle = rotation + (i * 2 * Math.PI) / sides;
+      points.push(radius * Math.cos(angle), radius * Math.sin(angle));
+    }
+    graphics.poly(points);
   }
 
   /**
@@ -152,7 +185,22 @@ export class PlacementRenderer {
 
     // Update ghost
     this.ghostSprite.clear();
-    this.ghostSprite.circle(0, 0, 16);
+
+    // Draw shape based on turret type
+    switch (turretType) {
+      case TurretType.PHASER_ARRAY:
+        this.drawPolygon(this.ghostSprite, 6, 16);
+        break;
+      case TurretType.TORPEDO_LAUNCHER:
+        this.drawPolygon(this.ghostSprite, 8, 16);
+        break;
+      case TurretType.DISRUPTOR_BANK:
+        this.drawPolygon(this.ghostSprite, 5, 16, -Math.PI / 2);
+        break;
+      default:
+        this.ghostSprite.circle(0, 0, 16);
+    }
+
     this.ghostSprite.fill({ color, alpha: 0.5 });
     this.ghostSprite.stroke({ color, width: 2, alpha: 0.8 });
 

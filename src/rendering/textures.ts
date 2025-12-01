@@ -138,6 +138,81 @@ function createProjectileTexture(app: Application, color: number): RenderTexture
 }
 
 /**
+ * Generate a hexagon texture (Phaser Turret)
+ */
+function createHexagonTexture(app: Application, color: number): RenderTexture {
+  const graphics = new Graphics();
+  const radius = SHAPE_SIZE / 2;
+  const centerX = SHAPE_SIZE / 2;
+  const centerY = SHAPE_SIZE / 2;
+
+  graphics.moveTo(centerX + radius, centerY);
+  for (let i = 1; i <= 6; i++) {
+    const angle = (i * Math.PI) / 3;
+    graphics.lineTo(centerX + radius * Math.cos(angle), centerY + radius * Math.sin(angle));
+  }
+  graphics.fill({ color });
+  graphics.stroke({ color: 0xFFFFFF, width: 1, alpha: 0.5 });
+
+  const texture = RenderTexture.create({ width: SHAPE_SIZE, height: SHAPE_SIZE });
+  app.renderer.render({ container: graphics, target: texture });
+  graphics.destroy();
+
+  return texture;
+}
+
+/**
+ * Generate an octagon texture (Torpedo Turret)
+ */
+function createOctagonTexture(app: Application, color: number): RenderTexture {
+  const graphics = new Graphics();
+  const radius = SHAPE_SIZE / 2;
+  const centerX = SHAPE_SIZE / 2;
+  const centerY = SHAPE_SIZE / 2;
+
+  graphics.moveTo(centerX + radius, centerY);
+  for (let i = 1; i <= 8; i++) {
+    const angle = (i * Math.PI) / 4;
+    graphics.lineTo(centerX + radius * Math.cos(angle), centerY + radius * Math.sin(angle));
+  }
+  graphics.fill({ color });
+  graphics.stroke({ color: 0xFFFFFF, width: 1, alpha: 0.5 });
+
+  const texture = RenderTexture.create({ width: SHAPE_SIZE, height: SHAPE_SIZE });
+  app.renderer.render({ container: graphics, target: texture });
+  graphics.destroy();
+
+  return texture;
+}
+
+/**
+ * Generate a pentagon texture (Disruptor Turret)
+ */
+function createPentagonTexture(app: Application, color: number): RenderTexture {
+  const graphics = new Graphics();
+  const radius = SHAPE_SIZE / 2;
+  const centerX = SHAPE_SIZE / 2;
+  const centerY = SHAPE_SIZE / 2;
+
+  // Rotate -90 deg to point up
+  const startAngle = -Math.PI / 2;
+
+  graphics.moveTo(centerX + radius * Math.cos(startAngle), centerY + radius * Math.sin(startAngle));
+  for (let i = 1; i <= 5; i++) {
+    const angle = startAngle + (i * 2 * Math.PI) / 5;
+    graphics.lineTo(centerX + radius * Math.cos(angle), centerY + radius * Math.sin(angle));
+  }
+  graphics.fill({ color });
+  graphics.stroke({ color: 0xFFFFFF, width: 1, alpha: 0.5 });
+
+  const texture = RenderTexture.create({ width: SHAPE_SIZE, height: SHAPE_SIZE });
+  app.renderer.render({ container: graphics, target: texture });
+  graphics.destroy();
+
+  return texture;
+}
+
+/**
  * Texture atlas for all faction shapes
  */
 export interface FactionTextures {
@@ -148,6 +223,9 @@ export interface FactionTextures {
   tholian: Texture;
   species8472: Texture;
   projectile: Texture;
+  turretPhaser: Texture;
+  turretTorpedo: Texture;
+  turretDisruptor: Texture;
 }
 
 // Texture cache keys for each faction
@@ -158,7 +236,10 @@ const TEXTURE_KEYS = {
   borg: 'faction_borg',
   tholian: 'faction_tholian',
   species8472: 'faction_species8472',
-  projectile: 'faction_projectile'
+  projectile: 'faction_projectile',
+  turretPhaser: 'turret_phaser',
+  turretTorpedo: 'turret_torpedo',
+  turretDisruptor: 'turret_disruptor'
 } as const;
 
 /**
@@ -170,7 +251,7 @@ export function createFactionTextures(app: Application): FactionTextures {
 
   // Check if all textures are already cached using defined keys
   const allCached = Object.values(TEXTURE_KEYS).every(key => cache.has(key));
-  
+
   if (allCached) {
     return {
       federation: cache.get(TEXTURE_KEYS.federation)!,
@@ -179,7 +260,10 @@ export function createFactionTextures(app: Application): FactionTextures {
       borg: cache.get(TEXTURE_KEYS.borg)!,
       tholian: cache.get(TEXTURE_KEYS.tholian)!,
       species8472: cache.get(TEXTURE_KEYS.species8472)!,
-      projectile: cache.get(TEXTURE_KEYS.projectile)!
+      projectile: cache.get(TEXTURE_KEYS.projectile)!,
+      turretPhaser: cache.get(TEXTURE_KEYS.turretPhaser)!,
+      turretTorpedo: cache.get(TEXTURE_KEYS.turretTorpedo)!,
+      turretDisruptor: cache.get(TEXTURE_KEYS.turretDisruptor)!
     };
   }
 
@@ -191,6 +275,9 @@ export function createFactionTextures(app: Application): FactionTextures {
   const tholian = createDiamondTexture(app, FACTION_COLORS.THOLIAN);
   const species8472 = createYShapeTexture(app, FACTION_COLORS.SPECIES_8472);
   const projectile = createProjectileTexture(app, FACTION_COLORS.PROJECTILE);
+  const turretPhaser = createHexagonTexture(app, FACTION_COLORS.FEDERATION);
+  const turretTorpedo = createOctagonTexture(app, FACTION_COLORS.FEDERATION);
+  const turretDisruptor = createPentagonTexture(app, FACTION_COLORS.FEDERATION);
 
   cache.set(TEXTURE_KEYS.federation, federation);
   cache.set(TEXTURE_KEYS.klingon, klingon);
@@ -199,6 +286,9 @@ export function createFactionTextures(app: Application): FactionTextures {
   cache.set(TEXTURE_KEYS.tholian, tholian);
   cache.set(TEXTURE_KEYS.species8472, species8472);
   cache.set(TEXTURE_KEYS.projectile, projectile);
+  cache.set(TEXTURE_KEYS.turretPhaser, turretPhaser);
+  cache.set(TEXTURE_KEYS.turretTorpedo, turretTorpedo);
+  cache.set(TEXTURE_KEYS.turretDisruptor, turretDisruptor);
 
   return {
     federation,
@@ -207,6 +297,9 @@ export function createFactionTextures(app: Application): FactionTextures {
     borg,
     tholian,
     species8472,
-    projectile
+    projectile,
+    turretPhaser,
+    turretTorpedo,
+    turretDisruptor
   };
 }

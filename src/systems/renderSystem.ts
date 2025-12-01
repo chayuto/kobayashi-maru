@@ -2,8 +2,9 @@
  * Render System for Kobayashi Maru
  * A bitECS system that syncs entity positions to sprites using SpriteManager
  */
-import { defineQuery, defineSystem, IWorld, enterQuery, exitQuery } from 'bitecs';
-import { Position, Faction, SpriteRef } from '../ecs/components';
+import { defineQuery, defineSystem, IWorld, enterQuery, exitQuery, hasComponent } from 'bitecs';
+import { Position, Faction, SpriteRef, Turret, Projectile } from '../ecs/components';
+import { TurretType, SpriteType } from '../types/constants';
 import type { SpriteManager } from '../rendering/spriteManager';
 
 // Query for entities with Position, Faction, and SpriteRef components
@@ -26,10 +27,31 @@ export function createRenderSystem(spriteManager: SpriteManager) {
     for (const eid of enteredEntities) {
       // Check if sprite needs to be created (index is unset/placeholder)
       if (SpriteRef.index[eid] === SPRITE_INDEX_UNSET) {
-        const factionId = Faction.id[eid];
+        let spriteType = Faction.id[eid]; // Default to faction ID
+
+        // Override for Turrets
+        if (hasComponent(world, Turret, eid)) {
+          const turretType = Turret.turretType[eid];
+          switch (turretType) {
+            case TurretType.PHASER_ARRAY:
+              spriteType = SpriteType.TURRET_PHASER;
+              break;
+            case TurretType.TORPEDO_LAUNCHER:
+              spriteType = SpriteType.TURRET_TORPEDO;
+              break;
+            case TurretType.DISRUPTOR_BANK:
+              spriteType = SpriteType.TURRET_DISRUPTOR;
+              break;
+          }
+        }
+        // Override for Projectiles
+        else if (hasComponent(world, Projectile, eid)) {
+          spriteType = SpriteType.PROJECTILE;
+        }
+
         const x = Position.x[eid];
         const y = Position.y[eid];
-        const spriteIndex = spriteManager.createSprite(factionId, x, y);
+        const spriteIndex = spriteManager.createSprite(spriteType, x, y);
         SpriteRef.index[eid] = spriteIndex;
       }
     }

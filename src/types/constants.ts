@@ -33,6 +33,27 @@ export const FactionId = {
 
 export type FactionIdType = typeof FactionId[keyof typeof FactionId];
 
+// Sprite Types for rendering (decoupled from FactionId)
+export const SpriteType = {
+  // Factions (map 1:1 to FactionId for convenience)
+  FEDERATION: 0,
+  KLINGON: 1,
+  ROMULAN: 2,
+  BORG: 3,
+  THOLIAN: 4,
+  SPECIES_8472: 5,
+
+  // Turrets
+  TURRET_PHASER: 10,
+  TURRET_TORPEDO: 11,
+  TURRET_DISRUPTOR: 12,
+
+  // Projectiles
+  PROJECTILE: 99
+} as const;
+
+export type SpriteTypeId = typeof SpriteType[keyof typeof SpriteType];
+
 // Game configuration
 export const GAME_CONFIG = {
   TARGET_FPS: 60,
