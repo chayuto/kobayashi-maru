@@ -1,10 +1,8 @@
 /**
  * Placement Manager for Kobayashi Maru
- * Handles turret placement logic with mouse/touch input.
- * Note: This is a "Manager" not an ECS "System" because it handles
- * UI/input events and doesn't process entities in bulk.
+ * Pure logic class for turret placement - no rendering dependencies.
+ * Handles placement state, validation, and turret creation.
  */
-import { Application, Graphics, Container } from 'pixi.js';
 import { GAME_CONFIG, TURRET_CONFIG, TurretType } from '../types/constants';
 import { Position, Turret } from '../ecs/components';
 import { createTurret } from '../ecs/entityFactory';
@@ -25,67 +23,47 @@ export enum PlacementState {
 }
 
 /**
- * Event types emitted by the placement system
+ * Event types emitted by the placement manager
  */
-export type PlacementEventType = 'start' | 'cancel' | 'placed' | 'invalid';
+export type PlacementEventType = 'start' | 'cancel' | 'placed' | 'invalid' | 'cursorMove';
 
 export interface PlacementEvent {
   type: PlacementEventType;
   turretType?: number;
   x?: number;
   y?: number;
+  isValid?: boolean;
   reason?: string;
 }
 
 type PlacementListener = (event: PlacementEvent) => void;
 
 /**
- * Manages turret placement with visual preview
+ * Result of a placement attempt
+ */
+export interface PlacementResult {
+  success: boolean;
+  entityId: number;
+  reason?: string;
+}
+
+/**
+ * Manages turret placement logic (pure logic, no rendering)
  */
 export class PlacementManager {
-  private app: Application;
   private world: GameWorld;
   private resourceManager: ResourceManager;
   private state: PlacementState = PlacementState.IDLE;
   private currentTurretType: number = TurretType.PHASER_ARRAY;
-  private previewContainer: Container;
-  private ghostSprite: Graphics;
-  private rangeCircle: Graphics;
   private cursorX: number = 0;
   private cursorY: number = 0;
   private isValidPosition: boolean = false;
   private listeners: Map<PlacementEventType, PlacementListener[]>;
-  private boundMouseMove: (e: MouseEvent) => void;
-  private boundMouseClick: (e: MouseEvent) => void;
-  private boundTouchMove: (e: TouchEvent) => void;
-  private boundTouchEnd: (e: TouchEvent) => void;
-  private boundKeyDown: (e: KeyboardEvent) => void;
 
-  constructor(app: Application, world: GameWorld, resourceManager: ResourceManager) {
-    this.app = app;
+  constructor(world: GameWorld, resourceManager: ResourceManager) {
     this.world = world;
     this.resourceManager = resourceManager;
     this.listeners = new Map();
-
-    // Create preview container
-    this.previewContainer = new Container();
-    this.previewContainer.visible = false;
-    this.app.stage.addChild(this.previewContainer);
-
-    // Create ghost sprite (simple circle for now)
-    this.ghostSprite = new Graphics();
-    this.previewContainer.addChild(this.ghostSprite);
-
-    // Create range circle
-    this.rangeCircle = new Graphics();
-    this.previewContainer.addChild(this.rangeCircle);
-
-    // Bind event handlers
-    this.boundMouseMove = this.handleMouseMove.bind(this);
-    this.boundMouseClick = this.handleMouseClick.bind(this);
-    this.boundTouchMove = this.handleTouchMove.bind(this);
-    this.boundTouchEnd = this.handleTouchEnd.bind(this);
-    this.boundKeyDown = this.handleKeyDown.bind(this);
   }
 
   /**
@@ -99,20 +77,6 @@ export class PlacementManager {
 
     this.currentTurretType = turretType;
     this.state = PlacementState.PLACING;
-    this.previewContainer.visible = true;
-
-    // Update ghost appearance
-    this.updateGhostAppearance();
-
-    // Add event listeners
-    const canvas = this.app.canvas;
-    if (canvas) {
-      canvas.addEventListener('mousemove', this.boundMouseMove);
-      canvas.addEventListener('click', this.boundMouseClick);
-      canvas.addEventListener('touchmove', this.boundTouchMove, { passive: false });
-      canvas.addEventListener('touchend', this.boundTouchEnd);
-    }
-    document.addEventListener('keydown', this.boundKeyDown);
 
     this.emit('start', { type: 'start', turretType });
 
@@ -121,161 +85,35 @@ export class PlacementManager {
   }
 
   /**
-   * Confirm placement at current position
-   * @returns Entity ID if placement was successful, -1 otherwise
+   * Update the cursor position during placement
+   * @param x - World X coordinate
+   * @param y - World Y coordinate
    */
-  confirmPlacement(): number {
+  updateCursorPosition(x: number, y: number): void {
     if (this.state !== PlacementState.PLACING) {
-      return -1;
-    }
-
-    if (!this.isValidPosition) {
-      this.emit('invalid', {
-        type: 'invalid',
-        turretType: this.currentTurretType,
-        x: this.cursorX,
-        y: this.cursorY,
-        reason: 'Invalid placement position'
-      });
-      // Play error sound
-      AudioManager.getInstance().play(SoundType.ERROR_BEEP, { volume: 0.5 });
-      return -1;
-    }
-
-    const config = TURRET_CONFIG[this.currentTurretType];
-    if (!this.resourceManager.canAfford(config.cost)) {
-      this.emit('invalid', {
-        type: 'invalid',
-        turretType: this.currentTurretType,
-        x: this.cursorX,
-        y: this.cursorY,
-        reason: 'Insufficient resources'
-      });
-      // Play error sound
-      AudioManager.getInstance().play(SoundType.ERROR_BEEP, { volume: 0.5 });
-      return -1;
-    }
-
-    // Deduct resources
-    this.resourceManager.spendResources(config.cost);
-
-    // Play placement sound
-    AudioManager.getInstance().play(SoundType.TURRET_PLACE, { volume: 0.6 });
-
-    // Create turret
-    const eid = createTurret(this.world, this.cursorX, this.cursorY, this.currentTurretType);
-
-    this.emit('placed', {
-      type: 'placed',
-      turretType: this.currentTurretType,
-      x: this.cursorX,
-      y: this.cursorY
-    });
-
-    // Exit placement mode
-    this.cancelPlacement();
-
-    return eid;
-  }
-
-  /**
-   * Cancel placement mode
-   */
-  cancelPlacement(): void {
-    if (this.state === PlacementState.IDLE) {
       return;
     }
 
-    this.state = PlacementState.IDLE;
-    this.previewContainer.visible = false;
+    this.cursorX = x;
+    this.cursorY = y;
+    this.isValidPosition = this.validatePosition(x, y);
 
-    // Remove event listeners
-    const canvas = this.app.canvas;
-    if (canvas) {
-      canvas.removeEventListener('mousemove', this.boundMouseMove);
-      canvas.removeEventListener('click', this.boundMouseClick);
-      canvas.removeEventListener('touchmove', this.boundTouchMove);
-      canvas.removeEventListener('touchend', this.boundTouchEnd);
-    }
-    document.removeEventListener('keydown', this.boundKeyDown);
-
-    this.emit('cancel', { type: 'cancel', turretType: this.currentTurretType });
-  }
-
-  /**
-   * Check if currently in placement mode
-   */
-  isPlacing(): boolean {
-    return this.state === PlacementState.PLACING;
-  }
-
-  /**
-   * Get the currently selected turret type
-   */
-  getCurrentTurretType(): number {
-    return this.currentTurretType;
-  }
-
-  /**
-   * Get current cursor position
-   */
-  getCursorPosition(): { x: number; y: number } {
-    return { x: this.cursorX, y: this.cursorY };
-  }
-
-  /**
-   * Check if current position is valid
-   */
-  isCurrentPositionValid(): boolean {
-    return this.isValidPosition;
-  }
-
-  /**
-   * Update the ghost sprite appearance based on turret type
-   */
-  private updateGhostAppearance(): void {
-    const config = TURRET_CONFIG[this.currentTurretType];
-
-    // Clear and redraw ghost
-    this.ghostSprite.clear();
-    this.ghostSprite.circle(0, 0, 16);
-    this.ghostSprite.fill({ color: 0x33CC99, alpha: 0.5 });
-    this.ghostSprite.stroke({ color: 0x33CC99, width: 2, alpha: 0.8 });
-
-    // Clear and redraw range circle
-    this.rangeCircle.clear();
-    this.rangeCircle.circle(0, 0, config.range);
-    this.rangeCircle.stroke({ color: 0x33CC99, width: 1, alpha: 0.3 });
-  }
-
-  /**
-   * Update the preview position and validity visual
-   */
-  private updatePreview(): void {
-    this.previewContainer.position.set(this.cursorX, this.cursorY);
-
-    // Update validity visual
-    const validColor = 0x33CC99;  // Green
-    const invalidColor = 0xDD4444; // Red
-    const color = this.isValidPosition ? validColor : invalidColor;
-    const config = TURRET_CONFIG[this.currentTurretType];
-
-    // Update ghost
-    this.ghostSprite.clear();
-    this.ghostSprite.circle(0, 0, 16);
-    this.ghostSprite.fill({ color, alpha: 0.5 });
-    this.ghostSprite.stroke({ color, width: 2, alpha: 0.8 });
-
-    // Update range circle
-    this.rangeCircle.clear();
-    this.rangeCircle.circle(0, 0, config.range);
-    this.rangeCircle.stroke({ color, width: 1, alpha: 0.3 });
+    this.emit('cursorMove', {
+      type: 'cursorMove',
+      turretType: this.currentTurretType,
+      x: this.cursorX,
+      y: this.cursorY,
+      isValid: this.isValidPosition
+    });
   }
 
   /**
    * Validate if position is valid for turret placement
+   * @param x - World X coordinate
+   * @param y - World Y coordinate
+   * @returns True if position is valid
    */
-  private validatePosition(x: number, y: number): boolean {
+  validatePosition(x: number, y: number): boolean {
     // Check bounds (with margin)
     const margin = 32;
     if (x < margin || x > GAME_CONFIG.WORLD_WIDTH - margin ||
@@ -306,74 +144,128 @@ export class PlacementManager {
   }
 
   /**
-   * Convert screen coordinates to world coordinates
+   * Attempt to place a turret at specified position
+   * @param x - World X coordinate
+   * @param y - World Y coordinate
+   * @returns PlacementResult indicating success/failure
    */
-  private screenToWorld(screenX: number, screenY: number): { x: number; y: number } {
-    const canvas = this.app.canvas;
-    if (!canvas) {
-      return { x: 0, y: 0 };
+  placeTurret(x: number, y: number): PlacementResult {
+    if (this.state !== PlacementState.PLACING) {
+      return { success: false, entityId: -1, reason: 'Not in placement mode' };
     }
-    const rect = canvas.getBoundingClientRect();
-    // Use displayed size (rect) instead of internal canvas dimensions
-    // This properly handles CSS scaling and device pixel ratio
-    const displayWidth = rect.width || 1;
-    const displayHeight = rect.height || 1;
-    const scaleX = GAME_CONFIG.WORLD_WIDTH / displayWidth;
-    const scaleY = GAME_CONFIG.WORLD_HEIGHT / displayHeight;
 
-    return {
-      x: (screenX - rect.left) * scaleX,
-      y: (screenY - rect.top) * scaleY
-    };
-  }
-
-  /**
-   * Handle mouse move events
-   */
-  private handleMouseMove(e: MouseEvent): void {
-    const pos = this.screenToWorld(e.clientX, e.clientY);
-    this.cursorX = pos.x;
-    this.cursorY = pos.y;
-    this.isValidPosition = this.validatePosition(this.cursorX, this.cursorY);
-    this.updatePreview();
-  }
-
-  /**
-   * Handle mouse click events
-   */
-  private handleMouseClick(): void {
-    this.confirmPlacement();
-  }
-
-  /**
-   * Handle touch move events
-   */
-  private handleTouchMove(e: TouchEvent): void {
-    e.preventDefault(); // Prevent default browser behaviors like scrolling
-    if (e.touches.length > 0) {
-      const touch = e.touches[0];
-      const pos = this.screenToWorld(touch.clientX, touch.clientY);
-      this.cursorX = pos.x;
-      this.cursorY = pos.y;
-      this.isValidPosition = this.validatePosition(this.cursorX, this.cursorY);
-      this.updatePreview();
+    if (!this.validatePosition(x, y)) {
+      this.emit('invalid', {
+        type: 'invalid',
+        turretType: this.currentTurretType,
+        x,
+        y,
+        reason: 'Invalid placement position'
+      });
+      // Play error sound
+      AudioManager.getInstance().play(SoundType.ERROR_BEEP, { volume: 0.5 });
+      return { success: false, entityId: -1, reason: 'Invalid placement position' };
     }
-  }
 
-  /**
-   * Handle touch end events
-   */
-  private handleTouchEnd(): void {
-    this.confirmPlacement();
-  }
-
-  /**
-   * Handle keyboard events
-   */
-  private handleKeyDown(e: KeyboardEvent): void {
-    if (e.key === 'Escape') {
-      this.cancelPlacement();
+    const config = TURRET_CONFIG[this.currentTurretType];
+    if (!this.resourceManager.canAfford(config.cost)) {
+      this.emit('invalid', {
+        type: 'invalid',
+        turretType: this.currentTurretType,
+        x,
+        y,
+        reason: 'Insufficient resources'
+      });
+      // Play error sound
+      AudioManager.getInstance().play(SoundType.ERROR_BEEP, { volume: 0.5 });
+      return { success: false, entityId: -1, reason: 'Insufficient resources' };
     }
+
+    // Deduct resources
+    this.resourceManager.spendResources(config.cost);
+
+    // Play placement sound
+    AudioManager.getInstance().play(SoundType.TURRET_PLACE, { volume: 0.6 });
+
+    // Create turret
+    const eid = createTurret(this.world, x, y, this.currentTurretType);
+
+    this.emit('placed', {
+      type: 'placed',
+      turretType: this.currentTurretType,
+      x,
+      y
+    });
+
+    // Exit placement mode
+    this.cancelPlacement();
+
+    return { success: true, entityId: eid };
+  }
+
+  /**
+   * Confirm placement at current cursor position
+   * @returns Entity ID if placement was successful, -1 otherwise
+   */
+  confirmPlacement(): number {
+    const result = this.placeTurret(this.cursorX, this.cursorY);
+    return result.entityId;
+  }
+
+  /**
+   * Cancel placement mode
+   */
+  cancelPlacement(): void {
+    if (this.state === PlacementState.IDLE) {
+      return;
+    }
+
+    const turretType = this.currentTurretType;
+    this.state = PlacementState.IDLE;
+
+    this.emit('cancel', { type: 'cancel', turretType });
+  }
+
+  /**
+   * Check if currently in placement mode
+   */
+  isPlacing(): boolean {
+    return this.state === PlacementState.PLACING;
+  }
+
+  /**
+   * Get current placement state
+   */
+  getState(): PlacementState {
+    return this.state;
+  }
+
+  /**
+   * Get the currently selected turret type
+   */
+  getCurrentTurretType(): number {
+    return this.currentTurretType;
+  }
+
+  /**
+   * Get current cursor position
+   */
+  getCursorPosition(): { x: number; y: number } {
+    return { x: this.cursorX, y: this.cursorY };
+  }
+
+  /**
+   * Check if current position is valid
+   */
+  isCurrentPositionValid(): boolean {
+    return this.isValidPosition;
+  }
+
+  /**
+   * Get the turret configuration for the current type
+   */
+  getCurrentTurretConfig() {
+    return TURRET_CONFIG[this.currentTurretType];
   }
 
   /**
@@ -414,6 +306,6 @@ export class PlacementManager {
    */
   destroy(): void {
     this.cancelPlacement();
-    this.previewContainer.destroy({ children: true });
+    this.listeners.clear();
   }
 }
