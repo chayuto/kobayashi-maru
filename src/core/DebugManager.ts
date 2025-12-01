@@ -136,18 +136,10 @@ export class DebugManager {
         if (!this.container) return;
 
         const width = window.innerWidth;
-        const height = window.innerHeight;
-        const isPortrait = height > width;
 
         // Calculate scale factor matching ResponsiveUIManager logic
-        let scaleFactor: number;
-        if (width < 768 || (width < 1024 && isPortrait)) {
-            scaleFactor = 0.8;
-        } else if (width < 1024) {
-            scaleFactor = 0.8;
-        } else {
-            scaleFactor = 1.0;
-        }
+        // Mobile/tablet (< 1024px) uses 0.8x scale, desktop uses 1.0x
+        const scaleFactor = width < 1024 ? 0.8 : 1.0;
 
         // Apply CSS transform for scaling
         this.container.style.transform = `scale(${scaleFactor})`;
