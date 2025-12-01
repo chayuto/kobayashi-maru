@@ -119,8 +119,9 @@ export class HUDManager {
 
     const scale = this.responsiveUIManager.getScaleFactor();
     const padding = UI_STYLES.PADDING * scale;
-    const width = window.innerWidth; // Use window width for HUD positioning
-    const height = window.innerHeight;
+    // Use game world dimensions instead of window dimensions for HUD positioning
+    const width = GAME_CONFIG.WORLD_WIDTH;
+    const height = GAME_CONFIG.WORLD_HEIGHT;
 
     // Scale container based on device type if needed, or just scale elements
     // For now, let's just reposition panels based on new width/height

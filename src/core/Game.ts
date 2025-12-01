@@ -78,9 +78,12 @@ export class Game {
   private initialized: boolean = false;
   private gameTime: number = 0; // Total game time in seconds
   private previousKMHealth: number = 0;
-  // Bound event handler for cleanup
+  // Bound event handlers for cleanup
   private boundHandleEnemyKilled: (payload: EnemyKilledPayload) => void;
+  private boundHandleWaveStarted: (payload: any) => void;
+  private boundHandleWaveCompleted: (payload: any) => void;
   private boundHandleKeyDown: (e: KeyboardEvent) => void;
+  private killCount: number = 0;
 
   constructor(containerId: string = 'app') {
     const container = document.getElementById(containerId);
@@ -109,6 +112,8 @@ export class Game {
 
     // Bind event handlers
     this.boundHandleEnemyKilled = this.handleEnemyKilled.bind(this);
+    this.boundHandleWaveStarted = this.handleWaveStarted.bind(this);
+    this.boundHandleWaveCompleted = this.handleWaveCompleted.bind(this);
     this.boundHandleKeyDown = this.handleKeyDown.bind(this);
   }
 
@@ -295,6 +300,8 @@ export class Game {
     // This handles: wave manager tracking, score manager kills, and resource rewards
     // Note: ScoreManager now automatically subscribes to ENEMY_KILLED via EventBus
     this.eventBus.on(GameEventType.ENEMY_KILLED, this.boundHandleEnemyKilled);
+    this.eventBus.on(GameEventType.WAVE_STARTED, this.boundHandleWaveStarted);
+    this.eventBus.on(GameEventType.WAVE_COMPLETED, this.boundHandleWaveCompleted);
 
     // Start playing and wave 1
     this.gameState.setState(GameStateType.PLAYING);
@@ -311,6 +318,34 @@ export class Game {
     this.waveManager.removeEnemy(payload.entityId);
     // Award resources (ScoreManager handles kill counting via its own EventBus subscription)
     this.resourceManager.addResources(GAME_CONFIG.RESOURCE_REWARD);
+    // Add message to log
+    this.killCount++;
+    if (this.hudManager) {
+      this.hudManager.addLogMessage(`Enemy destroyed (+${GAME_CONFIG.RESOURCE_REWARD} matter)`, 'kill');
+    }
+  }
+
+  /**
+   * Handle WAVE_STARTED event from EventBus
+   * Displays wave start message in the log
+   */
+  private handleWaveStarted(payload: any): void {
+    if (this.hudManager) {
+      this.hudManager.addLogMessage(`⚠ Wave ${payload.waveNumber} started!`, 'wave');
+      if (payload.totalEnemies) {
+        this.hudManager.addLogMessage(`${payload.totalEnemies} enemies incoming`, 'warning');
+      }
+    }
+  }
+
+  /**
+   * Handle WAVE_COMPLETED event from EventBus
+   * Displays wave completion message in the log
+   */
+  private handleWaveCompleted(payload: any): void {
+    if (this.hudManager) {
+      this.hudManager.addLogMessage(`✓ Wave ${payload.waveNumber} complete!`, 'wave');
+    }
   }
 
   /**
@@ -586,6 +621,7 @@ export class Game {
     // Reset all managers
     this.scoreManager.reset();
     this.resourceManager.reset();
+    this.killCount = 0;
     this.waveManager.reset();
     this.gameTime = 0;
 
@@ -677,6 +713,8 @@ export class Game {
     window.removeEventListener('keydown', this.boundHandleKeyDown);
     // Unsubscribe from EventBus
     this.eventBus.off(GameEventType.ENEMY_KILLED, this.boundHandleEnemyKilled);
+    this.eventBus.off(GameEventType.WAVE_STARTED, this.boundHandleWaveStarted);
+    this.eventBus.off(GameEventType.WAVE_COMPLETED, this.boundHandleWaveCompleted);
     this.scoreManager.unsubscribe();
     if (this.placementRenderer) {
       this.placementRenderer.destroy();
