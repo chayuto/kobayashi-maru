@@ -28,7 +28,8 @@ export const FactionId = {
   BORG: 3,
   THOLIAN: 4,
   SPECIES_8472: 5,
-  PROJECTILE: 99 // Special faction for rendering projectiles
+  PROJECTILE: 99,          // Special faction for friendly projectiles
+  ENEMY_PROJECTILE: 98     // Special faction for enemy projectiles
 } as const;
 
 export type FactionIdType = typeof FactionId[keyof typeof FactionId];
@@ -49,7 +50,8 @@ export const SpriteType = {
   TURRET_DISRUPTOR: 12,
 
   // Projectiles
-  PROJECTILE: 99
+  PROJECTILE: 99,
+  ENEMY_PROJECTILE: 98
 } as const;
 
 export type SpriteTypeId = typeof SpriteType[keyof typeof SpriteType];
@@ -89,7 +91,8 @@ export const AIBehaviorType = {
   STRAFE: 1,      // Side-to-side movement while approaching (Romulan)
   FLANK: 2,       // Circle around to attack from side (Tholian)
   SWARM: 3,       // Move as group toward nearest threat (Borg)
-  HUNTER: 4       // Aggressive pursuit, targets turrets (Species 8472)
+  HUNTER: 4,      // Aggressive pursuit, targets turrets (Species 8472)
+  ORBIT: 5        // Slow approach, then orbit at fixed distance and shoot (Tholian alternate)
 } as const;
 
 export type AIBehaviorTypeId = typeof AIBehaviorType[keyof typeof AIBehaviorType];

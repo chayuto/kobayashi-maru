@@ -13,3 +13,5 @@ export * from './projectileSystem';
 export * from './statusEffectSystem';
 export * from './SystemManager';
 export * from './enemyCollisionSystem';
+export * from './enemyCombatSystem';
+export * from './enemyProjectileSystem';
