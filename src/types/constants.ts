@@ -28,7 +28,8 @@ export const FactionId = {
   BORG: 3,
   THOLIAN: 4,
   SPECIES_8472: 5,
-  PROJECTILE: 99 // Special faction for rendering projectiles
+  PROJECTILE: 99,          // Special faction for friendly projectiles
+  ENEMY_PROJECTILE: 98     // Special faction for enemy projectiles
 } as const;
 
 export type FactionIdType = typeof FactionId[keyof typeof FactionId];
@@ -49,7 +50,8 @@ export const SpriteType = {
   TURRET_DISRUPTOR: 12,
 
   // Projectiles
-  PROJECTILE: 99
+  PROJECTILE: 99,
+  ENEMY_PROJECTILE: 98
 } as const;
 
 export type SpriteTypeId = typeof SpriteType[keyof typeof SpriteType];
@@ -68,7 +70,14 @@ export const GAME_CONFIG = {
   ENEMY_COLLISION_RADIUS: 40,   // Collision radius for enemy-ship collision
   ENEMY_COLLISION_DAMAGE: 25,   // Damage dealt by enemy on collision
   // Slow mode settings
-  SLOW_MODE_MULTIPLIER: 0.5     // Speed multiplier when slow mode is enabled
+  SLOW_MODE_MULTIPLIER: 0.5,    // Speed multiplier when slow mode is enabled
+  // Orbit behavior settings
+  ORBIT_RADIUS: 300,            // Distance to orbit around target (pixels)
+  ORBIT_SPEED: 50,              // Slow orbit speed (pixels per second)
+  ORBIT_APPROACH_SPEED: 40,     // Slow approach speed until orbit distance
+  // Collision radii for entities
+  KOBAYASHI_MARU_RADIUS: 40,    // Collision radius for Kobayashi Maru
+  TURRET_RADIUS: 20             // Collision radius for turrets
 } as const;
 
 // Turret type IDs
@@ -89,7 +98,8 @@ export const AIBehaviorType = {
   STRAFE: 1,      // Side-to-side movement while approaching (Romulan)
   FLANK: 2,       // Circle around to attack from side (Tholian)
   SWARM: 3,       // Move as group toward nearest threat (Borg)
-  HUNTER: 4       // Aggressive pursuit, targets turrets (Species 8472)
+  HUNTER: 4,      // Aggressive pursuit, targets turrets (Species 8472)
+  ORBIT: 5        // Slow approach, then orbit at fixed distance and shoot (Tholian alternate)
 } as const;
 
 export type AIBehaviorTypeId = typeof AIBehaviorType[keyof typeof AIBehaviorType];

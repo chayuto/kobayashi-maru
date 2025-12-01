@@ -3,7 +3,7 @@
  * Creates pre-configured entities with appropriate components
  */
 import { addEntity, addComponent } from 'bitecs';
-import { Position, Velocity, Faction, SpriteRef, Health, Shield, Turret, Target, AIBehavior, Projectile, Collider, WeaponProperties } from './components';
+import { Position, Velocity, Faction, SpriteRef, Health, Shield, Turret, Target, AIBehavior, Projectile, Collider, WeaponProperties, EnemyWeapon } from './components';
 import { FactionId, TurretType, TURRET_CONFIG, AIBehaviorType, ProjectileType, PROJECTILE_CONFIG } from '../types/constants';
 import type { GameWorld } from './world';
 import { incrementEntityCount } from './world';
@@ -205,11 +205,19 @@ export function createTholianShip(world: GameWorld, x: number, y: number): numbe
   Shield.current[eid] = 40;
   Shield.max[eid] = 40;
 
-  // Tholian AI: Flank attack, tactical
+  // Tholian AI: Orbit behavior - slow approach, then circle around and shoot
   addComponent(world, AIBehavior, eid);
-  AIBehavior.behaviorType[eid] = AIBehaviorType.FLANK;
+  AIBehavior.behaviorType[eid] = AIBehaviorType.ORBIT;
   AIBehavior.aggression[eid] = 0.5;
   AIBehavior.stateTimer[eid] = 0;
+
+  // Tholian weapon: Slow firing disruptor bolt
+  addComponent(world, EnemyWeapon, eid);
+  EnemyWeapon.range[eid] = 350;        // Can shoot while orbiting
+  EnemyWeapon.fireRate[eid] = 0.5;     // 1 shot every 2 seconds
+  EnemyWeapon.damage[eid] = 15;        // Moderate damage
+  EnemyWeapon.lastFired[eid] = 0;
+  EnemyWeapon.projectileType[eid] = ProjectileType.DISRUPTOR_BOLT;
 
   incrementEntityCount();
   return eid;
@@ -440,6 +448,69 @@ export function createProjectile(
   Collider.radius[eid] = config.size;
   Collider.layer[eid] = 2; // Projectile layer (need to define layers properly later)
   Collider.mask[eid] = 1;  // Collides with enemies (layer 1)
+
+  incrementEntityCount();
+  return eid;
+}
+
+/**
+ * Creates an enemy projectile entity (fired by enemies toward Kobayashi Maru/turrets)
+ * @param world - The ECS world
+ * @param x - Starting X position
+ * @param y - Starting Y position
+ * @param targetX - Target X position
+ * @param targetY - Target Y position
+ * @param damage - Damage to deal on impact
+ * @param projectileType - Type of projectile
+ * @returns Entity ID
+ */
+export function createEnemyProjectile(
+  world: GameWorld,
+  x: number,
+  y: number,
+  targetX: number,
+  targetY: number,
+  damage: number,
+  projectileType: number
+): number {
+  const eid = addEntity(world);
+
+  addComponent(world, Position, eid);
+  Position.x[eid] = x;
+  Position.y[eid] = y;
+
+  addComponent(world, Velocity, eid);
+
+  addComponent(world, Projectile, eid);
+  Projectile.damage[eid] = damage;
+  Projectile.projectileType[eid] = projectileType;
+  Projectile.targetEntityId[eid] = 0; // No homing for enemy projectiles
+
+  // Set config based on type
+  const config = PROJECTILE_CONFIG[projectileType] || PROJECTILE_CONFIG[ProjectileType.DISRUPTOR_BOLT];
+  Projectile.speed[eid] = config.speed;
+  Projectile.lifetime[eid] = config.lifetime;
+
+  // Calculate initial velocity toward target
+  const dx = targetX - x;
+  const dy = targetY - y;
+  const dist = Math.sqrt(dx * dx + dy * dy);
+
+  if (dist > 0) {
+    Velocity.x[eid] = (dx / dist) * config.speed;
+    Velocity.y[eid] = (dy / dist) * config.speed;
+  }
+
+  addComponent(world, Faction, eid);
+  Faction.id[eid] = FactionId.ENEMY_PROJECTILE; // Enemy projectile faction
+
+  addComponent(world, SpriteRef, eid);
+  SpriteRef.index[eid] = PLACEHOLDER_SPRITE_INDEX;
+
+  addComponent(world, Collider, eid);
+  Collider.radius[eid] = config.size;
+  Collider.layer[eid] = 3; // Enemy projectile layer
+  Collider.mask[eid] = 0;  // Federation entities (layer 0)
 
   incrementEntityCount();
   return eid;

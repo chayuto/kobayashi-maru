@@ -7,7 +7,7 @@ import { createGameWorld, GameWorld } from '../ecs/world';
 import { addEntity, addComponent } from 'bitecs';
 import { Position, Velocity, AIBehavior, Faction, Turret } from '../ecs/components';
 import { createAISystem } from '../systems/aiSystem';
-import { AIBehaviorType } from '../types/constants';
+import { AIBehaviorType, GAME_CONFIG } from '../types/constants';
 
 describe('AI System', () => {
     let world: GameWorld;
@@ -92,5 +92,56 @@ describe('AI System', () => {
         const angle = Math.atan2(Velocity.y[hunterId], Velocity.x[hunterId]);
         const expectedAngle = Math.atan2(100, 100);
         expect(angle).toBeCloseTo(expectedAngle, 1);
+    });
+
+    it('should approach target slowly for Orbit behavior when far away', () => {
+        const eid = addEntity(world);
+        addComponent(world, Position, eid);
+        addComponent(world, Velocity, eid);
+        addComponent(world, AIBehavior, eid);
+        addComponent(world, Faction, eid);
+
+        // Position far from center (outside orbit radius)
+        Position.x[eid] = 100;
+        Position.y[eid] = 100;
+        Velocity.x[eid] = 0;
+        Velocity.y[eid] = 0;
+        AIBehavior.behaviorType[eid] = AIBehaviorType.ORBIT;
+        AIBehavior.aggression[eid] = 0.5;
+
+        aiSystem(world, 0.016, 0);
+
+        // Should move toward center (960, 540) slowly
+        expect(Velocity.x[eid]).toBeGreaterThan(0);
+        expect(Velocity.y[eid]).toBeGreaterThan(0);
+
+        // Speed should be slow (approach speed from config)
+        const speed = Math.sqrt(Velocity.x[eid] * Velocity.x[eid] + Velocity.y[eid] * Velocity.y[eid]);
+        expect(speed).toBeCloseTo(GAME_CONFIG.ORBIT_APPROACH_SPEED, 1);
+    });
+
+    it('should orbit around target for Orbit behavior when at orbit distance', () => {
+        const eid = addEntity(world);
+        addComponent(world, Position, eid);
+        addComponent(world, Velocity, eid);
+        addComponent(world, AIBehavior, eid);
+        addComponent(world, Faction, eid);
+
+        // Position at orbit distance from center
+        const centerX = GAME_CONFIG.WORLD_WIDTH / 2;
+        const centerY = GAME_CONFIG.WORLD_HEIGHT / 2;
+        Position.x[eid] = centerX + GAME_CONFIG.ORBIT_RADIUS; // At orbit radius
+        Position.y[eid] = centerY;
+        Velocity.x[eid] = 0;
+        Velocity.y[eid] = 0;
+        AIBehavior.behaviorType[eid] = AIBehaviorType.ORBIT;
+        AIBehavior.aggression[eid] = 0.5;
+
+        aiSystem(world, 0.016, 0);
+
+        // Should have tangential velocity (perpendicular to radius)
+        // At position directly east of center, tangential is north/south
+        // So Y velocity should be non-zero, X velocity should be small
+        expect(Math.abs(Velocity.y[eid])).toBeGreaterThan(Math.abs(Velocity.x[eid]) * 0.5);
     });
 });

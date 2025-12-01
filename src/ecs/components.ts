@@ -78,6 +78,15 @@ export const Projectile = defineComponent({
   projectileType: Types.ui8 // Type (torpedo, etc.)
 });
 
+// EnemyWeapon component - for enemies that can shoot projectiles
+export const EnemyWeapon = defineComponent({
+  range: Types.f32,        // Range at which enemy can shoot
+  fireRate: Types.f32,     // Shots per second
+  damage: Types.f32,       // Damage per shot
+  lastFired: Types.f32,    // Timestamp of last shot (in seconds)
+  projectileType: Types.ui8 // Type of projectile (uses ProjectileType)
+});
+
 // ============================================================================
 // STATUS EFFECT COMPONENTS
 // ============================================================================

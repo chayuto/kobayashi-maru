@@ -72,6 +72,11 @@ export function createAISystem() {
                     updateDirectBehavior(eid, posX, posY, targetX, targetY);
                     break;
                 }
+
+                case AIBehaviorType.ORBIT:
+                    // Slow approach then orbit around target
+                    updateOrbitBehavior(eid, posX, posY, targetX, targetY, gameTime);
+                    break;
             }
         }
     };
@@ -229,4 +234,53 @@ function findNearestTurret(x: number, y: number, turrets: number[]): number {
     }
 
     return nearestEid;
+}
+
+/**
+ * Updates velocity for Orbit behavior
+ * Slow approach to orbit distance, then circle around target
+ */
+function updateOrbitBehavior(eid: number, posX: number, posY: number, targetX: number, targetY: number, gameTime: number) {
+    const dx = targetX - posX;
+    const dy = targetY - posY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    if (dist <= 0) return;
+
+    // Determine orbit direction based on entity ID (some clockwise, some counter-clockwise)
+    const orbitDirection = (eid % 2 === 0) ? 1 : -1;
+
+    const orbitRadius = GAME_CONFIG.ORBIT_RADIUS;
+    const orbitSpeed = GAME_CONFIG.ORBIT_SPEED;
+    const approachSpeed = GAME_CONFIG.ORBIT_APPROACH_SPEED;
+
+    if (dist > orbitRadius + 20) {
+        // Phase 1: Approach slowly until reaching orbit distance
+        // Move directly toward target at slow speed
+        const dirX = dx / dist;
+        const dirY = dy / dist;
+
+        Velocity.x[eid] = dirX * approachSpeed;
+        Velocity.y[eid] = dirY * approachSpeed;
+    } else {
+        // Phase 2: Orbit around target at fixed distance
+        // Calculate tangent direction for circular motion
+        const dirX = dx / dist;
+        const dirY = dy / dist;
+
+        // Perpendicular (tangent) direction for orbit
+        const tangentX = -dirY * orbitDirection;
+        const tangentY = dirX * orbitDirection;
+
+        // Also add slight inward/outward correction to maintain orbit radius
+        const radiusError = dist - orbitRadius;
+        const correctionStrength = 0.3;
+
+        // Add slight oscillation for more interesting movement
+        const oscillation = Math.sin(gameTime * 0.5 + eid) * 0.1;
+
+        // Combine tangent motion with radius correction
+        Velocity.x[eid] = (tangentX + dirX * radiusError * correctionStrength * 0.1 + oscillation * -dirY) * orbitSpeed;
+        Velocity.y[eid] = (tangentY + dirY * radiusError * correctionStrength * 0.1 + oscillation * dirX) * orbitSpeed;
+    }
 }

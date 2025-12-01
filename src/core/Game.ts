@@ -13,7 +13,7 @@ import {
 } from '../ecs';
 import { Health, Shield, Turret, Position, Faction, SpriteRef } from '../ecs/components';
 import { SpriteManager, BeamRenderer, ParticleSystem, HealthBarRenderer, ScreenShake, PlacementRenderer } from '../rendering';
-import { createRenderSystem, createMovementSystem, createCollisionSystem, CollisionSystem, createTargetingSystem, createCombatSystem, createDamageSystem, createAISystem, createProjectileSystem, statusEffectSystem, TargetingSystem, CombatSystem, DamageSystem, SystemManager, createEnemyCollisionSystem, EnemyCollisionSystem } from '../systems';
+import { createRenderSystem, createMovementSystem, createCollisionSystem, CollisionSystem, createTargetingSystem, createCombatSystem, createDamageSystem, createAISystem, createProjectileSystem, statusEffectSystem, TargetingSystem, CombatSystem, DamageSystem, SystemManager, createEnemyCollisionSystem, EnemyCollisionSystem, createEnemyCombatSystem, EnemyCombatSystem, createEnemyProjectileSystem, EnemyProjectileSystem } from '../systems';
 
 import { GAME_CONFIG, LCARS_COLORS, GameEventType, EnemyKilledPayload, WaveStartedPayload, WaveCompletedPayload } from '../types';
 import { SpatialHash } from '../collision';
@@ -51,6 +51,8 @@ export class Game {
   private projectileSystem: ReturnType<typeof createProjectileSystem> | null = null;
   private aiSystem: ReturnType<typeof createAISystem> | null = null;
   private enemyCollisionSystem: EnemyCollisionSystem | null = null;
+  private enemyCombatSystem: EnemyCombatSystem | null = null;
+  private enemyProjectileSystem: EnemyProjectileSystem | null = null;
   private systemManager: SystemManager;
   private spatialHash: SpatialHash | null = null;
   private debugManager: DebugManager | null = null;
@@ -235,6 +237,17 @@ export class Game {
       () => this.kobayashiMaruId
     );
 
+    // Initialize enemy combat system (for enemies that shoot projectiles)
+    this.enemyCombatSystem = createEnemyCombatSystem(
+      () => this.kobayashiMaruId
+    );
+
+    // Initialize enemy projectile system (handles enemy projectile collisions)
+    this.enemyProjectileSystem = createEnemyProjectileSystem(
+      this.spatialHash,
+      () => this.kobayashiMaruId
+    );
+
     // Register systems with SystemManager in execution order
     // Lower priority numbers run first
     this.systemManager.register('collision', this.collisionSystem, 10, { requiresDelta: false });
@@ -244,7 +257,9 @@ export class Game {
     this.systemManager.register('enemy-collision', this.enemyCollisionSystem, 38, { requiresDelta: false }); // Check enemy collisions after movement
     this.systemManager.register('targeting', this.targetingSystem, 40, { requiresDelta: false });
     this.systemManager.register('combat', this.combatSystem, 50, { requiresGameTime: true });
+    this.systemManager.register('enemy-combat', this.enemyCombatSystem, 55, { requiresGameTime: true }); // Enemy shooting after player combat
     this.systemManager.register('projectile', this.projectileSystem, 60);
+    this.systemManager.register('enemy-projectile', this.enemyProjectileSystem, 62); // Enemy projectile collisions after friendly projectiles
     this.systemManager.register('damage', this.damageSystem, 70, { requiresDelta: false });
 
     // Initialize placement manager (pure logic)
