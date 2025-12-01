@@ -21,6 +21,7 @@ import { Starfield } from '../rendering/Starfield';
 
 import { DebugManager } from './DebugManager';
 import { TouchInputManager } from './TouchInputManager';
+import { InputManager } from './InputManager';
 import { PerformanceMonitor } from './PerformanceMonitor';
 import { QualityManager } from './QualityManager';
 import { HapticManager } from './HapticManager';
@@ -52,6 +53,7 @@ export class Game {
   private spatialHash: SpatialHash | null = null;
   private debugManager: DebugManager | null = null;
   private touchInputManager: TouchInputManager | null = null;
+  private inputManager: InputManager;
   private hudManager: HUDManager | null = null;
   private starfield: Starfield | null = null;
   private beamRenderer: BeamRenderer | null = null;
@@ -101,6 +103,7 @@ export class Game {
     this.audioManager = AudioManager.getInstance();
     this.eventBus = EventBus.getInstance();
     this.systemManager = new SystemManager();
+    this.inputManager = new InputManager();
 
     // Bind event handlers
     this.boundHandleEnemyKilled = this.handleEnemyKilled.bind(this);
@@ -131,6 +134,9 @@ export class Game {
     // Initialize touch input manager
     this.touchInputManager = new TouchInputManager(this.app);
     this.touchInputManager.init();
+
+    // Initialize input manager
+    this.inputManager.init(this.app.canvas);
 
     // Handle window resize
     window.addEventListener('resize', this.handleResize.bind(this));
@@ -602,6 +608,7 @@ export class Game {
     if (this.touchInputManager) {
       this.touchInputManager.destroy();
     }
+    this.inputManager.destroy();
     this.app.destroy(true);
     this.initialized = false;
   }
@@ -724,5 +731,13 @@ export class Game {
    */
   getHapticManager(): HapticManager {
     return this.hapticManager;
+  }
+
+  /**
+   * Get the input manager
+   * @returns The input manager instance
+   */
+  getInputManager(): InputManager {
+    return this.inputManager;
   }
 }
