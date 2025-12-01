@@ -13,7 +13,7 @@ import {
 } from '../ecs';
 import { Health, Shield, Turret, Position, Faction, SpriteRef } from '../ecs/components';
 import { SpriteManager, BeamRenderer, ParticleSystem, HealthBarRenderer, ScreenShake, PlacementRenderer } from '../rendering';
-import { createRenderSystem, createMovementSystem, createCollisionSystem, CollisionSystem, createTargetingSystem, createCombatSystem, createDamageSystem, createAISystem, createProjectileSystem, statusEffectSystem, TargetingSystem, CombatSystem, DamageSystem, SystemManager } from '../systems';
+import { createRenderSystem, createMovementSystem, createCollisionSystem, CollisionSystem, createTargetingSystem, createCombatSystem, createDamageSystem, createAISystem, createProjectileSystem, statusEffectSystem, TargetingSystem, CombatSystem, DamageSystem, SystemManager, createEnemyCollisionSystem, EnemyCollisionSystem } from '../systems';
 
 import { GAME_CONFIG, LCARS_COLORS, GameEventType, EnemyKilledPayload, WaveStartedPayload, WaveCompletedPayload } from '../types';
 import { SpatialHash } from '../collision';
@@ -50,6 +50,7 @@ export class Game {
   private damageSystem: DamageSystem | null = null;
   private projectileSystem: ReturnType<typeof createProjectileSystem> | null = null;
   private aiSystem: ReturnType<typeof createAISystem> | null = null;
+  private enemyCollisionSystem: EnemyCollisionSystem | null = null;
   private systemManager: SystemManager;
   private spatialHash: SpatialHash | null = null;
   private debugManager: DebugManager | null = null;
@@ -85,6 +86,9 @@ export class Game {
   private boundHandleWaveCompleted: (payload: WaveCompletedPayload) => void;
   private boundHandleKeyDown: (e: KeyboardEvent) => void;
   private killCount: number = 0;
+  // God mode and slow mode settings
+  private godModeEnabled: boolean = false;
+  private slowModeEnabled: boolean = false;
 
   constructor(containerId: string = 'app') {
     const container = document.getElementById(containerId);
@@ -199,8 +203,8 @@ export class Game {
     // Create the render system with the sprite manager
     this.renderSystem = createRenderSystem(this.spriteManager);
 
-    // Create the movement system
-    this.movementSystem = createMovementSystem();
+    // Create the movement system with speed multiplier support for slow mode
+    this.movementSystem = createMovementSystem(() => this.getSpeedMultiplier());
 
     // Initialize spatial hash for collision detection
     this.spatialHash = new SpatialHash(
@@ -225,12 +229,19 @@ export class Game {
     // Initialize projectile system
     this.projectileSystem = createProjectileSystem(this.spatialHash);
 
+    // Initialize enemy collision system
+    this.enemyCollisionSystem = createEnemyCollisionSystem(
+      this.particleSystem,
+      () => this.kobayashiMaruId
+    );
+
     // Register systems with SystemManager in execution order
     // Lower priority numbers run first
     this.systemManager.register('collision', this.collisionSystem, 10, { requiresDelta: false });
     this.systemManager.register('ai', this.aiSystem, 20, { requiresGameTime: true });
     this.systemManager.register('movement', this.movementSystem, 30);
     this.systemManager.register('status-effects', statusEffectSystem, 35); // Process status effects after movement
+    this.systemManager.register('enemy-collision', this.enemyCollisionSystem, 38, { requiresDelta: false }); // Check enemy collisions after movement
     this.systemManager.register('targeting', this.targetingSystem, 40, { requiresDelta: false });
     this.systemManager.register('combat', this.combatSystem, 50, { requiresGameTime: true });
     this.systemManager.register('projectile', this.projectileSystem, 60);
@@ -244,7 +255,7 @@ export class Game {
 
     // Initialize HUD manager
     if (this.hudManager) {
-      this.hudManager.init(this.app);
+      this.hudManager.init(this.app, this);
 
       // Connect Turret Menu to Placement Manager
       const turretMenu = this.hudManager.getTurretMenu();
@@ -566,6 +577,11 @@ export class Game {
    * Checks if the Kobayashi Maru has been destroyed and triggers game over
    */
   private checkGameOver(): void {
+    // Skip game over check if god mode is enabled
+    if (this.godModeEnabled) {
+      return;
+    }
+
     if (this.kobayashiMaruId === -1) {
       return;
     }
@@ -685,6 +701,68 @@ export class Game {
    */
   isPaused(): boolean {
     return this.gameState.isPaused();
+  }
+
+  /**
+   * Enable or disable god mode
+   * @param enabled - Whether god mode should be enabled
+   */
+  setGodMode(enabled: boolean): void {
+    this.godModeEnabled = enabled;
+    console.log(`God mode ${enabled ? 'enabled' : 'disabled'}`);
+  }
+
+  /**
+   * Toggle god mode on/off
+   * @returns The new god mode state
+   */
+  toggleGodMode(): boolean {
+    this.godModeEnabled = !this.godModeEnabled;
+    console.log(`God mode ${this.godModeEnabled ? 'enabled' : 'disabled'}`);
+    return this.godModeEnabled;
+  }
+
+  /**
+   * Check if god mode is enabled
+   * @returns Whether god mode is enabled
+   */
+  isGodModeEnabled(): boolean {
+    return this.godModeEnabled;
+  }
+
+  /**
+   * Enable or disable slow mode (half speed for all enemies)
+   * @param enabled - Whether slow mode should be enabled
+   */
+  setSlowMode(enabled: boolean): void {
+    this.slowModeEnabled = enabled;
+    console.log(`Slow mode ${enabled ? 'enabled' : 'disabled'}`);
+  }
+
+  /**
+   * Toggle slow mode on/off
+   * @returns The new slow mode state
+   */
+  toggleSlowMode(): boolean {
+    this.slowModeEnabled = !this.slowModeEnabled;
+    console.log(`Slow mode ${this.slowModeEnabled ? 'enabled' : 'disabled'}`);
+    return this.slowModeEnabled;
+  }
+
+  /**
+   * Check if slow mode is enabled
+   * @returns Whether slow mode is enabled
+   */
+  isSlowModeEnabled(): boolean {
+    return this.slowModeEnabled;
+  }
+
+  /**
+   * Get the slow mode speed multiplier
+   * @returns The speed multiplier (1.0 if slow mode disabled, 0.5 if enabled)
+   */
+  getSpeedMultiplier(): number {
+    return this.slowModeEnabled ? GAME_CONFIG.SLOW_MODE_MULTIPLIER : 1.0;
   }
 
   /**

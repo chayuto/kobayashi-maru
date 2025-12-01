@@ -63,7 +63,12 @@ export const GAME_CONFIG = {
   COLLISION_CELL_SIZE: 64,  // Cell size for spatial hash (2x typical entity radius)
   MIN_TURRET_DISTANCE: 64,  // Minimum distance between turrets in pixels
   INITIAL_RESOURCES: 500,   // Starting resource amount
-  RESOURCE_REWARD: 10       // Resources gained per enemy kill
+  RESOURCE_REWARD: 10,      // Resources gained per enemy kill
+  // Enemy collision settings
+  ENEMY_COLLISION_RADIUS: 40,   // Collision radius for enemy-ship collision
+  ENEMY_COLLISION_DAMAGE: 25,   // Damage dealt by enemy on collision
+  // Slow mode settings
+  SLOW_MODE_MULTIPLIER: 0.5     // Speed multiplier when slow mode is enabled
 } as const;
 
 // Turret type IDs
