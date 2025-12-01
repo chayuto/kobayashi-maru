@@ -43,7 +43,7 @@ export class DebugManager {
     private killsElement: HTMLElement | null = null;
     private enemiesElement: HTMLElement | null = null;
     private resourcesElement: HTMLElement | null = null;
-    private isVisible: boolean = true;
+    private isVisible: boolean = false;
 
     constructor() {
         this.initialize();
@@ -52,6 +52,8 @@ export class DebugManager {
     private initialize(): void {
         this.container = document.createElement('div');
         this.container.className = 'debug-overlay';
+        // Start hidden by default
+        this.container.style.display = 'none';
 
         // Performance section
         const perfSection = this.createSection('SYSTEM');
@@ -121,6 +123,27 @@ export class DebugManager {
                 this.toggle();
             }
         });
+
+        // Handle window resize for responsive scaling
+        window.addEventListener('resize', this.handleResize.bind(this));
+        this.handleResize();
+    }
+
+    /**
+     * Handle window resize to scale the debug overlay
+     */
+    private handleResize(): void {
+        if (!this.container) return;
+
+        const width = window.innerWidth;
+
+        // Calculate scale factor matching ResponsiveUIManager logic
+        // Mobile/tablet (< 1024px) uses 0.8x scale, desktop uses 1.0x
+        const scaleFactor = width < 1024 ? 0.8 : 1.0;
+
+        // Apply CSS transform for scaling
+        this.container.style.transform = `scale(${scaleFactor})`;
+        this.container.style.transformOrigin = 'top left';
     }
 
     /**
