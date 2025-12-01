@@ -7,12 +7,15 @@ import { Health } from '../ecs/components';
 import { FactionId } from '../types/constants';
 import { createDamageSystem } from '../systems/damageSystem';
 import type { GameWorld } from '../ecs/world';
+import { EventBus } from '../core/EventBus';
 
 describe('Damage System', () => {
   let world: GameWorld;
   let damageSystem: ReturnType<typeof createDamageSystem>;
 
   beforeEach(() => {
+    // Reset EventBus to ensure clean state between tests
+    EventBus.resetInstance();
     world = createGameWorld();
     damageSystem = createDamageSystem();
   });
@@ -171,6 +174,52 @@ describe('Damage System', () => {
       // Both should be removed
       expect(getEntityCount()).toBe(initialCount - 2);
       expect(callback).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('EventBus integration', () => {
+    it('should emit ENEMY_KILLED event when enemy is destroyed', async () => {
+      const { GameEventType } = await import('../types/events');
+      const eventBus = EventBus.getInstance();
+      const eventHandler = vi.fn();
+      
+      eventBus.on(GameEventType.ENEMY_KILLED, eventHandler);
+      
+      // Create enemy
+      const enemyId = createKlingonShip(world, 500, 500);
+      
+      // Set health to 0
+      Health.current[enemyId] = 0;
+      
+      // Run damage system
+      damageSystem.update(world);
+      
+      // EventBus handler should be called with correct payload
+      expect(eventHandler).toHaveBeenCalledTimes(1);
+      expect(eventHandler).toHaveBeenCalledWith(expect.objectContaining({
+        entityId: enemyId,
+        factionId: FactionId.KLINGON
+      }));
+    });
+
+    it('should not emit ENEMY_KILLED event for Federation death', async () => {
+      const { GameEventType } = await import('../types/events');
+      const eventBus = EventBus.getInstance();
+      const eventHandler = vi.fn();
+      
+      eventBus.on(GameEventType.ENEMY_KILLED, eventHandler);
+      
+      // Create federation ship
+      const shipId = createFederationShip(world, 500, 500);
+      
+      // Set health to 0
+      Health.current[shipId] = 0;
+      
+      // Run damage system
+      damageSystem.update(world);
+      
+      // EventBus handler should not be called for Federation
+      expect(eventHandler).not.toHaveBeenCalled();
     });
   });
 });

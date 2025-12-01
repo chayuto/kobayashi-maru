@@ -1,15 +1,24 @@
 /**
  * Tests for Score Manager System
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { ScoreManager } from '../game/scoreManager';
 import { FactionId } from '../types/constants';
+import { EventBus } from '../core/EventBus';
+import { GameEventType } from '../types/events';
 
 describe('ScoreManager', () => {
   let scoreManager: ScoreManager;
 
   beforeEach(() => {
+    // Reset EventBus to ensure clean state
+    EventBus.resetInstance();
     scoreManager = new ScoreManager();
+  });
+
+  afterEach(() => {
+    // Clean up subscriptions
+    scoreManager.unsubscribe();
   });
 
   describe('initial state', () => {
@@ -155,6 +164,74 @@ describe('ScoreManager', () => {
       scoreManager.reset();
       scoreManager.update(50);
       expect(scoreManager.getTimeSurvived()).toBe(50);
+    });
+  });
+
+  describe('EventBus integration', () => {
+    it('should increment kills when ENEMY_KILLED event is emitted', () => {
+      const eventBus = EventBus.getInstance();
+
+      eventBus.emit(GameEventType.ENEMY_KILLED, {
+        entityId: 1,
+        factionId: FactionId.KLINGON,
+        x: 100,
+        y: 200
+      });
+
+      expect(scoreManager.getEnemiesDefeated()).toBe(1);
+      expect(scoreManager.getKillsByFaction(FactionId.KLINGON)).toBe(1);
+    });
+
+    it('should update wave reached when WAVE_COMPLETED event is emitted', () => {
+      const eventBus = EventBus.getInstance();
+
+      eventBus.emit(GameEventType.WAVE_COMPLETED, { waveNumber: 5 });
+
+      expect(scoreManager.getWaveReached()).toBe(5);
+    });
+
+    it('should handle multiple ENEMY_KILLED events', () => {
+      const eventBus = EventBus.getInstance();
+
+      eventBus.emit(GameEventType.ENEMY_KILLED, {
+        entityId: 1,
+        factionId: FactionId.KLINGON,
+        x: 100,
+        y: 200
+      });
+
+      eventBus.emit(GameEventType.ENEMY_KILLED, {
+        entityId: 2,
+        factionId: FactionId.ROMULAN,
+        x: 150,
+        y: 250
+      });
+
+      eventBus.emit(GameEventType.ENEMY_KILLED, {
+        entityId: 3,
+        factionId: FactionId.KLINGON,
+        x: 200,
+        y: 300
+      });
+
+      expect(scoreManager.getEnemiesDefeated()).toBe(3);
+      expect(scoreManager.getKillsByFaction(FactionId.KLINGON)).toBe(2);
+      expect(scoreManager.getKillsByFaction(FactionId.ROMULAN)).toBe(1);
+    });
+
+    it('should not receive events after unsubscribe', () => {
+      const eventBus = EventBus.getInstance();
+
+      scoreManager.unsubscribe();
+
+      eventBus.emit(GameEventType.ENEMY_KILLED, {
+        entityId: 1,
+        factionId: FactionId.KLINGON,
+        x: 100,
+        y: 200
+      });
+
+      expect(scoreManager.getEnemiesDefeated()).toBe(0);
     });
   });
 });
