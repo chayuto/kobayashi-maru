@@ -143,7 +143,7 @@ export class DebugManager {
 
         // Apply CSS transform for scaling
         this.container.style.transform = `scale(${scaleFactor})`;
-        this.container.style.transformOrigin = 'top left';
+        this.container.style.transformOrigin = 'top right'; // Changed from 'top left'
     }
 
     /**
@@ -152,12 +152,12 @@ export class DebugManager {
     private createSection(label: string): HTMLElement {
         const section = document.createElement('div');
         section.className = 'debug-section';
-        
+
         const header = document.createElement('div');
         header.className = 'section-header';
         header.textContent = label;
         section.appendChild(header);
-        
+
         return section;
     }
 
@@ -221,23 +221,23 @@ export class DebugManager {
             // Add color coding for game state
             this.gameStateElement.className = `stat-highlight ${this.getStateClassName(stats.gameState)}`;
         }
-        
+
         if (this.waveElement) {
             this.waveElement.textContent = `Wave: ${stats.waveNumber} (${stats.waveState})`;
         }
-        
+
         if (this.timeElement) {
             this.timeElement.textContent = `Time: ${this.formatTime(stats.timeSurvived)}`;
         }
-        
+
         if (this.killsElement) {
             this.killsElement.textContent = `Kills: ${stats.enemiesDefeated}`;
         }
-        
+
         if (this.enemiesElement) {
             this.enemiesElement.textContent = `Active Enemies: ${stats.activeEnemies}`;
         }
-        
+
         if (this.resourcesElement) {
             this.resourcesElement.textContent = `Matter: ${stats.resources}`;
         }

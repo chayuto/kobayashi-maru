@@ -113,6 +113,8 @@ export const TURRET_CONFIG: Record<number, {
   health: number;
   shield: number;
   name: string;
+  description: string;  // What the weapon does
+  special?: string;     // Special ability description
 }> = {
   [TurretType.PHASER_ARRAY]: {
     range: 200,
@@ -121,7 +123,9 @@ export const TURRET_CONFIG: Record<number, {
     cost: 100,
     health: 50,
     shield: 25,
-    name: 'Phaser Array'
+    name: 'Phaser Array',
+    description: 'Fast-firing energy weapon',
+    special: 'High fire rate, good for swarms'
   },
   [TurretType.TORPEDO_LAUNCHER]: {
     range: 350,
@@ -130,7 +134,9 @@ export const TURRET_CONFIG: Record<number, {
     cost: 200,
     health: 75,
     shield: 40,
-    name: 'Torpedo Launcher'
+    name: 'Torpedo Launcher',
+    description: 'Long-range heavy damage',
+    special: 'Highest damage, longest range'
   },
   [TurretType.DISRUPTOR_BANK]: {
     range: 250,
@@ -139,7 +145,9 @@ export const TURRET_CONFIG: Record<number, {
     cost: 150,
     health: 60,
     shield: 30,
-    name: 'Disruptor Bank'
+    name: 'Disruptor Bank',
+    description: 'Balanced beam weapon',
+    special: 'Good all-rounder'
   },
   [TurretType.TETRYON_BEAM]: {
     range: 220,
@@ -148,7 +156,9 @@ export const TURRET_CONFIG: Record<number, {
     cost: 150,
     health: 55,
     shield: 28,
-    name: 'Tetryon Beam'
+    name: 'Tetryon Beam',
+    description: 'Shield-stripping weapon',
+    special: '3x damage to shields, 0.5x to hull'
   },
   [TurretType.PLASMA_CANNON]: {
     range: 200,
@@ -157,7 +167,9 @@ export const TURRET_CONFIG: Record<number, {
     cost: 180,
     health: 65,
     shield: 35,
-    name: 'Plasma Cannon'
+    name: 'Plasma Cannon',
+    description: 'Burning projectile weapon',
+    special: 'Applies burning (4 dmg/sec × 5s)'
   },
   [TurretType.POLARON_BEAM]: {
     range: 230,
@@ -166,7 +178,9 @@ export const TURRET_CONFIG: Record<number, {
     cost: 160,
     health: 58,
     shield: 32,
-    name: 'Polaron Beam'
+    name: 'Polaron Beam',
+    description: 'Power-draining weapon',
+    special: 'Stacking slow (max 3, 10% each)'
   }
 };
 

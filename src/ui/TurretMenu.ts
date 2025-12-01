@@ -22,8 +22,8 @@ export class TurretMenu {
      */
     private createMenu(): void {
         const padding = UI_STYLES.PADDING;
-        const buttonWidth = 180;
-        const buttonHeight = 80; // Increased for touch targets
+        const buttonWidth = 240; // Increased width for more content
+        const buttonHeight = 95; // Increased height for description
         const startY = 0; // Buttons start at top of menu container
 
         // Create a button for each turret type
@@ -45,22 +45,61 @@ export class TurretMenu {
             // Turret Name
             const nameStyle = new TextStyle({
                 fontFamily: UI_STYLES.FONT_FAMILY,
-                fontSize: UI_STYLES.FONT_SIZE_MEDIUM, // Increased from SMALL
+                fontSize: UI_STYLES.FONT_SIZE_MEDIUM,
                 fill: UI_STYLES.COLORS.SECONDARY,
                 fontWeight: 'bold'
             });
             const nameText = new Text({ text: config.name, style: nameStyle });
-            nameText.position.set(10, 10);
+            nameText.position.set(10, 8);
             button.addChild(nameText);
+
+            // Description
+            const descStyle = new TextStyle({
+                fontFamily: UI_STYLES.FONT_FAMILY,
+                fontSize: 11,
+                fill: 0xCCCCCC,
+                wordWrap: true,
+                wordWrapWidth: buttonWidth - 20
+            });
+            const descText = new Text({ text: config.description, style: descStyle });
+            descText.position.set(10, 28);
+            button.addChild(descText);
+
+            // Stats (Damage/Range/Rate)
+            const statsStyle = new TextStyle({
+                fontFamily: UI_STYLES.FONT_FAMILY,
+                fontSize: 10,
+                fill: 0x99CCFF
+            });
+            const statsText = new Text({
+                text: `DMG:${config.damage} RNG:${config.range} RATE:${config.fireRate}/s`,
+                style: statsStyle
+            });
+            statsText.position.set(10, 46);
+            button.addChild(statsText);
+
+            // Special ability (if exists)
+            if (config.special) {
+                const specialStyle = new TextStyle({
+                    fontFamily: UI_STYLES.FONT_FAMILY,
+                    fontSize: 10,
+                    fill: UI_STYLES.COLORS.PRIMARY,
+                    fontStyle: 'italic'
+                });
+                const specialText = new Text({ text: `• ${config.special}`, style: specialStyle });
+                specialText.position.set(10, 60);
+                button.addChild(specialText);
+            }
 
             // Cost
             const costStyle = new TextStyle({
                 fontFamily: UI_STYLES.FONT_FAMILY,
-                fontSize: UI_STYLES.FONT_SIZE_LARGE, // Increased from MEDIUM
-                fill: UI_STYLES.COLORS.PRIMARY
+                fontSize: UI_STYLES.FONT_SIZE_MEDIUM,
+                fill: UI_STYLES.COLORS.PRIMARY,
+                fontWeight: 'bold'
             });
             const costText = new Text({ text: `${config.cost} M`, style: costStyle });
-            costText.position.set(10, 40); // Adjusted Y position
+            costText.position.set(buttonWidth - 60, 8); // Top right
             button.addChild(costText);
 
             // Interactivity
@@ -102,17 +141,24 @@ export class TurretMenu {
             const canAfford = resources >= config.cost;
             const bg = button.children[0] as Graphics;
             const nameText = button.children[1] as Text;
-            const costText = button.children[2] as Text;
+            const descText = button.children[2] as Text;
+            const statsText = button.children[3] as Text;
+            // Child 4 or 5 is special text (if exists), child 5 or 6 is cost
+            const costText = button.children[button.children.length - 1] as Text;
 
             if (canAfford) {
                 bg.stroke({ color: UI_STYLES.COLORS.SECONDARY, width: 2 });
                 nameText.style.fill = UI_STYLES.COLORS.SECONDARY;
+                descText.style.fill = 0xCCCCCC;
+                statsText.style.fill = 0x99CCFF;
                 costText.style.fill = UI_STYLES.COLORS.PRIMARY;
                 button.cursor = 'pointer';
                 button.alpha = 1;
             } else {
                 bg.stroke({ color: 0x666666, width: 2 });
                 nameText.style.fill = 0x888888;
+                descText.style.fill = 0x666666;
+                statsText.style.fill = 0x666666;
                 costText.style.fill = 0x888888;
                 button.cursor = 'not-allowed';
                 button.alpha = 0.7;

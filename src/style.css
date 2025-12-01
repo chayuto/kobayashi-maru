@@ -1,7 +1,7 @@
 .debug-overlay {
   position: absolute;
   top: 10px;
-  left: 10px;
+  right: 10px;  /* Changed from left to right */
   background-color: rgba(0, 0, 0, 0.85);
   color: #99CCFF; /* LCARS Galaxy Blue */
   padding: 12px;
@@ -12,6 +12,7 @@
   pointer-events: none; /* Allow clicks to pass through */
   z-index: 1000; /* Ensure it's on top */
   min-width: 180px;
+  max-width: 250px; /* Add max-width to keep it contained */
 }
 
 .debug-section {
