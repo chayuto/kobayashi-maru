@@ -1,5 +1,6 @@
 /**
  * Systems barrel export for Kobayashi Maru
+ * Contains ECS systems for game logic and rendering
  */
 export * from './renderSystem';
 export * from './movementSystem';

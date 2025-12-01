@@ -1,3 +1,7 @@
+/**
+ * Rendering module barrel export for Kobayashi Maru
+ * Contains visual rendering components and systems
+ */
 export * from './textures';
 export * from './spriteManager';
 export * from './BeamRenderer';
