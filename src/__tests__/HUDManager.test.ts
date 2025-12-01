@@ -26,6 +26,7 @@ vi.mock('pixi.js', async () => {
   // Mock Graphics class
   class MockGraphics {
     position = { set: vi.fn() };
+    scale = { set: vi.fn() };
     clear = vi.fn().mockReturnThis();
     roundRect = vi.fn().mockReturnThis();
     fill = vi.fn().mockReturnThis();
@@ -38,6 +39,7 @@ vi.mock('pixi.js', async () => {
   class MockContainer {
     visible = true;
     position = { set: vi.fn() };
+    scale = { set: vi.fn() };
     children: unknown[] = [];
     addChild = vi.fn((child) => {
       this.children.push(child);
