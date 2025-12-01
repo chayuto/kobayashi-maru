@@ -1,0 +1,75 @@
+/**
+ * Game Event Types for Kobayashi Maru
+ * Defines all events emitted by the global Event Bus
+ */
+
+/**
+ * Event type identifiers
+ */
+export enum GameEventType {
+  ENEMY_KILLED = 'ENEMY_KILLED',
+  WAVE_STARTED = 'WAVE_STARTED',
+  WAVE_COMPLETED = 'WAVE_COMPLETED',
+  PLAYER_DAMAGED = 'PLAYER_DAMAGED',
+  RESOURCE_UPDATED = 'RESOURCE_UPDATED',
+  GAME_OVER = 'GAME_OVER'
+}
+
+/**
+ * Payload for ENEMY_KILLED event
+ */
+export interface EnemyKilledPayload {
+  entityId: number;
+  factionId: number;
+  x: number;
+  y: number;
+}
+
+/**
+ * Payload for WAVE_STARTED event
+ */
+export interface WaveStartedPayload {
+  waveNumber: number;
+  totalEnemies?: number;
+}
+
+/**
+ * Payload for WAVE_COMPLETED event
+ */
+export interface WaveCompletedPayload {
+  waveNumber: number;
+}
+
+/**
+ * Payload for PLAYER_DAMAGED event
+ */
+export interface PlayerDamagedPayload {
+  currentHealth: number;
+}
+
+/**
+ * Payload for RESOURCE_UPDATED event
+ */
+export interface ResourceUpdatedPayload {
+  current: number;
+  amount: number;
+}
+
+/**
+ * Payload for GAME_OVER event
+ */
+export interface GameOverPayload {
+  score: number;
+}
+
+/**
+ * Map of event types to their payload types
+ */
+export interface GameEventMap {
+  [GameEventType.ENEMY_KILLED]: EnemyKilledPayload;
+  [GameEventType.WAVE_STARTED]: WaveStartedPayload;
+  [GameEventType.WAVE_COMPLETED]: WaveCompletedPayload;
+  [GameEventType.PLAYER_DAMAGED]: PlayerDamagedPayload;
+  [GameEventType.RESOURCE_UPDATED]: ResourceUpdatedPayload;
+  [GameEventType.GAME_OVER]: GameOverPayload;
+}

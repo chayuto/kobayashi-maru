@@ -14,13 +14,14 @@ import {
 import { Health, Shield, Turret, Position, Faction, SpriteRef } from '../ecs/components';
 import { SpriteManager, BeamRenderer, ParticleSystem, HealthBarRenderer, ScreenShake } from '../rendering';
 import { createRenderSystem, createMovementSystem, createCollisionSystem, CollisionSystem, createTargetingSystem, createCombatSystem, createDamageSystem, createAISystem, createProjectileSystem, TargetingSystem, CombatSystem, DamageSystem, SystemManager } from '../systems';
-import { GAME_CONFIG, LCARS_COLORS } from '../types';
+import { GAME_CONFIG, LCARS_COLORS, GameEventType, EnemyKilledPayload } from '../types';
 import { SpatialHash } from '../collision';
 
 import { Starfield } from '../rendering/Starfield';
 
 import { DebugManager } from './DebugManager';
 import { PerformanceMonitor } from './PerformanceMonitor';
+import { EventBus } from './EventBus';
 import { WaveManager, GameState, GameStateType, ScoreManager, HighScoreManager, ResourceManager, PlacementManager } from '../game';
 import { HUDManager, GameOverScreen, calculateScore } from '../ui';
 import { AudioManager } from '../audio';
@@ -60,12 +61,15 @@ export class Game {
   private highScoreManager: HighScoreManager;
   private resourceManager: ResourceManager;
   private audioManager: AudioManager;
+  private eventBus: EventBus;
   private placementManager: PlacementManager | null = null;
   private gameOverScreen: GameOverScreen | null = null;
   private kobayashiMaruId: number = -1;
   private initialized: boolean = false;
   private gameTime: number = 0; // Total game time in seconds
   private previousKMHealth: number = 0;
+  // Bound event handler for cleanup
+  private boundHandleEnemyKilled: (payload: EnemyKilledPayload) => void;
 
   constructor(containerId: string = 'app') {
     const container = document.getElementById(containerId);
@@ -86,7 +90,11 @@ export class Game {
     this.highScoreManager = new HighScoreManager();
     this.resourceManager = new ResourceManager();
     this.audioManager = AudioManager.getInstance();
+    this.eventBus = EventBus.getInstance();
     this.systemManager = new SystemManager();
+
+    // Bind event handlers
+    this.boundHandleEnemyKilled = this.handleEnemyKilled.bind(this);
   }
 
   /**
@@ -236,33 +244,26 @@ export class Game {
     // Initialize wave manager
     this.waveManager.init(this.world);
 
-    // Set up wave event listeners
-    this.waveManager.on('waveStart', (event) => {
-      console.log(`Wave ${event.waveNumber} started with ${event.data?.totalEnemies} enemies`);
-    });
-
-    this.waveManager.on('waveComplete', (event) => {
-      console.log(`Wave ${event.waveNumber} complete!`);
-      // Update score manager with wave reached
-      this.scoreManager.setWaveReached(event.waveNumber);
-    });
-
-    // Set up enemy death callback to update wave manager and score
-    if (this.damageSystem) {
-      this.damageSystem.onEnemyDeath((entityId, factionId) => {
-        // Remove enemy from wave manager tracking
-        this.waveManager.removeEnemy(entityId);
-        // Record kill in score manager
-        this.scoreManager.addKill(factionId);
-        // Award resources
-        this.resourceManager.addResources(GAME_CONFIG.RESOURCE_REWARD);
-      });
-    }
+    // Subscribe to EventBus for enemy kills
+    // This handles: wave manager tracking, score manager kills, and resource rewards
+    // Note: ScoreManager now automatically subscribes to ENEMY_KILLED via EventBus
+    this.eventBus.on(GameEventType.ENEMY_KILLED, this.boundHandleEnemyKilled);
 
     // Start playing and wave 1
     this.gameState.setState(GameStateType.PLAYING);
     this.waveManager.startWave(1);
     console.log(`Total entity count: ${getEntityCount()}`);
+  }
+
+  /**
+   * Handle ENEMY_KILLED event from EventBus
+   * Updates wave manager tracking and awards resources
+   */
+  private handleEnemyKilled(payload: EnemyKilledPayload): void {
+    // Remove enemy from wave manager tracking
+    this.waveManager.removeEnemy(payload.entityId);
+    // Award resources (ScoreManager handles kill counting via its own EventBus subscription)
+    this.resourceManager.addResources(GAME_CONFIG.RESOURCE_REWARD);
   }
 
   /**
@@ -552,6 +553,9 @@ export class Game {
    */
   destroy(): void {
     window.removeEventListener('resize', this.handleResize.bind(this));
+    // Unsubscribe from EventBus
+    this.eventBus.off(GameEventType.ENEMY_KILLED, this.boundHandleEnemyKilled);
+    this.scoreManager.unsubscribe();
     if (this.placementManager) {
       this.placementManager.destroy();
     }

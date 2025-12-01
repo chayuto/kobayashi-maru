@@ -3,6 +3,7 @@
  * Manages wave spawning, progression, and completion detection
  */
 import { FactionId, GAME_CONFIG } from '../types/constants';
+import { GameEventType } from '../types/events';
 import {
   createKlingonShip,
   createRomulanShip,
@@ -20,19 +21,23 @@ import {
   getDifficultyScale
 } from './waveConfig';
 import { SpawnPoints, SpawnPosition } from './spawnPoints';
+import { EventBus } from '../core/EventBus';
 
 /**
  * Event types emitted by the WaveManager
+ * @deprecated Use GameEventType from '../types/events' instead
  */
 export type WaveEventType = 'waveStart' | 'waveComplete' | 'enemySpawned';
 
 /**
  * Wave event callback type
+ * @deprecated Use EventBus for event handling
  */
 export type WaveEventCallback = (event: WaveEvent) => void;
 
 /**
  * Wave event data
+ * @deprecated Use EventBus for event handling
  */
 export interface WaveEvent {
   type: WaveEventType;
@@ -80,6 +85,11 @@ export class WaveManager {
   private eventListeners: Map<WaveEventType, WaveEventCallback[]> = new Map();
   private nextWaveTimer: number = 0;
   private autoStartNextWave: boolean = true;
+  private eventBus: EventBus;
+
+  constructor() {
+    this.eventBus = EventBus.getInstance();
+  }
 
   /**
    * Initializes the wave manager with a world
@@ -119,7 +129,13 @@ export class WaveManager {
       spawnPoints: this.createSpawnPoints(config)
     }));
 
-    // Emit wave start event
+    // Emit wave start event via EventBus
+    this.eventBus.emit(GameEventType.WAVE_STARTED, {
+      waveNumber: this.currentWave,
+      totalEnemies: this.getTotalEnemyCount()
+    });
+
+    // Emit wave start event via local event system (backward compatibility)
     this.emitEvent({
       type: 'waveStart',
       waveNumber: this.currentWave,
@@ -343,7 +359,12 @@ export class WaveManager {
     this.state = 'complete';
     this.nextWaveTimer = 0;
 
-    // Emit wave complete event
+    // Emit wave complete event via EventBus
+    this.eventBus.emit(GameEventType.WAVE_COMPLETED, {
+      waveNumber: this.currentWave
+    });
+
+    // Emit wave complete event via local event system (backward compatibility)
     this.emitEvent({
       type: 'waveComplete',
       waveNumber: this.currentWave

@@ -17,6 +17,7 @@ import {
 } from '../game';
 import { createGameWorld, getEntityCount } from '../ecs';
 import { FactionId, GAME_CONFIG } from '../types/constants';
+import { EventBus } from '../core/EventBus';
 
 describe('Wave Configuration', () => {
   it('should have pre-defined configurations for waves 1-10', () => {
@@ -211,6 +212,8 @@ describe('Wave Manager', () => {
   let world: ReturnType<typeof createGameWorld>;
 
   beforeEach(() => {
+    // Reset EventBus to ensure clean state between tests
+    EventBus.resetInstance();
     world = createGameWorld();
     waveManager = new WaveManager();
     waveManager.init(world);

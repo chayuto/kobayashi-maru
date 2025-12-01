@@ -5,15 +5,18 @@
 import { defineQuery, removeEntity, IWorld } from 'bitecs';
 import { Health, Faction, Position } from '../ecs/components';
 import { FactionId } from '../types/constants';
+import { GameEventType } from '../types/events';
 import { AudioManager, SoundType } from '../audio';
 import { decrementEntityCount } from '../ecs/world';
 import { ParticleSystem, EFFECTS } from '../rendering';
+import { EventBus } from '../core/EventBus';
 
 // Query for entities with Health component
 const healthQuery = defineQuery([Health, Faction, Position]);
 
 /**
  * Callback type for enemy death events
+ * @deprecated Use EventBus.on(GameEventType.ENEMY_KILLED) instead
  */
 export type EnemyDeathCallback = (entityId: number, factionId: number) => void;
 
@@ -23,10 +26,12 @@ export type EnemyDeathCallback = (entityId: number, factionId: number) => void;
  * @returns A system function that processes entity deaths
  */
 export function createDamageSystem(particleSystem?: ParticleSystem) {
-  // Store callbacks for enemy death
+  // Store callbacks for enemy death (kept for backward compatibility)
   const deathCallbacks: EnemyDeathCallback[] = [];
   // Track entities destroyed this frame
   const destroyedThisFrame: number[] = [];
+  // Get the EventBus instance
+  const eventBus = EventBus.getInstance();
 
   function damageSystem(world: IWorld): IWorld {
     // Clear destroyed list from last frame
@@ -73,7 +78,15 @@ export function createDamageSystem(particleSystem?: ParticleSystem) {
 
       // Only process non-Federation entities as enemies
       if (factionId !== FactionId.FEDERATION) {
-        // Notify callbacks about enemy death
+        // Emit event via EventBus
+        eventBus.emit(GameEventType.ENEMY_KILLED, {
+          entityId: eid,
+          factionId,
+          x,
+          y
+        });
+
+        // Notify callbacks about enemy death (backward compatibility)
         for (const callback of deathCallbacks) {
           callback(eid, factionId);
         }
@@ -94,12 +107,14 @@ export function createDamageSystem(particleSystem?: ParticleSystem) {
     update: damageSystem,
     /**
      * Register a callback for enemy death events
+     * @deprecated Use EventBus.on(GameEventType.ENEMY_KILLED) instead
      */
     onEnemyDeath: (callback: EnemyDeathCallback) => {
       deathCallbacks.push(callback);
     },
     /**
      * Remove a death callback
+     * @deprecated Use EventBus.off(GameEventType.ENEMY_KILLED) instead
      */
     offEnemyDeath: (callback: EnemyDeathCallback) => {
       const index = deathCallbacks.indexOf(callback);
