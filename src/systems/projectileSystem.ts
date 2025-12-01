@@ -99,7 +99,7 @@ export function createProjectileSystem(spatialHash: SpatialHash) {
 
         return world;
     }
-    
+
     /**
      * Set callback for when projectiles hit targets
      */
@@ -117,7 +117,9 @@ export function createProjectileSystem(spatialHash: SpatialHash) {
  * Applies damage to an entity, prioritizing shields over health
  * (Duplicated from combatSystem - should ideally be a shared utility)
  */
-function applyDamage(world: IWorld, entityId: number, damage: number): void {
+function applyDamage(world: IWorld, entityId: number, damage: number): number {
+    let totalDamageDealt = 0;
+
     // Apply damage to shields first if entity has Shield component
     if (hasComponent(world, Shield, entityId)) {
         const currentShield = Shield.current[entityId];
@@ -125,12 +127,17 @@ function applyDamage(world: IWorld, entityId: number, damage: number): void {
             const shieldDamage = Math.min(currentShield, damage);
             Shield.current[entityId] = currentShield - shieldDamage;
             damage -= shieldDamage;
+            totalDamageDealt += shieldDamage;
         }
     }
 
     // Apply remaining damage to health
     if (damage > 0) {
         const currentHealth = Health.current[entityId];
-        Health.current[entityId] = Math.max(0, currentHealth - damage);
+        const healthDamage = Math.min(currentHealth, damage);
+        Health.current[entityId] = currentHealth - healthDamage;
+        totalDamageDealt += healthDamage;
     }
+
+    return totalDamageDealt;
 }

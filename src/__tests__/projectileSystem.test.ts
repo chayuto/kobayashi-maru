@@ -32,15 +32,15 @@ describe('Projectile System', () => {
 
         // Let's check lifetime update
         const initialLifetime = Projectile.lifetime[projectileId];
-        system(world, 1.0);
-        expect(Projectile.lifetime[projectileId]).toBeCloseTo(initialLifetime - 1.0);
+        system.update(world, 0.1);
+        expect(Projectile.lifetime[projectileId]).toBeCloseTo(initialLifetime - 0.1);
     });
 
     it('should despawn projectile when lifetime expires', () => {
         const projectileId = createProjectile(world, 0, 0, 100, 0, 10, ProjectileType.PHOTON_TORPEDO);
         Projectile.lifetime[projectileId] = 0.1;
 
-        system(world, 0.2);
+        system.update(world, 0.2);
 
         // Entity should be removed
         // In bitecs, removing entity removes components from the entity mask
@@ -71,7 +71,7 @@ describe('Projectile System', () => {
         const projectileId = createProjectile(world, 100, 100, 200, 200, 50, ProjectileType.PHOTON_TORPEDO);
 
         // Run system
-        system(world, 0.1);
+        system.update(world, 0.1);
 
         // Enemy should take damage
         expect(Health.current[enemyId]).toBe(50);
@@ -101,7 +101,7 @@ describe('Projectile System', () => {
         const projectileId = createProjectile(world, 100, 100, 200, 200, 50, ProjectileType.PHOTON_TORPEDO);
 
         // Run system
-        system(world, 0.1);
+        system.update(world, 0.1);
 
         // Friend should NOT take damage
         expect(Health.current[friendId]).toBe(100);
