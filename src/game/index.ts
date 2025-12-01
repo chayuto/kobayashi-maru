@@ -1,5 +1,6 @@
 /**
- * Game module barrel export
+ * Game module barrel export for Kobayashi Maru
+ * Contains game state management, scoring, and wave systems
  */
 export * from './waveConfig';
 export * from './spawnPoints';
