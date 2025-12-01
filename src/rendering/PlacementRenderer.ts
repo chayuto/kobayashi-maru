@@ -216,7 +216,8 @@ export class PlacementRenderer {
     if (e.touches.length > 0) {
       const touch = e.touches[0];
       const pos = this.screenToWorld(touch.clientX, touch.clientY);
-      this.placementManager.updateCursorPosition(pos.x, pos.y);
+      // Offset Y by -64 (one cell size) to show turret above finger
+      this.placementManager.updateCursorPosition(pos.x, pos.y - 64);
     }
   }
 

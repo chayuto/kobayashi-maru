@@ -2,13 +2,19 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>Kobayashi Maru</title>
     <style>
       * {
         margin: 0;
         padding: 0;
         box-sizing: border-box;
+        touch-action: none; /* Prevent default touch actions like scrolling/zooming */
+        -webkit-touch-callout: none; /* Prevent callout menu */
+        -webkit-user-select: none; /* Prevent text selection */
+        user-select: none;
       }
       
       html, body {
@@ -16,6 +22,7 @@
         height: 100%;
         overflow: hidden;
         background-color: #000000;
+        overscroll-behavior: none; /* Prevent pull-to-refresh */
       }
       
       #app {
@@ -28,6 +35,7 @@
       
       canvas {
         display: block;
+        outline: none;
       }
     </style>
   </head>

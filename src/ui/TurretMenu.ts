@@ -23,7 +23,7 @@ export class TurretMenu {
     private createMenu(): void {
         const padding = UI_STYLES.PADDING;
         const buttonWidth = 180;
-        const buttonHeight = 60;
+        const buttonHeight = 80; // Increased for touch targets
         const startY = 0; // Buttons start at top of menu container
 
         // Create a button for each turret type
@@ -45,7 +45,7 @@ export class TurretMenu {
             // Turret Name
             const nameStyle = new TextStyle({
                 fontFamily: UI_STYLES.FONT_FAMILY,
-                fontSize: UI_STYLES.FONT_SIZE_SMALL,
+                fontSize: UI_STYLES.FONT_SIZE_MEDIUM, // Increased from SMALL
                 fill: UI_STYLES.COLORS.SECONDARY,
                 fontWeight: 'bold'
             });
@@ -56,11 +56,11 @@ export class TurretMenu {
             // Cost
             const costStyle = new TextStyle({
                 fontFamily: UI_STYLES.FONT_FAMILY,
-                fontSize: UI_STYLES.FONT_SIZE_MEDIUM,
+                fontSize: UI_STYLES.FONT_SIZE_LARGE, // Increased from MEDIUM
                 fill: UI_STYLES.COLORS.PRIMARY
             });
             const costText = new Text({ text: `${config.cost} M`, style: costStyle });
-            costText.position.set(10, 30);
+            costText.position.set(10, 40); // Adjusted Y position
             button.addChild(costText);
 
             // Interactivity

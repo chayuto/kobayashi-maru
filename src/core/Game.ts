@@ -20,6 +20,7 @@ import { SpatialHash } from '../collision';
 import { Starfield } from '../rendering/Starfield';
 
 import { DebugManager } from './DebugManager';
+import { TouchInputManager } from './TouchInputManager';
 import { PerformanceMonitor } from './PerformanceMonitor';
 import { EventBus } from './EventBus';
 import { WaveManager, GameState, GameStateType, ScoreManager, HighScoreManager, ResourceManager, PlacementManager } from '../game';
@@ -48,6 +49,7 @@ export class Game {
   private systemManager: SystemManager;
   private spatialHash: SpatialHash | null = null;
   private debugManager: DebugManager | null = null;
+  private touchInputManager: TouchInputManager | null = null;
   private hudManager: HUDManager | null = null;
   private starfield: Starfield | null = null;
   private beamRenderer: BeamRenderer | null = null;
@@ -119,6 +121,10 @@ export class Game {
 
     // Add canvas to DOM
     this.container.appendChild(this.app.canvas);
+
+    // Initialize touch input manager
+    this.touchInputManager = new TouchInputManager(this.app);
+    this.touchInputManager.init();
 
     // Handle window resize
     window.addEventListener('resize', this.handleResize.bind(this));
@@ -423,7 +429,7 @@ export class Game {
 
       // Get turret count
       const turretCount = turretQuery(this.world).length;
-      
+
       // Get combat stats
       const combatStats = this.combatSystem?.getStats();
 
@@ -514,7 +520,7 @@ export class Game {
     this.resourceManager.reset();
     this.waveManager.reset();
     this.gameTime = 0;
-    
+
     // Reset combat stats
     if (this.combatSystem) {
       this.combatSystem.resetStats();
@@ -582,6 +588,9 @@ export class Game {
       this.healthBarRenderer.destroy();
     }
     this.spriteManager.destroy();
+    if (this.touchInputManager) {
+      this.touchInputManager.destroy();
+    }
     this.app.destroy(true);
     this.initialized = false;
   }

@@ -9,6 +9,7 @@ import { HealthBar } from './HealthBar';
 import { GAME_CONFIG } from '../types/constants';
 import { TurretMenu } from './TurretMenu';
 import { AudioManager } from '../audio';
+import { ResponsiveUIManager } from './ResponsiveUIManager';
 
 // Wave state color mapping - defined outside class to avoid object creation on each update
 const WAVE_STATE_COLORS: Record<string, number> = {
@@ -25,6 +26,7 @@ export class HUDManager {
   public container: Container;
   private visible: boolean = true;
   private app: Application | null = null;
+  private responsiveUIManager: ResponsiveUIManager | null = null;
 
   // UI Elements
   private waveText: Text | null = null;
@@ -38,12 +40,12 @@ export class HUDManager {
   private shieldBar: HealthBar | null = null;
   private statusLabel: Text | null = null;
   private turretMenu: TurretMenu | null = null;
-  
+
   // Sound mute button
   private muteButton: Container | null = null;
   private muteIcon: Graphics | null = null;
   private muteLabel: Text | null = null;
-  
+
   // Extended stats
   private statsPanel: Graphics | null = null;
   private dpsText: Text | null = null;
@@ -67,6 +69,7 @@ export class HUDManager {
    */
   init(app: Application): void {
     this.app = app;
+    this.responsiveUIManager = new ResponsiveUIManager(app);
 
     // Add HUD container to stage (on top of everything)
     this.app.stage.addChild(this.container);
@@ -89,6 +92,80 @@ export class HUDManager {
     const menuY = UI_STYLES.PADDING + 60 + UI_STYLES.PADDING;
     this.turretMenu.setPosition(menuX, menuY);
     this.container.addChild(this.turretMenu.container);
+
+    // Handle resize
+    window.addEventListener('resize', this.handleResize.bind(this));
+    this.handleResize();
+  }
+
+  /**
+   * Handle window resize to update HUD layout
+   */
+  private handleResize(): void {
+    if (!this.responsiveUIManager) return;
+
+    const scale = this.responsiveUIManager.getScaleFactor();
+    const padding = UI_STYLES.PADDING * scale;
+    const width = window.innerWidth; // Use window width for HUD positioning
+    const height = window.innerHeight;
+
+    // Scale container based on device type if needed, or just scale elements
+    // For now, let's just reposition panels based on new width/height
+
+    // Update Top Left Panel
+    if (this.topLeftPanel) {
+      this.topLeftPanel.position.set(padding, padding);
+      this.topLeftPanel.scale.set(scale);
+    }
+
+    // Update Top Right Panel
+    if (this.topRightPanel) {
+      // 180 is original width
+      this.topRightPanel.scale.set(scale);
+      this.topRightPanel.position.set(width - (180 * scale) - padding, padding);
+    }
+
+    // Update Bottom Left Panel
+    if (this.bottomLeftPanel) {
+      this.bottomLeftPanel.scale.set(scale);
+      this.bottomLeftPanel.position.set(padding, height - (80 * scale) - padding);
+    }
+
+    // Update Bottom Right Panel
+    if (this.bottomRightPanel) {
+      this.bottomRightPanel.scale.set(scale);
+      this.bottomRightPanel.position.set(width - (140 * scale) - padding, height - (60 * scale) - padding);
+    }
+
+    // Update Bottom Center Panel
+    if (this.bottomCenterPanel) {
+      const panelWidth = UI_STYLES.BAR_WIDTH + 40;
+      this.bottomCenterPanel.scale.set(scale);
+      this.bottomCenterPanel.position.set((width - (panelWidth * scale)) / 2, height - (90 * scale) - padding);
+    }
+
+    // Update Mute Button
+    if (this.muteButton) {
+      this.muteButton.scale.set(scale);
+      this.muteButton.position.set(padding, padding + (100 * scale) + padding);
+    }
+
+    // Update Stats Panel
+    if (this.statsPanel) {
+      this.statsPanel.scale.set(scale);
+      this.statsPanel.position.set(padding, padding + (100 * scale) + padding + (40 * scale) + padding);
+    }
+
+    // Update Turret Menu
+    if (this.turretMenu) {
+      // Turret menu handles its own scaling/positioning internally usually, but we need to position its container
+      // It was positioned at: width - 180 - padding, padding + 60 + padding
+      this.turretMenu.container.scale.set(scale);
+      this.turretMenu.container.position.set(
+        width - (180 * scale) - padding,
+        padding + (60 * scale) + padding
+      );
+    }
   }
 
   /**
@@ -363,13 +440,13 @@ export class HUDManager {
 
     const audioManager = AudioManager.getInstance();
     const isMuted = audioManager.isMuted();
-    
+
     this.muteIcon.clear();
-    
+
     // Draw speaker body
     this.muteIcon.rect(0, 8, 8, 10);
     this.muteIcon.fill({ color: isMuted ? 0x888888 : UI_STYLES.COLORS.PRIMARY });
-    
+
     // Draw speaker cone
     this.muteIcon.moveTo(8, 8);
     this.muteIcon.lineTo(16, 2);
@@ -377,7 +454,7 @@ export class HUDManager {
     this.muteIcon.lineTo(8, 18);
     this.muteIcon.closePath();
     this.muteIcon.fill({ color: isMuted ? 0x888888 : UI_STYLES.COLORS.PRIMARY });
-    
+
     if (isMuted) {
       // Draw X over speaker
       this.muteIcon.moveTo(18, 6);
@@ -578,6 +655,10 @@ export class HUDManager {
       this.shieldBar.destroy();
     }
     this.container.destroy({ children: true });
+    if (this.responsiveUIManager) {
+      this.responsiveUIManager.destroy();
+    }
+    window.removeEventListener('resize', this.handleResize.bind(this));
   }
 
   /**

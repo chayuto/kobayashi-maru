@@ -12,7 +12,10 @@ export enum GameEventType {
   WAVE_COMPLETED = 'WAVE_COMPLETED',
   PLAYER_DAMAGED = 'PLAYER_DAMAGED',
   RESOURCE_UPDATED = 'RESOURCE_UPDATED',
-  GAME_OVER = 'GAME_OVER'
+  GAME_OVER = 'GAME_OVER',
+  TOUCH_START = 'TOUCH_START',
+  TOUCH_MOVE = 'TOUCH_MOVE',
+  TOUCH_END = 'TOUCH_END'
 }
 
 /**
@@ -63,6 +66,15 @@ export interface GameOverPayload {
 }
 
 /**
+ * Payload for TOUCH events
+ */
+export interface TouchEventPayload {
+  x: number;
+  y: number;
+  originalEvent: TouchEvent;
+}
+
+/**
  * Map of event types to their payload types
  */
 export interface GameEventMap {
@@ -72,4 +84,7 @@ export interface GameEventMap {
   [GameEventType.PLAYER_DAMAGED]: PlayerDamagedPayload;
   [GameEventType.RESOURCE_UPDATED]: ResourceUpdatedPayload;
   [GameEventType.GAME_OVER]: GameOverPayload;
+  [GameEventType.TOUCH_START]: TouchEventPayload;
+  [GameEventType.TOUCH_MOVE]: TouchEventPayload;
+  [GameEventType.TOUCH_END]: TouchEventPayload;
 }
