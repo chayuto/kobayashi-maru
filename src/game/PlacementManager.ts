@@ -264,7 +264,7 @@ export class PlacementManager {
   /**
    * Get the turret configuration for the current type
    */
-  getCurrentTurretConfig() {
+  getCurrentTurretConfig(): (typeof TURRET_CONFIG)[number] {
     return TURRET_CONFIG[this.currentTurretType];
   }
 

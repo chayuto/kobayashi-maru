@@ -3,7 +3,7 @@
  * Tests placement logic without any PixiJS dependencies
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { PlacementManager, PlacementState, PlacementEvent } from '../game/PlacementManager';
+import { PlacementManager, PlacementState } from '../game/PlacementManager';
 import { ResourceManager } from '../game/resourceManager';
 import { GAME_CONFIG, TURRET_CONFIG, TurretType } from '../types/constants';
 import { EventBus } from '../core/EventBus';
