@@ -58,6 +58,11 @@ export function createEnemyCollisionSystem(
         continue;
       }
 
+      // Skip dead enemies (will be cleaned up by damage system)
+      if (Health.current[eid] <= 0) {
+        continue;
+      }
+
       const enemyX = Position.x[eid];
       const enemyY = Position.y[eid];
 
