@@ -5,18 +5,12 @@
  */
 import { defineQuery, IWorld, hasComponent } from 'bitecs';
 import { Position, Health, Faction, AIBehavior, Shield } from '../ecs/components';
-import { FactionId } from '../types/constants';
+import { FactionId, GAME_CONFIG } from '../types/constants';
 import { ParticleSystem, EFFECTS } from '../rendering';
 import { AudioManager, SoundType } from '../audio';
 
 // Query for enemy entities (have AIBehavior component, non-Federation faction)
 const enemyQuery = defineQuery([Position, Health, Faction, AIBehavior]);
-
-// Collision radius for enemy-ship collision (sum of both radii)
-const COLLISION_RADIUS = 40;
-
-// Damage dealt by enemy on collision
-const COLLISION_DAMAGE = 25;
 
 /**
  * Creates the enemy collision system that handles enemy-ship collisions
@@ -70,13 +64,14 @@ export function createEnemyCollisionSystem(
       const dx = enemyX - kmX;
       const dy = enemyY - kmY;
       const distanceSquared = dx * dx + dy * dy;
-      const collisionRadiusSquared = COLLISION_RADIUS * COLLISION_RADIUS;
+      const collisionRadius = GAME_CONFIG.ENEMY_COLLISION_RADIUS;
+      const collisionRadiusSquared = collisionRadius * collisionRadius;
 
       if (distanceSquared <= collisionRadiusSquared) {
         // Collision detected!
         
         // Deal damage to Kobayashi Maru (shields first, then hull)
-        dealDamageToTarget(kmId, COLLISION_DAMAGE);
+        dealDamageToTarget(kmId, GAME_CONFIG.ENEMY_COLLISION_DAMAGE);
 
         // Spawn explosion effect at enemy position
         if (particleSystem) {

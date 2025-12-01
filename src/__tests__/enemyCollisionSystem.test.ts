@@ -5,12 +5,16 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { createWorld, addEntity, addComponent } from 'bitecs';
 import { createEnemyCollisionSystem } from '../systems/enemyCollisionSystem';
 import { Position, Health, Faction, AIBehavior, Shield } from '../ecs/components';
-import { FactionId } from '../types/constants';
+import { FactionId, GAME_CONFIG } from '../types/constants';
 
 describe('EnemyCollisionSystem', () => {
   let world: ReturnType<typeof createWorld>;
   let kobayashiMaruId: number;
   let enemyCollisionSystem: ReturnType<typeof createEnemyCollisionSystem>;
+
+  // Use config values for tests
+  const COLLISION_RADIUS = GAME_CONFIG.ENEMY_COLLISION_RADIUS;
+  const COLLISION_DAMAGE = GAME_CONFIG.ENEMY_COLLISION_DAMAGE;
 
   beforeEach(() => {
     world = createWorld();
@@ -75,8 +79,8 @@ describe('EnemyCollisionSystem', () => {
 
     enemyCollisionSystem.update(world);
 
-    // Kobayashi Maru shield should be damaged by collision damage (25)
-    expect(Shield.current[kobayashiMaruId]).toBe(200 - 25);
+    // Kobayashi Maru shield should be damaged by collision damage
+    expect(Shield.current[kobayashiMaruId]).toBe(200 - COLLISION_DAMAGE);
     // Hull should not be damaged when shields absorb all damage
     expect(Health.current[kobayashiMaruId]).toBe(500);
     // Enemy should be killed (health set to 0)
@@ -102,17 +106,17 @@ describe('EnemyCollisionSystem', () => {
 
     enemyCollisionSystem.update(world);
 
-    // Shields should be depleted (10 - 25 = 0, clamped)
+    // Shields should be depleted (10 - COLLISION_DAMAGE = 0, clamped)
     expect(Shield.current[kobayashiMaruId]).toBe(0);
-    // Hull should take remaining damage (25 - 10 = 15)
-    expect(Health.current[kobayashiMaruId]).toBe(500 - 15);
+    // Hull should take remaining damage (COLLISION_DAMAGE - 10 = 15)
+    expect(Health.current[kobayashiMaruId]).toBe(500 - (COLLISION_DAMAGE - 10));
   });
 
   it('should detect collision within collision radius', () => {
-    // Create enemy just within collision radius (40 pixels)
+    // Create enemy just within collision radius
     const enemyId = addEntity(world);
     addComponent(world, Position, enemyId);
-    Position.x[enemyId] = 960 + 30;  // Within 40px radius
+    Position.x[enemyId] = 960 + (COLLISION_RADIUS - 10);  // Within collision radius
     Position.y[enemyId] = 540;
     addComponent(world, Health, enemyId);
     Health.current[enemyId] = 50;
@@ -129,10 +133,10 @@ describe('EnemyCollisionSystem', () => {
   });
 
   it('should not collide when just outside collision radius', () => {
-    // Create enemy just outside collision radius (40 pixels)
+    // Create enemy just outside collision radius
     const enemyId = addEntity(world);
     addComponent(world, Position, enemyId);
-    Position.x[enemyId] = 960 + 50;  // Outside 40px radius
+    Position.x[enemyId] = 960 + (COLLISION_RADIUS + 10);  // Outside collision radius
     Position.y[enemyId] = 540;
     addComponent(world, Health, enemyId);
     Health.current[enemyId] = 50;
@@ -238,7 +242,7 @@ describe('EnemyCollisionSystem', () => {
       expect(Health.current[enemyId]).toBe(0);
     }
 
-    // Kobayashi Maru should take damage from all collisions (25 * 3 = 75)
-    expect(Shield.current[kobayashiMaruId]).toBe(200 - 75);
+    // Kobayashi Maru should take damage from all collisions (COLLISION_DAMAGE * 3)
+    expect(Shield.current[kobayashiMaruId]).toBe(200 - (COLLISION_DAMAGE * 3));
   });
 });

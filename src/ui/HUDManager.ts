@@ -29,6 +29,10 @@ const WAVE_STATE_COLORS: Record<string, number> = {
   'complete': UI_STYLES.COLORS.HEALTH
 };
 
+// Toggle button dimensions
+const TOGGLE_BUTTON_WIDTH = 100;
+const TOGGLE_BUTTON_HEIGHT = 32;
+
 /**
  * HUDManager class - manages all HUD display elements
  */
@@ -224,7 +228,7 @@ export class HUDManager {
     if (this.slowModeButton) {
       this.slowModeButton.scale.set(scale);
       // Position below god mode button
-      this.slowModeButton.position.set(padding, padding + (100 * scale) + padding + (40 * scale) + padding + (90 * scale) + padding + (40 * scale) + padding);
+      this.slowModeButton.position.set(padding, padding + (100 * scale) + padding + (40 * scale) + padding + (90 * scale) + padding + (TOGGLE_BUTTON_HEIGHT * scale) + padding);
     }
   }
 
@@ -593,8 +597,6 @@ export class HUDManager {
    */
   private createGodModeButton(): void {
     const padding = UI_STYLES.PADDING;
-    const buttonWidth = 100;
-    const buttonHeight = 32;
     const x = padding;
     const y = padding + 100 + padding + 40 + padding + 90 + padding; // Below stats panel
 
@@ -606,7 +608,7 @@ export class HUDManager {
 
     // Button background
     const bg = new Graphics();
-    bg.roundRect(0, 0, buttonWidth, buttonHeight, 6);
+    bg.roundRect(0, 0, TOGGLE_BUTTON_WIDTH, TOGGLE_BUTTON_HEIGHT, 6);
     bg.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.7 });
     bg.stroke({ color: 0x888888, width: 2 });
     this.godModeButton.addChild(bg);
@@ -633,14 +635,14 @@ export class HUDManager {
     this.godModeButton.on('pointerover', () => {
       const isEnabled = this.game?.isGodModeEnabled() ?? false;
       bg.clear();
-      bg.roundRect(0, 0, buttonWidth, buttonHeight, 6);
+      bg.roundRect(0, 0, TOGGLE_BUTTON_WIDTH, TOGGLE_BUTTON_HEIGHT, 6);
       bg.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.9 });
       bg.stroke({ color: isEnabled ? UI_STYLES.COLORS.HEALTH : UI_STYLES.COLORS.PRIMARY, width: 3 });
     });
     this.godModeButton.on('pointerout', () => {
       const isEnabled = this.game?.isGodModeEnabled() ?? false;
       bg.clear();
-      bg.roundRect(0, 0, buttonWidth, buttonHeight, 6);
+      bg.roundRect(0, 0, TOGGLE_BUTTON_WIDTH, TOGGLE_BUTTON_HEIGHT, 6);
       bg.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.7 });
       bg.stroke({ color: isEnabled ? UI_STYLES.COLORS.HEALTH : 0x888888, width: 2 });
     });
@@ -661,7 +663,7 @@ export class HUDManager {
     const bg = this.godModeButton.children[0] as Graphics;
     if (bg) {
       bg.clear();
-      bg.roundRect(0, 0, 100, 32, 6);
+      bg.roundRect(0, 0, TOGGLE_BUTTON_WIDTH, TOGGLE_BUTTON_HEIGHT, 6);
       bg.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.7 });
       bg.stroke({ color: enabled ? UI_STYLES.COLORS.HEALTH : 0x888888, width: 2 });
     }
@@ -672,10 +674,8 @@ export class HUDManager {
    */
   private createSlowModeButton(): void {
     const padding = UI_STYLES.PADDING;
-    const buttonWidth = 100;
-    const buttonHeight = 32;
     const x = padding;
-    const y = padding + 100 + padding + 40 + padding + 90 + padding + 32 + padding; // Below god mode button
+    const y = padding + 100 + padding + 40 + padding + 90 + padding + TOGGLE_BUTTON_HEIGHT + padding; // Below god mode button
 
     // Create button container
     this.slowModeButton = new Container();
@@ -685,7 +685,7 @@ export class HUDManager {
 
     // Button background
     const bg = new Graphics();
-    bg.roundRect(0, 0, buttonWidth, buttonHeight, 6);
+    bg.roundRect(0, 0, TOGGLE_BUTTON_WIDTH, TOGGLE_BUTTON_HEIGHT, 6);
     bg.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.7 });
     bg.stroke({ color: 0x888888, width: 2 });
     this.slowModeButton.addChild(bg);
@@ -712,14 +712,14 @@ export class HUDManager {
     this.slowModeButton.on('pointerover', () => {
       const isEnabled = this.game?.isSlowModeEnabled() ?? false;
       bg.clear();
-      bg.roundRect(0, 0, buttonWidth, buttonHeight, 6);
+      bg.roundRect(0, 0, TOGGLE_BUTTON_WIDTH, TOGGLE_BUTTON_HEIGHT, 6);
       bg.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.9 });
       bg.stroke({ color: isEnabled ? UI_STYLES.COLORS.SECONDARY : UI_STYLES.COLORS.PRIMARY, width: 3 });
     });
     this.slowModeButton.on('pointerout', () => {
       const isEnabled = this.game?.isSlowModeEnabled() ?? false;
       bg.clear();
-      bg.roundRect(0, 0, buttonWidth, buttonHeight, 6);
+      bg.roundRect(0, 0, TOGGLE_BUTTON_WIDTH, TOGGLE_BUTTON_HEIGHT, 6);
       bg.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.7 });
       bg.stroke({ color: isEnabled ? UI_STYLES.COLORS.SECONDARY : 0x888888, width: 2 });
     });
@@ -740,7 +740,7 @@ export class HUDManager {
     const bg = this.slowModeButton.children[0] as Graphics;
     if (bg) {
       bg.clear();
-      bg.roundRect(0, 0, 100, 32, 6);
+      bg.roundRect(0, 0, TOGGLE_BUTTON_WIDTH, TOGGLE_BUTTON_HEIGHT, 6);
       bg.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.7 });
       bg.stroke({ color: enabled ? UI_STYLES.COLORS.SECONDARY : 0x888888, width: 2 });
     }
