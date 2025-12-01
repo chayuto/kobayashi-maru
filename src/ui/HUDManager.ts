@@ -201,8 +201,8 @@ export class HUDManager {
       fontWeight: 'bold'
     });
     this.waveText = new Text({ text: 'WAVE 1', style: waveStyle });
-    this.waveText.position.set(padding + 10, padding + 10);
-    this.container.addChild(this.waveText);
+    this.waveText.position.set(10, 10);
+    this.topLeftPanel.addChild(this.waveText);
 
     // Wave state text
     const stateStyle = new TextStyle({
@@ -211,8 +211,8 @@ export class HUDManager {
       fill: UI_STYLES.COLORS.SECONDARY
     });
     this.waveStateText = new Text({ text: 'IDLE', style: stateStyle });
-    this.waveStateText.position.set(padding + 10, padding + 40);
-    this.container.addChild(this.waveStateText);
+    this.waveStateText.position.set(10, 40);
+    this.topLeftPanel.addChild(this.waveStateText);
 
     // Enemy count text
     const enemyStyle = new TextStyle({
@@ -221,8 +221,8 @@ export class HUDManager {
       fill: UI_STYLES.COLORS.TEXT
     });
     this.enemyCountText = new Text({ text: 'Enemies: 0', style: enemyStyle });
-    this.enemyCountText.position.set(padding + 10, padding + 70);
-    this.container.addChild(this.enemyCountText);
+    this.enemyCountText.position.set(10, 70);
+    this.topLeftPanel.addChild(this.enemyCountText);
   }
 
   /**
@@ -245,11 +245,11 @@ export class HUDManager {
     const labelStyle = new TextStyle({
       fontFamily: UI_STYLES.FONT_FAMILY,
       fontSize: UI_STYLES.FONT_SIZE_SMALL,
-      fill: UI_STYLES.COLORS.SECONDARY
+      fill: UI_STYLES.COLORS.PRIMARY
     });
     const resourceLabel = new Text({ text: 'MATTER', style: labelStyle });
-    resourceLabel.position.set(x + 10, padding + 8);
-    this.container.addChild(resourceLabel);
+    resourceLabel.position.set(10, 8);
+    this.topRightPanel.addChild(resourceLabel);
 
     // Resources amount
     const resourceStyle = new TextStyle({
@@ -259,8 +259,8 @@ export class HUDManager {
       fontWeight: 'bold'
     });
     this.resourcesText = new Text({ text: '500', style: resourceStyle });
-    this.resourcesText.position.set(x + 10, padding + 28);
-    this.container.addChild(this.resourcesText);
+    this.resourcesText.position.set(10, 28);
+    this.topRightPanel.addChild(this.resourcesText);
   }
 
   /**
@@ -285,8 +285,8 @@ export class HUDManager {
       fill: UI_STYLES.COLORS.TEXT
     });
     this.timeText = new Text({ text: 'TIME: 00:00', style: timeStyle });
-    this.timeText.position.set(padding + 10, y + 15);
-    this.container.addChild(this.timeText);
+    this.timeText.position.set(10, 15);
+    this.bottomLeftPanel.addChild(this.timeText);
 
     // Enemies defeated
     const killsStyle = new TextStyle({
@@ -295,8 +295,8 @@ export class HUDManager {
       fill: UI_STYLES.COLORS.TEXT
     });
     this.killsText = new Text({ text: 'KILLS: 0', style: killsStyle });
-    this.killsText.position.set(padding + 10, y + 45);
-    this.container.addChild(this.killsText);
+    this.killsText.position.set(10, 45);
+    this.bottomLeftPanel.addChild(this.killsText);
   }
 
   /**
@@ -320,12 +320,12 @@ export class HUDManager {
     const labelStyle = new TextStyle({
       fontFamily: UI_STYLES.FONT_FAMILY,
       fontSize: UI_STYLES.FONT_SIZE_SMALL,
-      fill: UI_STYLES.COLORS.SECONDARY,
+      fill: UI_STYLES.COLORS.PRIMARY,
       fontWeight: 'bold'
     });
     this.statusLabel = new Text({ text: 'KOBAYASHI MARU STATUS', style: labelStyle });
-    this.statusLabel.position.set(x + 20, y + 8);
-    this.container.addChild(this.statusLabel);
+    this.statusLabel.position.set(20, 8);
+    this.bottomCenterPanel.addChild(this.statusLabel);
 
     // Shield bar
     this.shieldBar = new HealthBar(
@@ -334,8 +334,8 @@ export class HUDManager {
       UI_STYLES.COLORS.SHIELD,
       'SHLD'
     );
-    this.shieldBar.setPosition(x + 20, y + 30);
-    this.container.addChild(this.shieldBar.container);
+    this.shieldBar.setPosition(20, 30);
+    this.bottomCenterPanel.addChild(this.shieldBar.container);
 
     // Health bar
     this.healthBar = new HealthBar(
@@ -344,8 +344,8 @@ export class HUDManager {
       UI_STYLES.COLORS.HEALTH,
       'HULL'
     );
-    this.healthBar.setPosition(x + 20, y + 58);
-    this.container.addChild(this.healthBar.container);
+    this.healthBar.setPosition(20, 58);
+    this.bottomCenterPanel.addChild(this.healthBar.container);
   }
 
   /**
@@ -369,11 +369,11 @@ export class HUDManager {
     const labelStyle = new TextStyle({
       fontFamily: UI_STYLES.FONT_FAMILY,
       fontSize: UI_STYLES.FONT_SIZE_SMALL,
-      fill: UI_STYLES.COLORS.SECONDARY
+      fill: UI_STYLES.COLORS.PRIMARY
     });
     const turretLabel = new Text({ text: 'TURRETS', style: labelStyle });
-    turretLabel.position.set(x + 10, y + 8);
-    this.container.addChild(turretLabel);
+    turretLabel.position.set(10, 8);
+    this.bottomRightPanel.addChild(turretLabel);
 
     // Turret count
     const countStyle = new TextStyle({
@@ -383,8 +383,8 @@ export class HUDManager {
       fontWeight: 'bold'
     });
     this.turretCountText = new Text({ text: '0', style: countStyle });
-    this.turretCountText.position.set(x + 10, y + 28);
-    this.container.addChild(this.turretCountText);
+    this.turretCountText.position.set(10, 28);
+    this.bottomRightPanel.addChild(this.turretCountText);
   }
 
   /**
@@ -509,12 +509,12 @@ export class HUDManager {
     const headerStyle = new TextStyle({
       fontFamily: UI_STYLES.FONT_FAMILY,
       fontSize: UI_STYLES.FONT_SIZE_SMALL,
-      fill: UI_STYLES.COLORS.SECONDARY,
+      fill: UI_STYLES.COLORS.PRIMARY,
       fontWeight: 'bold'
     });
     const header = new Text({ text: 'COMBAT STATS', style: headerStyle });
-    header.position.set(x + 10, y + 8);
-    this.container.addChild(header);
+    header.position.set(10, 8);
+    this.statsPanel.addChild(header);
 
     // Stats text style
     const statStyle = new TextStyle({
@@ -525,18 +525,18 @@ export class HUDManager {
 
     // DPS text
     this.dpsText = new Text({ text: 'DPS: 0', style: statStyle });
-    this.dpsText.position.set(x + 10, y + 30);
-    this.container.addChild(this.dpsText);
+    this.dpsText.position.set(10, 30);
+    this.statsPanel.addChild(this.dpsText);
 
     // Accuracy text
     this.accuracyText = new Text({ text: 'ACC: 0%', style: statStyle });
-    this.accuracyText.position.set(x + 10, y + 50);
-    this.container.addChild(this.accuracyText);
+    this.accuracyText.position.set(10, 50);
+    this.statsPanel.addChild(this.accuracyText);
 
     // Total damage text
     this.damageText = new Text({ text: 'DMG: 0', style: statStyle });
-    this.damageText.position.set(x + 10, y + 70);
-    this.container.addChild(this.damageText);
+    this.damageText.position.set(10, 70);
+    this.statsPanel.addChild(this.damageText);
   }
 
   /**
