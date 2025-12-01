@@ -3,7 +3,7 @@
  * Creates pre-configured entities with appropriate components
  */
 import { addEntity, addComponent } from 'bitecs';
-import { Position, Velocity, Faction, SpriteRef, Health, Shield, Turret, Target, AIBehavior, Projectile, Collider } from './components';
+import { Position, Velocity, Faction, SpriteRef, Health, Shield, Turret, Target, AIBehavior, Projectile, Collider, WeaponProperties } from './components';
 import { FactionId, TurretType, TURRET_CONFIG, AIBehaviorType, ProjectileType, PROJECTILE_CONFIG } from '../types/constants';
 import type { GameWorld } from './world';
 import { incrementEntityCount } from './world';
@@ -339,6 +339,39 @@ export function createTurret(world: GameWorld, x: number, y: number, turretType:
   addComponent(world, Target, eid);
   Target.entityId[eid] = 0;
   Target.hasTarget[eid] = 0;
+
+  // Add weapon properties for special turrets
+  if (turretType === TurretType.TETRYON_BEAM) {
+    // Tetryon: 3x shield damage, 0.5x hull damage
+    addComponent(world, WeaponProperties, eid);
+    WeaponProperties.shieldDamageMultiplier[eid] = 3.0;
+    WeaponProperties.hullDamageMultiplier[eid] = 0.5;
+    WeaponProperties.critChance[eid] = 0;
+    WeaponProperties.critMultiplier[eid] = 1.0;
+    WeaponProperties.aoeRadius[eid] = 0;
+    WeaponProperties.statusEffectType[eid] = 0; // No status effect
+    WeaponProperties.statusEffectChance[eid] = 0;
+  } else if (turretType === TurretType.PLASMA_CANNON) {
+    // Plasma: Applies burning (4 dmg/sec for 5 seconds)
+    addComponent(world, WeaponProperties, eid);
+    WeaponProperties.shieldDamageMultiplier[eid] = 1.0;
+    WeaponProperties.hullDamageMultiplier[eid] = 1.0;
+    WeaponProperties.critChance[eid] = 0;
+    WeaponProperties.critMultiplier[eid] = 1.0;
+    WeaponProperties.aoeRadius[eid] = 0;
+    WeaponProperties.statusEffectType[eid] = 1; // Burn
+    WeaponProperties.statusEffectChance[eid] = 1.0; // 100% chance
+  } else if (turretType === TurretType.POLARON_BEAM) {
+    // Polaron: Stacking drain effect
+    addComponent(world, WeaponProperties, eid);
+    WeaponProperties.shieldDamageMultiplier[eid] = 1.0;
+    WeaponProperties.hullDamageMultiplier[eid] = 1.0;
+    WeaponProperties.critChance[eid] = 0;
+    WeaponProperties.critMultiplier[eid] = 1.0;
+    WeaponProperties.aoeRadius[eid] = 0;
+    WeaponProperties.statusEffectType[eid] = 3; // Drain
+    WeaponProperties.statusEffectChance[eid] = 1.0; // 100% chance
+  }
 
   incrementEntityCount();
   return eid;

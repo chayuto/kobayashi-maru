@@ -70,7 +70,10 @@ export const GAME_CONFIG = {
 export const TurretType = {
   PHASER_ARRAY: 0,      // Fast fire rate, low damage, medium range
   TORPEDO_LAUNCHER: 1,  // Slow fire rate, high damage, long range
-  DISRUPTOR_BANK: 2     // Medium fire rate, stacking debuff
+  DISRUPTOR_BANK: 2,    // Medium fire rate, stacking debuff
+  TETRYON_BEAM: 3,      // Shield-stripping beam
+  PLASMA_CANNON: 4,     // Burning projectile
+  POLARON_BEAM: 5       // Power-draining beam
 } as const;
 
 export type TurretTypeId = typeof TurretType[keyof typeof TurretType];
@@ -122,6 +125,33 @@ export const TURRET_CONFIG: Record<number, {
     health: 60,
     shield: 30,
     name: 'Disruptor Bank'
+  },
+  [TurretType.TETRYON_BEAM]: {
+    range: 220,
+    fireRate: 3,      // 3 shots per second
+    damage: 12,
+    cost: 150,
+    health: 55,
+    shield: 28,
+    name: 'Tetryon Beam'
+  },
+  [TurretType.PLASMA_CANNON]: {
+    range: 200,
+    fireRate: 1,      // 1 shot per second
+    damage: 8,        // + 20 burning damage over 5 seconds
+    cost: 180,
+    health: 65,
+    shield: 35,
+    name: 'Plasma Cannon'
+  },
+  [TurretType.POLARON_BEAM]: {
+    range: 230,
+    fireRate: 2.5,    // 2.5 shots per second
+    damage: 11,
+    cost: 160,
+    health: 58,
+    shield: 32,
+    name: 'Polaron Beam'
   }
 };
 

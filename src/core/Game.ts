@@ -13,7 +13,8 @@ import {
 } from '../ecs';
 import { Health, Shield, Turret, Position, Faction, SpriteRef } from '../ecs/components';
 import { SpriteManager, BeamRenderer, ParticleSystem, HealthBarRenderer, ScreenShake, PlacementRenderer } from '../rendering';
-import { createRenderSystem, createMovementSystem, createCollisionSystem, CollisionSystem, createTargetingSystem, createCombatSystem, createDamageSystem, createAISystem, createProjectileSystem, TargetingSystem, CombatSystem, DamageSystem, SystemManager } from '../systems';
+import { createRenderSystem, createMovementSystem, createCollisionSystem, CollisionSystem, createTargetingSystem, createCombatSystem, createDamageSystem, createAISystem, createProjectileSystem, statusEffectSystem, TargetingSystem, CombatSystem, DamageSystem, SystemManager } from '../systems';
+
 import { GAME_CONFIG, LCARS_COLORS, GameEventType, EnemyKilledPayload, WaveStartedPayload, WaveCompletedPayload } from '../types';
 import { SpatialHash } from '../collision';
 
@@ -229,6 +230,7 @@ export class Game {
     this.systemManager.register('collision', this.collisionSystem, 10, { requiresDelta: false });
     this.systemManager.register('ai', this.aiSystem, 20, { requiresGameTime: true });
     this.systemManager.register('movement', this.movementSystem, 30);
+    this.systemManager.register('status-effects', statusEffectSystem, 35); // Process status effects after movement
     this.systemManager.register('targeting', this.targetingSystem, 40, { requiresDelta: false });
     this.systemManager.register('combat', this.combatSystem, 50, { requiresGameTime: true });
     this.systemManager.register('projectile', this.projectileSystem, 60);

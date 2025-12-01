@@ -3,11 +3,12 @@
  * Handles turret firing logic, cooldowns, and damage application
  */
 import { defineQuery, hasComponent, IWorld } from 'bitecs';
-import { Position, Turret, Target, Faction, Health, Shield } from '../ecs/components';
+import { Position, Turret, Target, Faction, Health, Shield, WeaponProperties } from '../ecs/components';
 import { TurretType, ProjectileType } from '../types/constants';
 import { createProjectile } from '../ecs/entityFactory';
 import { AudioManager, SoundType } from '../audio';
 import { ParticleSystem, EFFECTS } from '../rendering';
+import { applyBurning, applyDrained } from './statusEffectSystem';
 
 // Query for turrets with targets
 const combatQuery = defineQuery([Position, Turret, Target, Faction]);
@@ -42,7 +43,7 @@ export interface CombatStats {
 export function createCombatSystem(particleSystem?: ParticleSystem) {
   // Store beam visuals for this frame (cleared each update)
   const activeBeams: BeamVisual[] = [];
-  
+
   // Combat statistics tracking
   let totalDamageDealt = 0;
   let totalShotsFired = 0;
@@ -52,19 +53,37 @@ export function createCombatSystem(particleSystem?: ParticleSystem) {
 
   /**
    * Applies damage to an entity, prioritizing shields over health
+   * @param turretEid - The turret entity ID (for WeaponProperties)
    * @returns The actual damage dealt (for stats tracking)
    */
-  function applyDamage(world: IWorld, entityId: number, damage: number, hitX: number, hitY: number, currentTime: number): number {
+  function applyDamage(world: IWorld, entityId: number, damage: number, hitX: number, hitY: number, currentTime: number, turretEid: number): number {
+    let finalDamage = damage;
+
+    // Check for weapon properties to modify damage
+    if (hasComponent(world, WeaponProperties, turretEid)) {
+      const hasShield = hasComponent(world, Shield, entityId) && Shield.current[entityId] > 0;
+
+      if (hasShield) {
+        // Apply shield damage multiplier
+        const shieldMult = WeaponProperties.shieldDamageMultiplier[turretEid] || 1.0;
+        finalDamage *= shieldMult;
+      } else {
+        // Apply hull damage multiplier
+        const hullMult = WeaponProperties.hullDamageMultiplier[turretEid] || 1.0;
+        finalDamage *= hullMult;
+      }
+    }
+
     let actualDamage = 0;
-    
+
     // Apply damage to shields first if entity has Shield component
     if (hasComponent(world, Shield, entityId)) {
       const currentShield = Shield.current[entityId];
       if (currentShield > 0) {
-        const shieldDamage = Math.min(currentShield, damage);
+        const shieldDamage = Math.min(currentShield, finalDamage);
         Shield.current[entityId] = currentShield - shieldDamage;
         actualDamage += shieldDamage;
-        damage -= shieldDamage;
+        finalDamage -= shieldDamage;
 
         // Shield hit effect
         if (particleSystem) {
@@ -77,35 +96,44 @@ export function createCombatSystem(particleSystem?: ParticleSystem) {
             ...EFFECTS.SHIELD_HIT,
             x: hitX,
             y: hitY,
-            spread: angle // Use spread as direction center? No, spread is range.
-            // The preset has spread: Math.PI * 0.5. 
-            // We might need to rotate the particles. 
-            // The current ParticleSystem implementation spawns particles in a random angle within spread centered at 0?
-            // "const angle = (Math.random() - 0.5) * config.spread;" -> This is centered at 0.
-            // We need to add a base rotation to the config or the system.
-            // For now, let's just spawn them. The current system doesn't support directional emission well without base angle.
-            // Let's just use the preset as is, it will look like a spark.
+            spread: angle
           });
         }
       }
     }
 
     // Apply remaining damage to health
-    if (damage > 0) {
+    if (finalDamage > 0) {
       const currentHealth = Health.current[entityId];
-      const healthDamage = Math.min(currentHealth, damage);
-      Health.current[entityId] = Math.max(0, currentHealth - damage);
+      const healthDamage = Math.min(currentHealth, finalDamage);
+      Health.current[entityId] = Math.max(0, currentHealth - finalDamage);
       actualDamage += healthDamage;
     }
-    
+
+    // Apply status effects if weapon has them
+    if (hasComponent(world, WeaponProperties, turretEid)) {
+      const statusType = WeaponProperties.statusEffectType[turretEid];
+      const statusChance = WeaponProperties.statusEffectChance[turretEid];
+
+      if (statusType > 0 && Math.random() < statusChance) {
+        if (statusType === 1) {
+          // Burning: 4 dmg/sec for 5 seconds
+          applyBurning(world, entityId, 4.0, 5.0);
+        } else if (statusType === 3) {
+          // Drain: 3 second duration per stack
+          applyDrained(world, entityId, 3.0);
+        }
+      }
+    }
+
     // Track stats
     totalDamageDealt += actualDamage;
     shotsHit++;
     damageHistory.push({ time: currentTime, damage: actualDamage });
-    
+
     // Clean up old damage history entries (keep only last DPS_WINDOW seconds)
     damageHistory = damageHistory.filter(entry => currentTime - entry.time < DPS_WINDOW);
-    
+
     return actualDamage;
   }
 
@@ -170,9 +198,9 @@ export function createCombatSystem(particleSystem?: ParticleSystem) {
         totalShotsFired++;
         createProjectile(world, turretX, turretY, targetX, targetY, damage, ProjectileType.PHOTON_TORPEDO, targetEid);
       } else {
-        // Beam weapons (phaser, disruptor) - instant hit
+        // Beam weapons - instant hit
         totalShotsFired++;
-        applyDamage(world, targetEid, damage, targetX, targetY, currentTime);
+        applyDamage(world, targetEid, damage, targetX, targetY, currentTime, turretEid);
 
         // Store beam visual for rendering
         activeBeams.push({
@@ -196,6 +224,15 @@ export function createCombatSystem(particleSystem?: ParticleSystem) {
         case TurretType.DISRUPTOR_BANK:
           audioManager.play(SoundType.DISRUPTOR_FIRE, { volume: 0.5 });
           break;
+        case TurretType.TETRYON_BEAM:
+          audioManager.play(SoundType.PHASER_FIRE, { volume: 0.45 }); // Similar to phaser
+          break;
+        case TurretType.PLASMA_CANNON:
+          audioManager.play(SoundType.TORPEDO_FIRE, { volume: 0.55 }); // Similar to torpedo
+          break;
+        case TurretType.POLARON_BEAM:
+          audioManager.play(SoundType.DISRUPTOR_FIRE, { volume: 0.48 }); // Similar to disruptor
+          break;
       }
 
       // Update last fired time
@@ -209,7 +246,7 @@ export function createCombatSystem(particleSystem?: ParticleSystem) {
 
     return world;
   }
-  
+
   /**
    * Get current combat statistics
    */
@@ -218,7 +255,7 @@ export function createCombatSystem(particleSystem?: ParticleSystem) {
     const recentDamage = damageHistory.reduce((sum, entry) => sum + entry.damage, 0);
     // Use the full DPS_WINDOW or actual elapsed time, whichever gives meaningful results
     const dps = recentDamage / DPS_WINDOW;
-    
+
     return {
       totalDamageDealt,
       totalShotsFired,
@@ -227,7 +264,7 @@ export function createCombatSystem(particleSystem?: ParticleSystem) {
       accuracy: totalShotsFired > 0 ? shotsHit / totalShotsFired : 0
     };
   }
-  
+
   /**
    * Reset all combat statistics (for game restart)
    */
@@ -237,7 +274,7 @@ export function createCombatSystem(particleSystem?: ParticleSystem) {
     shotsHit = 0;
     damageHistory = [];
   }
-  
+
   /**
    * Record a projectile hit for stats tracking
    * Called by projectile system when a projectile hits a target
