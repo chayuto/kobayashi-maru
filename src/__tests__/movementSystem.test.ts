@@ -4,7 +4,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createGameWorld } from '../ecs/world';
 import { createFederationShip, createKlingonShip } from '../ecs/entityFactory';
-import { Position, Velocity } from '../ecs/components';
+import { Position, Velocity, Projectile } from '../ecs/components';
+import { addComponent } from 'bitecs';
 import { createMovementSystem } from '../systems/movementSystem';
 import { GAME_CONFIG } from '../types/constants';
 
@@ -63,7 +64,7 @@ describe('Movement System', () => {
     // Step 1: 100 + 100 * 0.25 = 125
     expect(x1_after_step1).toBeCloseTo(125, 5);
     expect(y1_after_step1).toBeCloseTo(125, 5);
-    
+
     // Single step: 100 + 100 * 0.5 = 150
     expect(Position.x[eid3]).toBeCloseTo(150, 5);
     expect(Position.y[eid3]).toBeCloseTo(150, 5);
@@ -172,5 +173,20 @@ describe('Movement System', () => {
 
     expect(Position.x[eid]).toBeCloseTo(101, 5);
     expect(Position.y[eid]).toBeCloseTo(101, 5);
+  });
+
+  it('should NOT wrap projectile position when going off edge', () => {
+    // Create projectile entity near right edge
+    const eid = createFederationShip(world, GAME_CONFIG.WORLD_WIDTH - 10, 500);
+    addComponent(world, Projectile, eid); // Make it a projectile
+    Velocity.x[eid] = 100; // Moving right
+    Velocity.y[eid] = 0;
+
+    // Move for 1 second - would wrap to 90 if it wasn't a projectile
+    movementSystem(world, 1);
+
+    // Position should NOT wrap: 1920 - 10 + 100 = 2010
+    expect(Position.x[eid]).toBeCloseTo(2010, 5);
+    expect(Position.y[eid]).toBeCloseTo(500, 5);
   });
 });
