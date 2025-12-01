@@ -23,6 +23,7 @@ import { DebugManager } from './DebugManager';
 import { TouchInputManager } from './TouchInputManager';
 import { PerformanceMonitor } from './PerformanceMonitor';
 import { QualityManager } from './QualityManager';
+import { HapticManager } from './HapticManager';
 import { EventBus } from './EventBus';
 import { WaveManager, GameState, GameStateType, ScoreManager, HighScoreManager, ResourceManager, PlacementManager } from '../game';
 import { HUDManager, GameOverScreen, calculateScore } from '../ui';
@@ -59,6 +60,7 @@ export class Game {
   private screenShake: ScreenShake | null = null;
   private performanceMonitor: PerformanceMonitor;
   private qualityManager: QualityManager;
+  private hapticManager: HapticManager;
   private waveManager: WaveManager;
   private gameState: GameState;
   private scoreManager: ScoreManager;
@@ -90,6 +92,7 @@ export class Game {
     this.starfield = new Starfield(this.app);
     this.performanceMonitor = new PerformanceMonitor();
     this.qualityManager = new QualityManager(this.performanceMonitor);
+    this.hapticManager = new HapticManager();
     this.waveManager = new WaveManager();
     this.gameState = new GameState();
     this.scoreManager = new ScoreManager();
@@ -713,5 +716,13 @@ export class Game {
    */
   getSystemManager(): SystemManager {
     return this.systemManager;
+  }
+
+  /**
+   * Get the haptic manager
+   * @returns The haptic manager instance
+   */
+  getHapticManager(): HapticManager {
+    return this.hapticManager;
   }
 }

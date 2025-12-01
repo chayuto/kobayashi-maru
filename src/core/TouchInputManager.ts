@@ -1,5 +1,6 @@
 import { Application } from 'pixi.js';
 import { EventBus } from './EventBus';
+import { GestureManager } from './GestureManager';
 import { GAME_CONFIG, GameEventType } from '../types';
 
 export interface TouchEventPayload {
@@ -11,11 +12,13 @@ export interface TouchEventPayload {
 export class TouchInputManager {
     private app: Application;
     private eventBus: EventBus;
+    private gestureManager: GestureManager;
     private canvas: HTMLCanvasElement | null = null;
 
     constructor(app: Application) {
         this.app = app;
         this.eventBus = EventBus.getInstance();
+        this.gestureManager = new GestureManager();
     }
 
     init(): void {
@@ -41,6 +44,7 @@ export class TouchInputManager {
             const { x, y } = this.getGameCoordinates(e.touches[0]);
             this.eventBus.emit(GameEventType.TOUCH_START, { x, y, originalEvent: e });
         }
+        this.gestureManager.handleTouchStart(e);
     }
 
     private handleTouchMove(e: TouchEvent): void {
@@ -50,6 +54,7 @@ export class TouchInputManager {
             const { x, y } = this.getGameCoordinates(e.touches[0]);
             this.eventBus.emit(GameEventType.TOUCH_MOVE, { x, y, originalEvent: e });
         }
+        this.gestureManager.handleTouchMove(e);
     }
 
     private handleTouchEnd(e: TouchEvent): void {
@@ -58,6 +63,7 @@ export class TouchInputManager {
             const { x, y } = this.getGameCoordinates(e.changedTouches[0]);
             this.eventBus.emit(GameEventType.TOUCH_END, { x, y, originalEvent: e });
         }
+        this.gestureManager.handleTouchEnd(e);
     }
 
     private getGameCoordinates(touch: Touch): { x: number, y: number } {

@@ -15,7 +15,8 @@ export enum GameEventType {
   GAME_OVER = 'GAME_OVER',
   TOUCH_START = 'TOUCH_START',
   TOUCH_MOVE = 'TOUCH_MOVE',
-  TOUCH_END = 'TOUCH_END'
+  TOUCH_END = 'TOUCH_END',
+  GESTURE = 'GESTURE'
 }
 
 /**
@@ -74,6 +75,23 @@ export interface TouchEventPayload {
   originalEvent: TouchEvent;
 }
 
+export enum GestureType {
+  PAN = 'PAN',
+  PINCH = 'PINCH',
+  SWIPE = 'SWIPE',
+  TAP = 'TAP'
+}
+
+export interface GestureEvent {
+  type: GestureType;
+  deltaX?: number;
+  deltaY?: number;
+  scale?: number;
+  direction?: 'left' | 'right' | 'up' | 'down';
+  centerX?: number;
+  centerY?: number;
+}
+
 /**
  * Map of event types to their payload types
  */
@@ -87,4 +105,5 @@ export interface GameEventMap {
   [GameEventType.TOUCH_START]: TouchEventPayload;
   [GameEventType.TOUCH_MOVE]: TouchEventPayload;
   [GameEventType.TOUCH_END]: TouchEventPayload;
+  [GameEventType.GESTURE]: GestureEvent;
 }
