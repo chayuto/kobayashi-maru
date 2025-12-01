@@ -39,6 +39,15 @@ const AVERAGE_WINDOW_SIZE = 60;
 const MEMORY_UPDATE_INTERVAL = 1000;
 
 /**
+ * Performance Tiers for device capability
+ */
+export enum PerformanceTier {
+  HIGH = 0,   // Desktop / High-end mobile
+  MEDIUM = 1, // Mid-range mobile
+  LOW = 2     // Low-end mobile
+}
+
+/**
  * PerformanceMonitor class
  * Tracks detailed performance metrics for each game system
  */
@@ -67,7 +76,7 @@ export class PerformanceMonitor {
     this.systemTimings = new Map();
     this.systemStartTimes = new Map();
     this.systemBudgets = new Map();
-    
+
     // Pre-compute budget lookups
     this.initializeBudgets();
   }
@@ -90,7 +99,7 @@ export class PerformanceMonitor {
     // Check cached budget first
     const cached = this.systemBudgets.get(systemName);
     if (cached !== undefined) return cached;
-    
+
     // Compute and cache for new system names
     const budgetKey = systemName.toUpperCase() as keyof typeof FRAME_BUDGET;
     const budget = FRAME_BUDGET[budgetKey] ?? FRAME_BUDGET.OTHER;
@@ -117,7 +126,7 @@ export class PerformanceMonitor {
     }
 
     const elapsed = performance.now() - startTime;
-    
+
     // Store in rolling window
     if (!this.systemTimings.has(systemName)) {
       this.systemTimings.set(systemName, []);
@@ -212,7 +221,7 @@ export class PerformanceMonitor {
     if (now - this.lastMemoryUpdate < MEMORY_UPDATE_INTERVAL) {
       return;
     }
-    
+
     const perfMemory = (performance as unknown as { memory?: { usedJSHeapSize: number } }).memory;
     if (perfMemory) {
       this.metrics.memoryUsed = perfMemory.usedJSHeapSize / (1024 * 1024);
@@ -270,7 +279,7 @@ export class PerformanceMonitor {
     console.log(`Render Time: ${avg.renderTime.toFixed(2)}ms (current: ${current.renderTime.toFixed(2)}ms)`);
     console.log(`Entities: ${current.entityCount}`);
     console.log(`Memory: ${avg.memoryUsed.toFixed(1)}MB`);
-    
+
     console.group('System Timings (avg):');
     for (const [name, time] of avg.systemTimes) {
       const budget = this.getBudget(name);
@@ -287,7 +296,7 @@ export class PerformanceMonitor {
    */
   getSystemTimingBreakdown(): Array<{ name: string; time: number; budget: number; overBudget: boolean }> {
     const result: Array<{ name: string; time: number; budget: number; overBudget: boolean }> = [];
-    
+
     for (const [name, time] of this.metrics.systemTimes) {
       const budget = this.getBudget(name);
       result.push({
@@ -297,7 +306,7 @@ export class PerformanceMonitor {
         overBudget: time > budget
       });
     }
-    
+
     return result;
   }
 
@@ -329,5 +338,27 @@ export class PerformanceMonitor {
     if (values.length === 0) return 0;
     const sum = values.reduce((a, b) => a + b, 0);
     return sum / values.length;
+  }
+
+  /**
+   * Detects the likely performance tier of the device
+   * based on hardware concurrency and basic benchmarks
+   */
+  detectPerformanceTier(): PerformanceTier {
+    // Basic heuristic based on logical cores
+    const cores = navigator.hardwareConcurrency || 4;
+
+    // Check for mobile device
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    if (isMobile) {
+      if (cores >= 8) return PerformanceTier.HIGH; // High-end mobile
+      if (cores >= 4) return PerformanceTier.MEDIUM; // Mid-range
+      return PerformanceTier.LOW; // Low-end
+    }
+
+    // Desktop defaults to HIGH, unless very low core count
+    if (cores < 4) return PerformanceTier.MEDIUM;
+    return PerformanceTier.HIGH;
   }
 }

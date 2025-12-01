@@ -8,6 +8,7 @@ import { HUDData } from './types';
 import { HealthBar } from './HealthBar';
 import { GAME_CONFIG } from '../types/constants';
 import { TurretMenu } from './TurretMenu';
+import { MobileControlsOverlay } from './MobileControlsOverlay';
 import { AudioManager } from '../audio';
 import { ResponsiveUIManager } from './ResponsiveUIManager';
 
@@ -40,6 +41,7 @@ export class HUDManager {
   private shieldBar: HealthBar | null = null;
   private statusLabel: Text | null = null;
   private turretMenu: TurretMenu | null = null;
+  private mobileControls: MobileControlsOverlay | null = null;
 
   // Sound mute button
   private muteButton: Container | null = null;
@@ -92,6 +94,10 @@ export class HUDManager {
     const menuY = UI_STYLES.PADDING + 60 + UI_STYLES.PADDING;
     this.turretMenu.setPosition(menuX, menuY);
     this.container.addChild(this.turretMenu.container);
+
+    // Create Mobile Controls Overlay
+    this.mobileControls = new MobileControlsOverlay();
+    this.container.addChild(this.mobileControls.container);
 
     // Handle resize
     window.addEventListener('resize', this.handleResize.bind(this));
@@ -165,6 +171,11 @@ export class HUDManager {
         width - (180 * scale) - padding,
         padding + (60 * scale) + padding
       );
+    }
+
+    // Update Mobile Controls
+    if (this.mobileControls) {
+      this.mobileControls.updateLayout(scale);
     }
   }
 
@@ -653,6 +664,9 @@ export class HUDManager {
     }
     if (this.shieldBar) {
       this.shieldBar.destroy();
+    }
+    if (this.mobileControls) {
+      this.mobileControls.destroy();
     }
     this.container.destroy({ children: true });
     if (this.responsiveUIManager) {

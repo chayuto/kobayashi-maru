@@ -18,11 +18,11 @@ export class Starfield {
         this.app.stage.sortableChildren = true;
     }
 
-    public init(): void {
-        // Create 3 layers of stars
-        this.createLayer(50, 0.05, 0.5);   // Background: few stars, slow, small
-        this.createLayer(100, 0.1, 0.8);   // Midground: more stars, medium speed, medium size
-        this.createLayer(150, 0.2, 1.0);   // Foreground: many stars, fast, large
+    public init(starCountMultiplier: number = 1.0): void {
+        // Create 3 layers of stars, scaled by multiplier
+        this.createLayer(Math.floor(50 * starCountMultiplier), 0.05, 0.5);   // Background
+        this.createLayer(Math.floor(100 * starCountMultiplier), 0.1, 0.8);   // Midground
+        this.createLayer(Math.floor(150 * starCountMultiplier), 0.2, 1.0);   // Foreground
     }
 
     private createLayer(starCount: number, speed: number, baseScale: number): void {

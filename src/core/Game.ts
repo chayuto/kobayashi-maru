@@ -22,6 +22,7 @@ import { Starfield } from '../rendering/Starfield';
 import { DebugManager } from './DebugManager';
 import { TouchInputManager } from './TouchInputManager';
 import { PerformanceMonitor } from './PerformanceMonitor';
+import { QualityManager } from './QualityManager';
 import { EventBus } from './EventBus';
 import { WaveManager, GameState, GameStateType, ScoreManager, HighScoreManager, ResourceManager, PlacementManager } from '../game';
 import { HUDManager, GameOverScreen, calculateScore } from '../ui';
@@ -57,6 +58,7 @@ export class Game {
   private healthBarRenderer: HealthBarRenderer | null = null;
   private screenShake: ScreenShake | null = null;
   private performanceMonitor: PerformanceMonitor;
+  private qualityManager: QualityManager;
   private waveManager: WaveManager;
   private gameState: GameState;
   private scoreManager: ScoreManager;
@@ -87,6 +89,7 @@ export class Game {
     this.hudManager = new HUDManager();
     this.starfield = new Starfield(this.app);
     this.performanceMonitor = new PerformanceMonitor();
+    this.qualityManager = new QualityManager(this.performanceMonitor);
     this.waveManager = new WaveManager();
     this.gameState = new GameState();
     this.scoreManager = new ScoreManager();
@@ -149,7 +152,11 @@ export class Game {
 
     // Initialize starfield
     if (this.starfield) {
-      this.starfield.init();
+      const settings = this.qualityManager.getSettings();
+      // Calculate multiplier based on default (1000 stars)
+      // High: 1000 -> 1.0, Medium: 500 -> 0.5, Low: 200 -> 0.2
+      const multiplier = settings.starCount / 1000;
+      this.starfield.init(multiplier);
     }
 
     // Initialize sprite manager after app is ready
@@ -161,7 +168,8 @@ export class Game {
 
     // Initialize particle system
     this.particleSystem = new ParticleSystem();
-    this.particleSystem.init(this.app);
+    const particleSettings = this.qualityManager.getSettings();
+    this.particleSystem.init(this.app, particleSettings.maxParticles, particleSettings.particleSpawnRate);
 
     // Initialize health bar renderer
     this.healthBarRenderer = new HealthBarRenderer();
@@ -689,6 +697,14 @@ export class Game {
    */
   getPerformanceMonitor(): PerformanceMonitor {
     return this.performanceMonitor;
+  }
+
+  /**
+   * Get the quality manager
+   * @returns The quality manager instance
+   */
+  getQualityManager(): QualityManager {
+    return this.qualityManager;
   }
 
   /**

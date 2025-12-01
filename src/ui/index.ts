@@ -8,3 +8,4 @@ export * from './ResponsiveUIManager';
 export * from './HUDManager';
 export * from './GameOverScreen';
 export * from './TurretMenu';
+export * from './MobileControlsOverlay';

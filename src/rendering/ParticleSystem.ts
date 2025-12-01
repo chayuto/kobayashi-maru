@@ -30,17 +30,33 @@ export class ParticleSystem {
     private pool: Particle[] = [];
     private app: Application | null = null;
 
+    private maxParticles: number = 2000;
+    private spawnRateMultiplier: number = 1.0;
+
     constructor() {
         this.container = new Container();
     }
 
-    init(app: Application): void {
+    init(app: Application, maxParticles: number = 2000, spawnRateMultiplier: number = 1.0): void {
         this.app = app;
+        this.maxParticles = maxParticles;
+        this.spawnRateMultiplier = spawnRateMultiplier;
         this.app.stage.addChild(this.container);
     }
 
     spawn(config: ParticleConfig): void {
-        for (let i = 0; i < config.count; i++) {
+        // Check hard limit
+        if (this.particles.length >= this.maxParticles) {
+            return;
+        }
+
+        // Apply spawn rate multiplier (minimum 1 particle if count > 0)
+        let count = Math.ceil(config.count * this.spawnRateMultiplier);
+
+        // Adjust count based on remaining budget
+        count = Math.min(count, this.maxParticles - this.particles.length);
+
+        for (let i = 0; i < count; i++) {
             const particle = this.getParticle();
 
             // Initialize particle properties
