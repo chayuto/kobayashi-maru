@@ -27,7 +27,7 @@ import { QualityManager } from './QualityManager';
 import { HapticManager } from './HapticManager';
 import { EventBus } from './EventBus';
 import { WaveManager, GameState, GameStateType, ScoreManager, HighScoreManager, ResourceManager, PlacementManager } from '../game';
-import { HUDManager, GameOverScreen, calculateScore } from '../ui';
+import { HUDManager, GameOverScreen, calculateScore, PauseOverlay } from '../ui';
 import { AudioManager } from '../audio';
 
 // Query for counting turrets
@@ -73,12 +73,14 @@ export class Game {
   private placementManager: PlacementManager | null = null;
   private placementRenderer: PlacementRenderer | null = null;
   private gameOverScreen: GameOverScreen | null = null;
+  private pauseOverlay: PauseOverlay | null = null;
   private kobayashiMaruId: number = -1;
   private initialized: boolean = false;
   private gameTime: number = 0; // Total game time in seconds
   private previousKMHealth: number = 0;
   // Bound event handler for cleanup
   private boundHandleEnemyKilled: (payload: EnemyKilledPayload) => void;
+  private boundHandleKeyDown: (e: KeyboardEvent) => void;
 
   constructor(containerId: string = 'app') {
     const container = document.getElementById(containerId);
@@ -107,6 +109,7 @@ export class Game {
 
     // Bind event handlers
     this.boundHandleEnemyKilled = this.handleEnemyKilled.bind(this);
+    this.boundHandleKeyDown = this.handleKeyDown.bind(this);
   }
 
   /**
@@ -252,6 +255,23 @@ export class Game {
     this.gameOverScreen.init(this.app);
     this.gameOverScreen.setOnRestart(() => this.restart());
 
+    // Initialize pause overlay
+    this.pauseOverlay = new PauseOverlay();
+    this.pauseOverlay.init(this.app);
+    this.pauseOverlay.setOnResume(() => this.resume());
+    this.pauseOverlay.setOnRestart(() => {
+      this.resume();
+      this.restart();
+    });
+    this.pauseOverlay.setOnQuit(() => {
+      this.resume();
+      // TODO: Return to main menu when implemented
+      console.log('Quit to main menu (not yet implemented)');
+    });
+
+    // Add keyboard listener for pause
+    window.addEventListener('keydown', this.boundHandleKeyDown);
+
     // Initialize wave manager and spawn Kobayashi Maru
     this.initializeGameplay();
   }
@@ -291,6 +311,37 @@ export class Game {
     this.waveManager.removeEnemy(payload.entityId);
     // Award resources (ScoreManager handles kill counting via its own EventBus subscription)
     this.resourceManager.addResources(GAME_CONFIG.RESOURCE_REWARD);
+  }
+
+  /**
+   * Handle keyboard input for pause and other shortcuts
+   */
+  private handleKeyDown(e: KeyboardEvent): void {
+    // ESC key - Toggle pause
+    if (e.key === 'Escape') {
+      if (this.gameState.isPlaying()) {
+        this.pause();
+      } else if (this.gameState.isPaused()) {
+        this.resume();
+      }
+    }
+
+    // R key - Restart (when paused)
+    if (e.key === 'r' || e.key === 'R') {
+      if (this.gameState.isPaused()) {
+        this.resume();
+        this.restart();
+      }
+    }
+
+    // Q key - Quit (when paused)
+    if (e.key === 'q' || e.key === 'Q') {
+      if (this.gameState.isPaused()) {
+        this.resume();
+        // TODO: Return to main menu when implemented
+        console.log('Quit to main menu (not yet implemented)');
+      }
+    }
   }
 
   /**
@@ -556,6 +607,49 @@ export class Game {
   }
 
   /**
+   * Pause the game
+   */
+  pause(): void {
+    if (!this.gameState.isPlaying()) {
+      return;
+    }
+
+    this.gameState.setState(GameStateType.PAUSED);
+
+    // Show pause overlay
+    if (this.pauseOverlay) {
+      this.pauseOverlay.show();
+    }
+
+    console.log('Game paused');
+  }
+
+  /**
+   * Resume the game
+   */
+  resume(): void {
+    if (!this.gameState.isPaused()) {
+      return;
+    }
+
+    this.gameState.setState(GameStateType.PLAYING);
+
+    // Hide pause overlay
+    if (this.pauseOverlay) {
+      this.pauseOverlay.hide();
+    }
+
+    console.log('Game resumed');
+  }
+
+  /**
+   * Get pause state
+   */
+  isPaused(): boolean {
+    return this.gameState.isPaused();
+  }
+
+  /**
    * Clear all entities from the world for restart
    */
   private clearAllEntities(): void {
@@ -580,6 +674,7 @@ export class Game {
    */
   destroy(): void {
     window.removeEventListener('resize', this.handleResize.bind(this));
+    window.removeEventListener('keydown', this.boundHandleKeyDown);
     // Unsubscribe from EventBus
     this.eventBus.off(GameEventType.ENEMY_KILLED, this.boundHandleEnemyKilled);
     this.scoreManager.unsubscribe();
@@ -597,6 +692,9 @@ export class Game {
     }
     if (this.gameOverScreen) {
       this.gameOverScreen.destroy();
+    }
+    if (this.pauseOverlay) {
+      this.pauseOverlay.destroy();
     }
     if (this.particleSystem) {
       this.particleSystem.destroy();
