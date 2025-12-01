@@ -14,7 +14,7 @@ import {
 import { Health, Shield, Turret, Position, Faction, SpriteRef } from '../ecs/components';
 import { SpriteManager, BeamRenderer, ParticleSystem, HealthBarRenderer, ScreenShake, PlacementRenderer } from '../rendering';
 import { createRenderSystem, createMovementSystem, createCollisionSystem, CollisionSystem, createTargetingSystem, createCombatSystem, createDamageSystem, createAISystem, createProjectileSystem, TargetingSystem, CombatSystem, DamageSystem, SystemManager } from '../systems';
-import { GAME_CONFIG, LCARS_COLORS, GameEventType, EnemyKilledPayload } from '../types';
+import { GAME_CONFIG, LCARS_COLORS, GameEventType, EnemyKilledPayload, WaveStartedPayload, WaveCompletedPayload } from '../types';
 import { SpatialHash } from '../collision';
 
 import { Starfield } from '../rendering/Starfield';
@@ -80,8 +80,8 @@ export class Game {
   private previousKMHealth: number = 0;
   // Bound event handlers for cleanup
   private boundHandleEnemyKilled: (payload: EnemyKilledPayload) => void;
-  private boundHandleWaveStarted: (payload: any) => void;
-  private boundHandleWaveCompleted: (payload: any) => void;
+  private boundHandleWaveStarted: (payload: WaveStartedPayload) => void;
+  private boundHandleWaveCompleted: (payload: WaveCompletedPayload) => void;
   private boundHandleKeyDown: (e: KeyboardEvent) => void;
   private killCount: number = 0;
 
@@ -329,7 +329,7 @@ export class Game {
    * Handle WAVE_STARTED event from EventBus
    * Displays wave start message in the log
    */
-  private handleWaveStarted(payload: any): void {
+  private handleWaveStarted(payload: WaveStartedPayload): void {
     if (this.hudManager) {
       this.hudManager.addLogMessage(`⚠ Wave ${payload.waveNumber} started!`, 'wave');
       if (payload.totalEnemies) {
@@ -342,7 +342,7 @@ export class Game {
    * Handle WAVE_COMPLETED event from EventBus
    * Displays wave completion message in the log
    */
-  private handleWaveCompleted(payload: any): void {
+  private handleWaveCompleted(payload: WaveCompletedPayload): void {
     if (this.hudManager) {
       this.hudManager.addLogMessage(`✓ Wave ${payload.waveNumber} complete!`, 'wave');
     }

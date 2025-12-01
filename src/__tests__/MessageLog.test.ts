@@ -41,6 +41,7 @@ vi.mock('pixi.js', async () => {
         Container: MockContainer,
         Text: MockText,
         TextStyle: class MockTextStyle {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             constructor(_opts?: unknown) { }
         }
     };
@@ -83,7 +84,7 @@ describe('MessageLog', () => {
                 messageLog.addMessage(`Message ${i}`);
             }
             // Should only have visible texts up to MAX_MESSAGES
-            const visibleTexts = messageLog.container.children.filter((child: any) => child.visible);
+            const visibleTexts = messageLog.container.children.filter((child: { visible: boolean }) => child.visible);
             expect(visibleTexts.length).toBeLessThanOrEqual(8);
         });
     });
@@ -97,7 +98,7 @@ describe('MessageLog', () => {
             messageLog.update();
 
             // Message should still be visible but faded
-            const visibleTexts = messageLog.container.children.filter((child: any) => child.visible);
+            const visibleTexts = messageLog.container.children.filter((child: { visible: boolean }) => child.visible);
             expect(visibleTexts.length).toBeGreaterThan(0);
         });
 
@@ -109,7 +110,7 @@ describe('MessageLog', () => {
             messageLog.update();
 
             // Message should be removed (not visible)
-            const visibleTexts = messageLog.container.children.filter((child: any) => child.visible);
+            const visibleTexts = messageLog.container.children.filter((child: { visible: boolean }) => child.visible);
             expect(visibleTexts.length).toBe(0);
         });
     });
@@ -142,7 +143,7 @@ describe('MessageLog', () => {
             messageLog.addMessage('Message 2');
             messageLog.clear();
 
-            const visibleTexts = messageLog.container.children.filter((child: any) => child.visible);
+            const visibleTexts = messageLog.container.children.filter((child: { visible: boolean }) => child.visible);
             expect(visibleTexts.length).toBe(0);
         });
     });
