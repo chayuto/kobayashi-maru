@@ -9,6 +9,7 @@ import { HealthBar } from './HealthBar';
 import { GAME_CONFIG } from '../types/constants';
 import { TurretMenu } from './TurretMenu';
 import { MobileControlsOverlay } from './MobileControlsOverlay';
+import { MessageLog } from './MessageLog';
 import { AudioManager } from '../audio';
 import { ResponsiveUIManager } from './ResponsiveUIManager';
 
@@ -42,6 +43,7 @@ export class HUDManager {
   private statusLabel: Text | null = null;
   private turretMenu: TurretMenu | null = null;
   private mobileControls: MobileControlsOverlay | null = null;
+  private messageLog: MessageLog | null = null;
 
   // Sound mute button
   private muteButton: Container | null = null;
@@ -98,6 +100,11 @@ export class HUDManager {
     // Create Mobile Controls Overlay
     this.mobileControls = new MobileControlsOverlay();
     this.container.addChild(this.mobileControls.container);
+
+    // Create Message Log
+    this.messageLog = new MessageLog();
+    this.messageLog.setPosition(UI_STYLES.PADDING, GAME_CONFIG.WORLD_HEIGHT - 200);
+    this.container.addChild(this.messageLog.container);
 
     // Handle resize
     window.addEventListener('resize', this.handleResize.bind(this));
@@ -176,6 +183,12 @@ export class HUDManager {
     // Update Mobile Controls
     if (this.mobileControls) {
       this.mobileControls.updateLayout(scale);
+    }
+
+    // Update Message Log
+    if (this.messageLog) {
+      this.messageLog.container.scale.set(scale);
+      this.messageLog.container.position.set(padding, height - (200 * scale) - padding);
     }
   }
 
@@ -607,6 +620,11 @@ export class HUDManager {
     if (this.damageText && data.totalDamageDealt !== undefined) {
       this.damageText.text = `DMG: ${this.formatNumber(data.totalDamageDealt)}`;
     }
+
+    // Update message log fade effect
+    if (this.messageLog) {
+      this.messageLog.update();
+    }
   }
 
   /**
@@ -668,6 +686,9 @@ export class HUDManager {
     if (this.mobileControls) {
       this.mobileControls.destroy();
     }
+    if (this.messageLog) {
+      this.messageLog.destroy();
+    }
     this.container.destroy({ children: true });
     if (this.responsiveUIManager) {
       this.responsiveUIManager.destroy();
@@ -680,5 +701,16 @@ export class HUDManager {
    */
   getTurretMenu(): TurretMenu | null {
     return this.turretMenu;
+  }
+
+  /**
+   * Add a message to the message log
+   * @param text - Message text to display
+   * @param category - Optional message category
+   */
+  addLogMessage(text: string, category?: 'info' | 'warning' | 'damage' | 'kill' | 'wave'): void {
+    if (this.messageLog) {
+      this.messageLog.addMessage(text, category);
+    }
   }
 }

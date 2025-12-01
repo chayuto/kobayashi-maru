@@ -1,11 +1,12 @@
 /**
  * UI module barrel export
  */
-export * from './types';
-export * from './styles';
-export * from './HealthBar';
-export * from './ResponsiveUIManager';
-export * from './HUDManager';
-export * from './GameOverScreen';
-export * from './TurretMenu';
-export * from './MobileControlsOverlay';
+export { HUDManager } from './HUDManager';
+export { TurretMenu } from './TurretMenu';
+export { HealthBar } from './HealthBar';
+export { UI_STYLES } from './styles';
+export { GameOverScreen, calculateScore } from './GameOverScreen';
+export { ResponsiveUIManager } from './ResponsiveUIManager';
+export { MobileControlsOverlay } from './MobileControlsOverlay';
+export { MessageLog } from './MessageLog';
+export type { HUDData } from './types';
