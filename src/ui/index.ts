@@ -6,6 +6,7 @@ export { TurretMenu } from './TurretMenu';
 export { HealthBar } from './HealthBar';
 export { UI_STYLES } from './styles';
 export { GameOverScreen, calculateScore } from './GameOverScreen';
+export { PauseOverlay } from './PauseOverlay';
 export { ResponsiveUIManager } from './ResponsiveUIManager';
 export { MobileControlsOverlay } from './MobileControlsOverlay';
 export { MessageLog } from './MessageLog';
