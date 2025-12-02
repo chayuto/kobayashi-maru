@@ -22,8 +22,8 @@ export class TurretMenu {
      */
     private createMenu(): void {
         const padding = UI_STYLES.PADDING;
-        const buttonWidth = 240; // Increased width for more content
-        const buttonHeight = 95; // Increased height for description
+        const buttonWidth = 200; // Reduced from 240 to fit better
+        const buttonHeight = 75; // Reduced from 95 to fit all 6 weapons
         const startY = 0; // Buttons start at top of menu container
 
         // Create a button for each turret type
@@ -45,61 +45,61 @@ export class TurretMenu {
             // Turret Name
             const nameStyle = new TextStyle({
                 fontFamily: UI_STYLES.FONT_FAMILY,
-                fontSize: UI_STYLES.FONT_SIZE_MEDIUM,
+                fontSize: 13, // Slightly smaller
                 fill: UI_STYLES.COLORS.SECONDARY,
                 fontWeight: 'bold'
             });
             const nameText = new Text({ text: config.name, style: nameStyle });
-            nameText.position.set(10, 8);
+            nameText.position.set(8, 6);
             button.addChild(nameText);
 
             // Description
             const descStyle = new TextStyle({
                 fontFamily: UI_STYLES.FONT_FAMILY,
-                fontSize: 11,
+                fontSize: 10, // Smaller
                 fill: 0xCCCCCC,
                 wordWrap: true,
-                wordWrapWidth: buttonWidth - 20
+                wordWrapWidth: buttonWidth - 16
             });
             const descText = new Text({ text: config.description, style: descStyle });
-            descText.position.set(10, 28);
+            descText.position.set(8, 22);
             button.addChild(descText);
 
             // Stats (Damage/Range/Rate)
             const statsStyle = new TextStyle({
                 fontFamily: UI_STYLES.FONT_FAMILY,
-                fontSize: 10,
+                fontSize: 9,
                 fill: 0x99CCFF
             });
             const statsText = new Text({
                 text: `DMG:${config.damage} RNG:${config.range} RATE:${config.fireRate}/s`,
                 style: statsStyle
             });
-            statsText.position.set(10, 46);
+            statsText.position.set(8, 38);
             button.addChild(statsText);
 
             // Special ability (if exists)
             if (config.special) {
                 const specialStyle = new TextStyle({
                     fontFamily: UI_STYLES.FONT_FAMILY,
-                    fontSize: 10,
+                    fontSize: 9,
                     fill: UI_STYLES.COLORS.PRIMARY,
                     fontStyle: 'italic'
                 });
                 const specialText = new Text({ text: `• ${config.special}`, style: specialStyle });
-                specialText.position.set(10, 60);
+                specialText.position.set(8, 50);
                 button.addChild(specialText);
             }
 
             // Cost
             const costStyle = new TextStyle({
                 fontFamily: UI_STYLES.FONT_FAMILY,
-                fontSize: UI_STYLES.FONT_SIZE_MEDIUM,
+                fontSize: 13,
                 fill: UI_STYLES.COLORS.PRIMARY,
                 fontWeight: 'bold'
             });
             const costText = new Text({ text: `${config.cost} M`, style: costStyle });
-            costText.position.set(buttonWidth - 60, 8); // Top right
+            costText.position.set(buttonWidth - 55, 6); // Top right
             button.addChild(costText);
 
             // Interactivity
