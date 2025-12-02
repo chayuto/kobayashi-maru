@@ -84,6 +84,9 @@ export class HUDManager {
   private bottomCenterPanel: Graphics | null = null;
   private bottomRightPanel: Graphics | null = null;
 
+  // Bound event handler for cleanup
+  private boundResizeHandler: (() => void) | null = null;
+
   constructor() {
     this.container = new Container();
   }
@@ -132,7 +135,8 @@ export class HUDManager {
     this.container.addChild(this.messageLog.container);
 
     // Handle resize
-    window.addEventListener('resize', this.handleResize.bind(this));
+    this.boundResizeHandler = this.handleResize.bind(this);
+    window.addEventListener('resize', this.boundResizeHandler);
     this.handleResize();
   }
 
@@ -883,11 +887,17 @@ export class HUDManager {
     if (this.messageLog) {
       this.messageLog.destroy();
     }
+
+    // Remove event listener
+    if (this.boundResizeHandler) {
+      window.removeEventListener('resize', this.boundResizeHandler);
+      this.boundResizeHandler = null;
+    }
+
     this.container.destroy({ children: true });
     if (this.responsiveUIManager) {
       this.responsiveUIManager.destroy();
     }
-    window.removeEventListener('resize', this.handleResize.bind(this));
   }
 
   /**

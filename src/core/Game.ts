@@ -92,6 +92,9 @@ export class Game {
   private godModeEnabled: boolean = false;
   private slowModeEnabled: boolean = true; // Default to slow mode (0.5x speed)
 
+  // Bound event handlers for cleanup
+  private boundResizeHandler: (() => void) | null = null;
+
   constructor(containerId: string = 'app') {
     const container = document.getElementById(containerId);
     if (!container) {
@@ -153,8 +156,9 @@ export class Game {
     // Initialize input manager
     this.inputManager.init(this.app.canvas);
 
-    // Handle window resize
-    window.addEventListener('resize', this.handleResize.bind(this));
+    // Add resize handler
+    this.boundResizeHandler = this.handleResize.bind(this);
+    window.addEventListener('resize', this.boundResizeHandler);
     this.handleResize();
 
     // Initialize audio on first user interaction
@@ -804,8 +808,13 @@ export class Game {
    * Clean up resources
    */
   destroy(): void {
-    window.removeEventListener('resize', this.handleResize.bind(this));
+    // Remove event listeners
+    if (this.boundResizeHandler) {
+      window.removeEventListener('resize', this.boundResizeHandler);
+      this.boundResizeHandler = null;
+    }
     window.removeEventListener('keydown', this.boundHandleKeyDown);
+
     // Unsubscribe from EventBus
     this.eventBus.off(GameEventType.ENEMY_KILLED, this.boundHandleEnemyKilled);
     this.eventBus.off(GameEventType.WAVE_STARTED, this.boundHandleWaveStarted);

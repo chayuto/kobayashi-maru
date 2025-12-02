@@ -45,6 +45,10 @@ export class DebugManager {
     private resourcesElement: HTMLElement | null = null;
     private isVisible: boolean = false;
 
+    // Bound event handlers for cleanup
+    private boundKeyHandler: ((e: KeyboardEvent) => void) | null = null;
+    private boundResizeHandler: (() => void) | null = null;
+
     constructor() {
         this.initialize();
     }
@@ -118,14 +122,16 @@ export class DebugManager {
         document.body.appendChild(this.container);
 
         // Toggle visibility with backtick
-        window.addEventListener('keydown', (e) => {
+        this.boundKeyHandler = (e: KeyboardEvent) => {
             if (e.key === '`') {
                 this.toggle();
             }
-        });
+        };
+        window.addEventListener('keydown', this.boundKeyHandler);
 
         // Handle window resize for responsive scaling
-        window.addEventListener('resize', this.handleResize.bind(this));
+        this.boundResizeHandler = this.handleResize.bind(this);
+        window.addEventListener('resize', this.boundResizeHandler);
         this.handleResize();
     }
 
@@ -270,5 +276,26 @@ export class DebugManager {
         if (this.container) {
             this.container.style.display = this.isVisible ? 'block' : 'none';
         }
+    }
+
+    /**
+     * Clean up event listeners and DOM elements
+     */
+    public destroy(): void {
+        // Remove event listeners
+        if (this.boundKeyHandler) {
+            window.removeEventListener('keydown', this.boundKeyHandler);
+            this.boundKeyHandler = null;
+        }
+        if (this.boundResizeHandler) {
+            window.removeEventListener('resize', this.boundResizeHandler);
+            this.boundResizeHandler = null;
+        }
+
+        // Remove DOM element
+        if (this.container && this.container.parentNode) {
+            this.container.parentNode.removeChild(this.container);
+        }
+        this.container = null;
     }
 }
