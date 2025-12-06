@@ -54,10 +54,15 @@ export const Turret = defineComponent({
   turretType: Types.ui8  // Type of turret (phaser, torpedo, disruptor)
 });
 
-// Target component - stores current target for turrets
+// Target component - stores current target(s) for turrets
+// Supports up to 3 targets for multi-target upgrades
 export const Target = defineComponent({
-  entityId: Types.ui32,  // Current target entity ID
-  hasTarget: Types.ui8   // 0/1 flag indicating if target is valid
+  entityId: Types.ui32,    // Primary target entity ID
+  hasTarget: Types.ui8,    // 0/1 flag indicating if primary target is valid
+  entityId2: Types.ui32,   // Secondary target entity ID (multi-target upgrade)
+  hasTarget2: Types.ui8,   // 0/1 flag for secondary target
+  entityId3: Types.ui32,   // Tertiary target entity ID (multi-target upgrade level 2)
+  hasTarget3: Types.ui8    // 0/1 flag for tertiary target
 });
 
 // AI Behavior component - stores AI state and configuration

@@ -308,6 +308,10 @@ export function createKobayashiMaru(world: GameWorld, x: number, y: number): num
   addComponent(world, Target, eid);
   Target.entityId[eid] = 0;
   Target.hasTarget[eid] = 0;
+  Target.entityId2[eid] = 0;
+  Target.hasTarget2[eid] = 0;
+  Target.entityId3[eid] = 0;
+  Target.hasTarget3[eid] = 0;
 
   incrementEntityCount();
   return eid;
@@ -359,6 +363,10 @@ export function createTurret(world: GameWorld, x: number, y: number, turretType:
   addComponent(world, Target, eid);
   Target.entityId[eid] = 0;
   Target.hasTarget[eid] = 0;
+  Target.entityId2[eid] = 0;
+  Target.hasTarget2[eid] = 0;
+  Target.entityId3[eid] = 0;
+  Target.hasTarget3[eid] = 0;
 
   // Add upgrade component to all turrets (starts at level 0)
   addComponent(world, TurretUpgrade, eid);
