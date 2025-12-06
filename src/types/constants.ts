@@ -77,7 +77,11 @@ export const GAME_CONFIG = {
   ORBIT_APPROACH_SPEED: 40,     // Slow approach speed until orbit distance
   // Collision radii for entities
   KOBAYASHI_MARU_RADIUS: 40,    // Collision radius for Kobayashi Maru
-  TURRET_RADIUS: 20             // Collision radius for turrets
+  TURRET_RADIUS: 20,            // Collision radius for turrets
+  // Kobayashi Maru default defense weapon stats
+  KOBAYASHI_MARU_DEFENSE_RANGE: 250,     // Defense weapon range in pixels
+  KOBAYASHI_MARU_DEFENSE_FIRE_RATE: 2,   // Defense weapon fire rate (shots per second)
+  KOBAYASHI_MARU_DEFENSE_DAMAGE: 15      // Defense weapon damage per shot
 } as const;
 
 // Turret type IDs
