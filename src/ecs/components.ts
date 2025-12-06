@@ -148,3 +148,15 @@ export const WeaponProperties = defineComponent({
   statusEffectChance: Types.f32       // Chance to apply status 0.0-1.0
 });
 
+/**
+ * TurretUpgrade component - tracks upgrade state for turrets
+ * Each turret can be upgraded through multiple paths
+ */
+export const TurretUpgrade = defineComponent({
+  damageLevel: Types.ui8,      // Damage upgrade level (0-3)
+  rangeLevel: Types.ui8,       // Range upgrade level (0-3)
+  fireRateLevel: Types.ui8,    // Fire rate upgrade level (0-3)
+  multiTargetLevel: Types.ui8, // Multi-target upgrade level (0-2, enables multiple targets)
+  specialLevel: Types.ui8      // Special ability upgrade level (0-3, turret-specific)
+});
+
