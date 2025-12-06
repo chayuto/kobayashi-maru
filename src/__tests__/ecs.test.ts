@@ -2,6 +2,7 @@
  * Tests for ECS components and entity factory
  */
 import { describe, it, expect } from 'vitest';
+import { hasComponent } from 'bitecs';
 import { 
   createGameWorld,
   getEntityCount,
@@ -13,8 +14,8 @@ import {
   createSpecies8472Ship,
   createKobayashiMaru
 } from '../ecs';
-import { Position, Velocity, Faction, Health, Shield } from '../ecs/components';
-import { FactionId } from '../types/constants';
+import { Position, Velocity, Faction, Health, Shield, Turret, Target } from '../ecs/components';
+import { FactionId, GAME_CONFIG } from '../types/constants';
 
 describe('ECS World', () => {
   it('should create a new world', () => {
@@ -114,5 +115,20 @@ describe('Entity Factory - Kobayashi Maru', () => {
     expect(Health.max[eid]).toBe(500);
     expect(Shield.current[eid]).toBe(200);
     expect(Shield.max[eid]).toBe(200);
+  });
+
+  it('should create Kobayashi Maru with basic defense weapon', () => {
+    const world = createGameWorld();
+    const eid = createKobayashiMaru(world, 960, 540);
+    
+    // Verify Turret component exists
+    expect(hasComponent(world, Turret, eid)).toBe(true);
+    expect(Turret.range[eid]).toBe(GAME_CONFIG.KOBAYASHI_MARU_DEFENSE_RANGE);
+    expect(Turret.fireRate[eid]).toBe(GAME_CONFIG.KOBAYASHI_MARU_DEFENSE_FIRE_RATE);
+    expect(Turret.damage[eid]).toBe(GAME_CONFIG.KOBAYASHI_MARU_DEFENSE_DAMAGE);
+    
+    // Verify Target component exists
+    expect(hasComponent(world, Target, eid)).toBe(true);
+    expect(Target.hasTarget[eid]).toBe(0);
   });
 });

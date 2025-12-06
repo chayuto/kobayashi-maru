@@ -4,7 +4,7 @@
  */
 import { addEntity, addComponent } from 'bitecs';
 import { Position, Velocity, Faction, SpriteRef, Health, Shield, Turret, Target, AIBehavior, Projectile, Collider, WeaponProperties, EnemyWeapon } from './components';
-import { FactionId, TurretType, TURRET_CONFIG, AIBehaviorType, ProjectileType, PROJECTILE_CONFIG } from '../types/constants';
+import { FactionId, TurretType, TURRET_CONFIG, AIBehaviorType, ProjectileType, PROJECTILE_CONFIG, GAME_CONFIG } from '../types/constants';
 import type { GameWorld } from './world';
 import { incrementEntityCount } from './world';
 
@@ -296,6 +296,18 @@ export function createKobayashiMaru(world: GameWorld, x: number, y: number): num
   addComponent(world, Shield, eid);
   Shield.current[eid] = 200;
   Shield.max[eid] = 200;
+
+  // Add basic defense weapon to Kobayashi Maru
+  addComponent(world, Turret, eid);
+  Turret.range[eid] = GAME_CONFIG.KOBAYASHI_MARU_DEFENSE_RANGE;
+  Turret.fireRate[eid] = GAME_CONFIG.KOBAYASHI_MARU_DEFENSE_FIRE_RATE;
+  Turret.damage[eid] = GAME_CONFIG.KOBAYASHI_MARU_DEFENSE_DAMAGE;
+  Turret.lastFired[eid] = 0;
+  Turret.turretType[eid] = TurretType.DISRUPTOR_BANK; // Use disruptor type for main ship
+
+  addComponent(world, Target, eid);
+  Target.entityId[eid] = 0;
+  Target.hasTarget[eid] = 0;
 
   incrementEntityCount();
   return eid;
