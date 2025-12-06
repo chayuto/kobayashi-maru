@@ -4,6 +4,7 @@
  */
 export { HUDManager } from './HUDManager';
 export { TurretMenu } from './TurretMenu';
+export { TurretUpgradePanel } from './TurretUpgradePanel';
 export { HealthBar } from './HealthBar';
 export { UI_STYLES } from './styles';
 export { GameOverScreen, calculateScore } from './GameOverScreen';

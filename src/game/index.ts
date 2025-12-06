@@ -10,3 +10,4 @@ export * from './scoreManager';
 export * from './highScoreManager';
 export * from './resourceManager';
 export * from './PlacementManager';
+export * from './UpgradeManager';

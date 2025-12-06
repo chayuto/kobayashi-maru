@@ -54,10 +54,15 @@ export const Turret = defineComponent({
   turretType: Types.ui8  // Type of turret (phaser, torpedo, disruptor)
 });
 
-// Target component - stores current target for turrets
+// Target component - stores current target(s) for turrets
+// Supports up to 3 targets for multi-target upgrades
 export const Target = defineComponent({
-  entityId: Types.ui32,  // Current target entity ID
-  hasTarget: Types.ui8   // 0/1 flag indicating if target is valid
+  entityId: Types.ui32,    // Primary target entity ID
+  hasTarget: Types.ui8,    // 0/1 flag indicating if primary target is valid
+  entityId2: Types.ui32,   // Secondary target entity ID (multi-target upgrade)
+  hasTarget2: Types.ui8,   // 0/1 flag for secondary target
+  entityId3: Types.ui32,   // Tertiary target entity ID (multi-target upgrade level 2)
+  hasTarget3: Types.ui8    // 0/1 flag for tertiary target
 });
 
 // AI Behavior component - stores AI state and configuration
@@ -146,5 +151,17 @@ export const WeaponProperties = defineComponent({
   aoeRadius: Types.f32,               // AOE explosion radius (0 = no AOE)
   statusEffectType: Types.ui8,        // 0=none, 1=burn, 2=slow, 3=drain, 4=disable
   statusEffectChance: Types.f32       // Chance to apply status 0.0-1.0
+});
+
+/**
+ * TurretUpgrade component - tracks upgrade state for turrets
+ * Each turret can be upgraded through multiple paths
+ */
+export const TurretUpgrade = defineComponent({
+  damageLevel: Types.ui8,      // Damage upgrade level (0-3)
+  rangeLevel: Types.ui8,       // Range upgrade level (0-3)
+  fireRateLevel: Types.ui8,    // Fire rate upgrade level (0-3)
+  multiTargetLevel: Types.ui8, // Multi-target upgrade level (0-2, enables multiple targets)
+  specialLevel: Types.ui8      // Special ability upgrade level (0-3, turret-specific)
 });
 

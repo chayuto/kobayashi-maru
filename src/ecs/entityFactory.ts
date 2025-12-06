@@ -3,7 +3,7 @@
  * Creates pre-configured entities with appropriate components
  */
 import { addEntity, addComponent } from 'bitecs';
-import { Position, Velocity, Faction, SpriteRef, Health, Shield, Turret, Target, AIBehavior, Projectile, Collider, WeaponProperties, EnemyWeapon } from './components';
+import { Position, Velocity, Faction, SpriteRef, Health, Shield, Turret, Target, AIBehavior, Projectile, Collider, WeaponProperties, EnemyWeapon, TurretUpgrade } from './components';
 import { FactionId, TurretType, TURRET_CONFIG, AIBehaviorType, ProjectileType, PROJECTILE_CONFIG, GAME_CONFIG } from '../types/constants';
 import type { GameWorld } from './world';
 import { incrementEntityCount } from './world';
@@ -308,6 +308,10 @@ export function createKobayashiMaru(world: GameWorld, x: number, y: number): num
   addComponent(world, Target, eid);
   Target.entityId[eid] = 0;
   Target.hasTarget[eid] = 0;
+  Target.entityId2[eid] = 0;
+  Target.hasTarget2[eid] = 0;
+  Target.entityId3[eid] = 0;
+  Target.hasTarget3[eid] = 0;
 
   incrementEntityCount();
   return eid;
@@ -359,6 +363,18 @@ export function createTurret(world: GameWorld, x: number, y: number, turretType:
   addComponent(world, Target, eid);
   Target.entityId[eid] = 0;
   Target.hasTarget[eid] = 0;
+  Target.entityId2[eid] = 0;
+  Target.hasTarget2[eid] = 0;
+  Target.entityId3[eid] = 0;
+  Target.hasTarget3[eid] = 0;
+
+  // Add upgrade component to all turrets (starts at level 0)
+  addComponent(world, TurretUpgrade, eid);
+  TurretUpgrade.damageLevel[eid] = 0;
+  TurretUpgrade.rangeLevel[eid] = 0;
+  TurretUpgrade.fireRateLevel[eid] = 0;
+  TurretUpgrade.multiTargetLevel[eid] = 0;
+  TurretUpgrade.specialLevel[eid] = 0;
 
   // Add weapon properties for special turrets
   if (turretType === TurretType.TETRYON_BEAM) {
