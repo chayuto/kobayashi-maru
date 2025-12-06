@@ -188,6 +188,114 @@ export const TURRET_CONFIG: Record<number, {
   }
 };
 
+// Upgrade path types
+export const UpgradePath = {
+  DAMAGE: 0,       // Increase weapon damage
+  RANGE: 1,        // Increase targeting range
+  FIRE_RATE: 2,    // Increase fire rate
+  MULTI_TARGET: 3, // Enable targeting multiple enemies
+  SPECIAL: 4       // Turret-specific special ability
+} as const;
+
+export type UpgradePathId = typeof UpgradePath[keyof typeof UpgradePath];
+
+// Upgrade configuration for each path and level
+export const UPGRADE_CONFIG = {
+  [UpgradePath.DAMAGE]: {
+    name: 'Weapon Power',
+    description: 'Increase damage output',
+    maxLevel: 3,
+    costs: [50, 100, 200],          // Cost per level
+    bonusPercent: [25, 50, 100]     // +25%, +50%, +100% damage
+  },
+  [UpgradePath.RANGE]: {
+    name: 'Targeting Range',
+    description: 'Extend weapon range',
+    maxLevel: 3,
+    costs: [40, 80, 160],
+    bonusPercent: [20, 40, 80]      // +20%, +40%, +80% range
+  },
+  [UpgradePath.FIRE_RATE]: {
+    name: 'Fire Rate',
+    description: 'Increase shots per second',
+    maxLevel: 3,
+    costs: [60, 120, 240],
+    bonusPercent: [30, 60, 120]     // +30%, +60%, +120% fire rate
+  },
+  [UpgradePath.MULTI_TARGET]: {
+    name: 'Multi-Target',
+    description: 'Target multiple enemies',
+    maxLevel: 2,
+    costs: [150, 300],              // More expensive, powerful upgrade
+    targets: [2, 3]                 // Can target 2 or 3 enemies at once
+  },
+  [UpgradePath.SPECIAL]: {
+    name: 'Special Ability',
+    description: 'Turret-specific enhancement',
+    maxLevel: 3,
+    costs: [75, 150, 300],
+    // Effects vary by turret type (see TURRET_SPECIAL_UPGRADES)
+  }
+} as const;
+
+// Special upgrade effects per turret type
+export const TURRET_SPECIAL_UPGRADES: Record<number, {
+  name: string;
+  levels: string[]; // Description per level
+}> = {
+  [TurretType.PHASER_ARRAY]: {
+    name: 'Overload',
+    levels: [
+      'Chance to disable enemy weapons',
+      'Increased disable duration',
+      'Chain lightning to nearby enemies'
+    ]
+  },
+  [TurretType.TORPEDO_LAUNCHER]: {
+    name: 'Payload',
+    levels: [
+      'Small AOE explosion',
+      'Larger explosion radius',
+      'Armor penetration'
+    ]
+  },
+  [TurretType.DISRUPTOR_BANK]: {
+    name: 'Resonance',
+    levels: [
+      'Shield drain on hit',
+      'Increased shield damage',
+      'Shield bypass'
+    ]
+  },
+  [TurretType.TETRYON_BEAM]: {
+    name: 'Polarize',
+    levels: [
+      'Weaken enemy shields',
+      'Increased hull damage',
+      'Shield collapse'
+    ]
+  },
+  [TurretType.PLASMA_CANNON]: {
+    name: 'Inferno',
+    levels: [
+      'Increased burn damage',
+      'Longer burn duration',
+      'Burn spreads to nearby enemies'
+    ]
+  },
+  [TurretType.POLARON_BEAM]: {
+    name: 'Energy Drain',
+    levels: [
+      'Stronger slow effect',
+      'Permanent speed reduction',
+      'Disable enemy abilities'
+    ]
+  }
+};
+
+// Sell refund percentage (percent of total investment returned)
+export const TURRET_SELL_REFUND_PERCENT = 0.75; // 75% refund
+
 // Projectile Types
 export const ProjectileType = {
   PHOTON_TORPEDO: 0,

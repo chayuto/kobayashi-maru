@@ -22,7 +22,7 @@ export class TurretMenu {
      */
     private createMenu(): void {
         const padding = UI_STYLES.PADDING;
-        const buttonWidth = 200; // Reduced from 240 to fit better
+        const buttonWidth = 240; // Increased to fit icon
         const buttonHeight = 75; // Reduced from 95 to fit all 6 weapons
         const startY = 0; // Buttons start at top of menu container
 
@@ -42,6 +42,11 @@ export class TurretMenu {
             bg.stroke({ color: UI_STYLES.COLORS.SECONDARY, width: 2 });
             button.addChild(bg);
 
+            // Turret icon/visual (simple geometric representation)
+            const icon = this.createTurretIcon(type);
+            icon.position.set(10, buttonHeight / 2);
+            button.addChild(icon);
+
             // Turret Name
             const nameStyle = new TextStyle({
                 fontFamily: UI_STYLES.FONT_FAMILY,
@@ -50,7 +55,7 @@ export class TurretMenu {
                 fontWeight: 'bold'
             });
             const nameText = new Text({ text: config.name, style: nameStyle });
-            nameText.position.set(8, 6);
+            nameText.position.set(48, 6);
             button.addChild(nameText);
 
             // Description
@@ -59,10 +64,10 @@ export class TurretMenu {
                 fontSize: 10, // Smaller
                 fill: 0xCCCCCC,
                 wordWrap: true,
-                wordWrapWidth: buttonWidth - 16
+                wordWrapWidth: buttonWidth - 56
             });
             const descText = new Text({ text: config.description, style: descStyle });
-            descText.position.set(8, 22);
+            descText.position.set(48, 22);
             button.addChild(descText);
 
             // Stats (Damage/Range/Rate)
@@ -75,7 +80,7 @@ export class TurretMenu {
                 text: `DMG:${config.damage} RNG:${config.range} RATE:${config.fireRate}/s`,
                 style: statsStyle
             });
-            statsText.position.set(8, 38);
+            statsText.position.set(48, 38);
             button.addChild(statsText);
 
             // Special ability (if exists)
@@ -87,7 +92,7 @@ export class TurretMenu {
                     fontStyle: 'italic'
                 });
                 const specialText = new Text({ text: `• ${config.special}`, style: specialStyle });
-                specialText.position.set(8, 50);
+                specialText.position.set(48, 50);
                 button.addChild(specialText);
             }
 
@@ -99,7 +104,7 @@ export class TurretMenu {
                 fontWeight: 'bold'
             });
             const costText = new Text({ text: `${config.cost} M`, style: costStyle });
-            costText.position.set(buttonWidth - 55, 6); // Top right
+            costText.position.set(buttonWidth - 60, 6); // Top right
             button.addChild(costText);
 
             // Interactivity
@@ -130,6 +135,72 @@ export class TurretMenu {
     }
 
     /**
+     * Create a simple icon representation for each turret type
+     * @param turretType - Type of turret
+     * @returns Container with turret icon
+     */
+    private createTurretIcon(turretType: number): Container {
+        const icon = new Container();
+        const graphics = new Graphics();
+
+        // Use simple circles/rectangles for maximum compatibility
+        // Different colors distinguish turret types
+        switch (turretType) {
+            case TurretType.PHASER_ARRAY:
+                // Phaser: Yellow double circle (fast firing)
+                graphics.circle(0, 0, 12);
+                graphics.fill({ color: 0xFFCC00 });
+                graphics.circle(0, 0, 6);
+                graphics.fill({ color: 0xFFFFAA });
+                break;
+            case TurretType.TORPEDO_LAUNCHER:
+                // Torpedo: Orange circle with center (long range)
+                graphics.circle(0, 0, 12);
+                graphics.fill({ color: 0xFF6600 });
+                graphics.circle(0, 0, 4);
+                graphics.fill({ color: 0xFFAA44 });
+                break;
+            case TurretType.DISRUPTOR_BANK:
+                // Disruptor: Green circle (balanced)
+                graphics.circle(0, 0, 12);
+                graphics.fill({ color: 0x00FF00 });
+                graphics.circle(0, 0, 8);
+                graphics.fill({ color: 0x88FF88 });
+                break;
+            case TurretType.TETRYON_BEAM:
+                // Tetryon: Cyan circle (shield damage)
+                graphics.circle(0, 0, 12);
+                graphics.fill({ color: 0x00CCFF });
+                graphics.circle(0, 0, 6);
+                graphics.fill({ color: 0x66EEFF });
+                break;
+            case TurretType.PLASMA_CANNON:
+                // Plasma: Red/orange layered circles (burning)
+                graphics.circle(0, 0, 12);
+                graphics.fill({ color: 0xFF4400 });
+                graphics.circle(-3, -3, 7);
+                graphics.fill({ color: 0xFF8800 });
+                graphics.circle(3, 2, 5);
+                graphics.fill({ color: 0xFFCC00 });
+                break;
+            case TurretType.POLARON_BEAM:
+                // Polaron: Purple circle (draining)
+                graphics.circle(0, 0, 12);
+                graphics.fill({ color: 0x9933FF });
+                graphics.circle(0, 0, 7);
+                graphics.fill({ color: 0xCC99FF });
+                break;
+            default:
+                // Default: Simple circle
+                graphics.circle(0, 0, 10);
+                graphics.fill({ color: UI_STYLES.COLORS.SECONDARY });
+        }
+
+        icon.addChild(graphics);
+        return icon;
+    }
+
+    /**
      * Update menu state based on available resources
      * @param resources - Current player resources
      */
@@ -140,10 +211,11 @@ export class TurretMenu {
             const config = TURRET_CONFIG[type];
             const canAfford = resources >= config.cost;
             const bg = button.children[0] as Graphics;
-            const nameText = button.children[1] as Text;
-            const descText = button.children[2] as Text;
-            const statsText = button.children[3] as Text;
-            // Child 4 or 5 is special text (if exists), child 5 or 6 is cost
+            const icon = button.children[1] as Container; // Icon is now child 1
+            const nameText = button.children[2] as Text;
+            const descText = button.children[3] as Text;
+            const statsText = button.children[4] as Text;
+            // Child 5 or 6 is special text (if exists), last child is cost
             const costText = button.children[button.children.length - 1] as Text;
 
             if (canAfford) {
@@ -152,6 +224,7 @@ export class TurretMenu {
                 descText.style.fill = 0xCCCCCC;
                 statsText.style.fill = 0x99CCFF;
                 costText.style.fill = UI_STYLES.COLORS.PRIMARY;
+                icon.alpha = 1;
                 button.cursor = 'pointer';
                 button.alpha = 1;
             } else {
@@ -160,6 +233,7 @@ export class TurretMenu {
                 descText.style.fill = 0x666666;
                 statsText.style.fill = 0x666666;
                 costText.style.fill = 0x888888;
+                icon.alpha = 0.5;
                 button.cursor = 'not-allowed';
                 button.alpha = 0.7;
             }

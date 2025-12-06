@@ -144,21 +144,38 @@ export function createCombatSystem(particleSystem?: ParticleSystem) {
     const turrets = combatQuery(world);
 
     for (const turretEid of turrets) {
-      // Skip if no valid target
-      if (Target.hasTarget[turretEid] !== 1) continue;
-
-      const targetEid = Target.entityId[turretEid];
-
-      // Validate target still exists and has health
-      if (!hasComponent(world, Health, targetEid)) {
-        Target.hasTarget[turretEid] = 0;
-        continue;
+      // Collect all valid targets for this turret
+      const activeTargets: number[] = [];
+      
+      if (Target.hasTarget[turretEid] === 1) {
+        const targetEid = Target.entityId[turretEid];
+        if (hasComponent(world, Health, targetEid) && Health.current[targetEid] > 0) {
+          activeTargets.push(targetEid);
+        } else {
+          Target.hasTarget[turretEid] = 0;
+        }
       }
-
-      if (Health.current[targetEid] <= 0) {
-        Target.hasTarget[turretEid] = 0;
-        continue;
+      
+      if (Target.hasTarget2[turretEid] === 1) {
+        const targetEid2 = Target.entityId2[turretEid];
+        if (hasComponent(world, Health, targetEid2) && Health.current[targetEid2] > 0) {
+          activeTargets.push(targetEid2);
+        } else {
+          Target.hasTarget2[turretEid] = 0;
+        }
       }
+      
+      if (Target.hasTarget3[turretEid] === 1) {
+        const targetEid3 = Target.entityId3[turretEid];
+        if (hasComponent(world, Health, targetEid3) && Health.current[targetEid3] > 0) {
+          activeTargets.push(targetEid3);
+        } else {
+          Target.hasTarget3[turretEid] = 0;
+        }
+      }
+      
+      // Skip if no valid targets
+      if (activeTargets.length === 0) continue;
 
       // Check fire rate cooldown
       const fireRate = Turret.fireRate[turretEid];
@@ -175,11 +192,9 @@ export function createCombatSystem(particleSystem?: ParticleSystem) {
         continue; // Still on cooldown
       }
 
-      // Ready to fire!
+      // Ready to fire at all targets!
       const turretX = Position.x[turretEid];
       const turretY = Position.y[turretEid];
-      const targetX = Position.x[targetEid];
-      const targetY = Position.y[targetEid];
       const damage = Turret.damage[turretEid];
       const turretType = Turret.turretType[turretEid];
 
@@ -192,24 +207,30 @@ export function createCombatSystem(particleSystem?: ParticleSystem) {
         });
       }
 
-      // Apply damage based on weapon type
-      if (turretType === TurretType.TORPEDO_LAUNCHER) {
-        // Spawn projectile (tracked as shot fired)
-        totalShotsFired++;
-        createProjectile(world, turretX, turretY, targetX, targetY, damage, ProjectileType.PHOTON_TORPEDO, targetEid);
-      } else {
-        // Beam weapons - instant hit
-        totalShotsFired++;
-        applyDamage(world, targetEid, damage, targetX, targetY, currentTime, turretEid);
+      // Fire at each target
+      for (const targetEid of activeTargets) {
+        const targetX = Position.x[targetEid];
+        const targetY = Position.y[targetEid];
 
-        // Store beam visual for rendering
-        activeBeams.push({
-          startX: turretX,
-          startY: turretY,
-          endX: targetX,
-          endY: targetY,
-          turretType
-        });
+        // Apply damage based on weapon type
+        if (turretType === TurretType.TORPEDO_LAUNCHER) {
+          // Spawn projectile (tracked as shot fired)
+          totalShotsFired++;
+          createProjectile(world, turretX, turretY, targetX, targetY, damage, ProjectileType.PHOTON_TORPEDO, targetEid);
+        } else {
+          // Beam weapons - instant hit
+          totalShotsFired++;
+          applyDamage(world, targetEid, damage, targetX, targetY, currentTime, turretEid);
+
+          // Store beam visual for rendering
+          activeBeams.push({
+            startX: turretX,
+            startY: turretY,
+            endX: targetX,
+            endY: targetY,
+            turretType
+          });
+        }
       }
 
       // Play sound
@@ -238,9 +259,24 @@ export function createCombatSystem(particleSystem?: ParticleSystem) {
       // Update last fired time
       Turret.lastFired[turretEid] = currentTime;
 
-      // Check if target was killed
-      if (Health.current[targetEid] <= 0) {
-        Target.hasTarget[turretEid] = 0;
+      // Check if any targets were killed and clear their flags
+      if (Target.hasTarget[turretEid] === 1) {
+        const targetEid = Target.entityId[turretEid];
+        if (!hasComponent(world, Health, targetEid) || Health.current[targetEid] <= 0) {
+          Target.hasTarget[turretEid] = 0;
+        }
+      }
+      if (Target.hasTarget2[turretEid] === 1) {
+        const targetEid2 = Target.entityId2[turretEid];
+        if (!hasComponent(world, Health, targetEid2) || Health.current[targetEid2] <= 0) {
+          Target.hasTarget2[turretEid] = 0;
+        }
+      }
+      if (Target.hasTarget3[turretEid] === 1) {
+        const targetEid3 = Target.entityId3[turretEid];
+        if (!hasComponent(world, Health, targetEid3) || Health.current[targetEid3] <= 0) {
+          Target.hasTarget3[turretEid] = 0;
+        }
       }
     }
 
