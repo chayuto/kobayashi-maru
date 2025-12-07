@@ -5,3 +5,5 @@
 export * from './StorageService';
 export { applyDamage, applyDamageDetailed } from './DamageService';
 export type { DamageResult } from './DamageService';
+export { EntityPoolService } from './EntityPoolService';
+export { ErrorService, GameError, GameErrorCode } from './ErrorService';

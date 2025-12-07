@@ -5,6 +5,7 @@
 export * from './Game';
 export * from './GameInputHandler';
 export * from './GameStateController';
+export * from './GameCheatManager';
 export * from './PerformanceMonitor';
 export * from './QualityManager';
 export * from './EventBus';
