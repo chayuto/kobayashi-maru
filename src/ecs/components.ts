@@ -165,3 +165,29 @@ export const TurretUpgrade = defineComponent({
   specialLevel: Types.ui8      // Special ability upgrade level (0-3, turret-specific)
 });
 
+// ============================================================================
+// ENEMY VARIANT & SPECIAL ABILITY COMPONENTS
+// ============================================================================
+
+/**
+ * EnemyVariant component - identifies enemy rank/variant
+ * Used to distinguish Normal, Elite, and Boss enemies
+ */
+export const EnemyVariant = defineComponent({
+  rank: Types.ui8,           // 0=Normal, 1=Elite, 2=Boss
+  sizeScale: Types.f32,      // Visual size multiplier
+  statMultiplier: Types.f32  // Health/damage multiplier
+});
+
+/**
+ * SpecialAbility component - tracks ability cooldowns and state
+ * Enemies with special abilities use this to manage their unique powers
+ */
+export const SpecialAbility = defineComponent({
+  abilityType: Types.ui8,      // Type of special ability (see AbilityType in constants)
+  cooldown: Types.f32,         // Time between uses (seconds)
+  lastUsed: Types.f32,         // Timestamp of last use (game time in seconds)
+  duration: Types.f32,         // Duration of ability effect (seconds)
+  active: Types.ui8            // 0/1 flag if currently active
+});
+

@@ -2,7 +2,7 @@
  * Wave Configuration for Kobayashi Maru
  * Defines wave structures, enemy compositions, and difficulty scaling
  */
-import { FactionId, FactionIdType } from '../types/constants';
+import { FactionId, FactionIdType, AbilityType, AbilityTypeId } from '../types/constants';
 
 export type FormationType = 'random' | 'cluster' | 'v-formation';
 
@@ -206,4 +206,80 @@ export function getDifficultyScale(waveNumber: number): number {
   const baseScale = 1.45; // Scale at wave 10
   const exponentialGrowth = Math.pow(1.03, waveNumber - 10);
   return baseScale * exponentialGrowth;
+}
+
+// ============================================================================
+// BOSS WAVE SYSTEM
+// ============================================================================
+
+/**
+ * Configuration for boss wave special events
+ */
+export interface BossWaveConfig {
+  waveNumber: number;
+  bossType: FactionIdType;
+  bossCount: number;
+  bossAbilities: AbilityTypeId[];
+  supportEnemies: {
+    faction: FactionIdType;
+    count: number;
+  }[];
+  rewardMultiplier: number;
+}
+
+/**
+ * Pre-defined boss waves
+ */
+export const BOSS_WAVES: BossWaveConfig[] = [
+  {
+    waveNumber: 5,
+    bossType: FactionId.BORG,
+    bossCount: 1,
+    bossAbilities: [AbilityType.SHIELD_REGEN, AbilityType.SUMMON],
+    supportEnemies: [
+      { faction: FactionId.BORG, count: 10 }
+    ],
+    rewardMultiplier: 2.0
+  },
+  {
+    waveNumber: 10,
+    bossType: FactionId.SPECIES_8472,
+    bossCount: 1,
+    bossAbilities: [AbilityType.TELEPORT, AbilityType.CLOAK],
+    supportEnemies: [
+      { faction: FactionId.SPECIES_8472, count: 5 }
+    ],
+    rewardMultiplier: 3.0
+  },
+  {
+    waveNumber: 15,
+    bossType: FactionId.ROMULAN,
+    bossCount: 2,
+    bossAbilities: [AbilityType.CLOAK, AbilityType.RAMMING_SPEED],
+    supportEnemies: [
+      { faction: FactionId.ROMULAN, count: 15 },
+      { faction: FactionId.KLINGON, count: 10 }
+    ],
+    rewardMultiplier: 4.0
+  },
+  {
+    waveNumber: 20,
+    bossType: FactionId.BORG,
+    bossCount: 2,
+    bossAbilities: [AbilityType.SHIELD_REGEN, AbilityType.SPLIT],
+    supportEnemies: [
+      { faction: FactionId.BORG, count: 20 },
+      { faction: FactionId.THOLIAN, count: 10 }
+    ],
+    rewardMultiplier: 5.0
+  }
+];
+
+/**
+ * Checks if a wave is a boss wave
+ * @param waveNumber - The wave number to check
+ * @returns The boss wave config if it's a boss wave, null otherwise
+ */
+export function getBossWaveConfig(waveNumber: number): BossWaveConfig | null {
+  return BOSS_WAVES.find(bw => bw.waveNumber === waveNumber) ?? null;
 }
