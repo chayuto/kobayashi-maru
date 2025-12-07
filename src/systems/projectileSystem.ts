@@ -3,10 +3,11 @@
  * Handles projectile movement, lifetime, and collision detection
  */
 import { defineQuery, hasComponent, IWorld, removeEntity } from 'bitecs';
-import { Position, Velocity, Projectile, Collider, Health, Shield, Faction } from '../ecs/components';
+import { Position, Velocity, Projectile, Collider, Health, Faction } from '../ecs/components';
 import { SpatialHash } from '../collision';
 import { decrementEntityCount } from '../ecs/world';
 import { FactionId } from '../types/constants';
+import { applyDamage } from '../services';
 
 // Query for active projectiles
 const projectileQuery = defineQuery([Position, Velocity, Projectile, Collider]);
@@ -111,33 +112,4 @@ export function createProjectileSystem(spatialHash: SpatialHash) {
         update: projectileSystem,
         onHit
     };
-}
-
-/**
- * Applies damage to an entity, prioritizing shields over health
- * (Duplicated from combatSystem - should ideally be a shared utility)
- */
-function applyDamage(world: IWorld, entityId: number, damage: number): number {
-    let totalDamageDealt = 0;
-
-    // Apply damage to shields first if entity has Shield component
-    if (hasComponent(world, Shield, entityId)) {
-        const currentShield = Shield.current[entityId];
-        if (currentShield > 0) {
-            const shieldDamage = Math.min(currentShield, damage);
-            Shield.current[entityId] = currentShield - shieldDamage;
-            damage -= shieldDamage;
-            totalDamageDealt += shieldDamage;
-        }
-    }
-
-    // Apply remaining damage to health
-    if (damage > 0) {
-        const currentHealth = Health.current[entityId];
-        const healthDamage = Math.min(currentHealth, damage);
-        Health.current[entityId] = currentHealth - healthDamage;
-        totalDamageDealt += healthDamage;
-    }
-
-    return totalDamageDealt;
 }

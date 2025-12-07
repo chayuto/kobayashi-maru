@@ -3,10 +3,11 @@
  * Handles enemy projectile collisions with Federation entities (Kobayashi Maru, turrets)
  */
 import { defineQuery, hasComponent, IWorld, removeEntity } from 'bitecs';
-import { Position, Velocity, Projectile, Collider, Health, Shield, Faction, Turret } from '../ecs/components';
+import { Position, Velocity, Projectile, Collider, Health, Faction, Turret } from '../ecs/components';
 import { SpatialHash } from '../collision';
 import { decrementEntityCount } from '../ecs/world';
 import { FactionId, GAME_CONFIG } from '../types/constants';
+import { applyDamage } from '../services';
 
 // Query for enemy projectiles
 const enemyProjectileQuery = defineQuery([Position, Velocity, Projectile, Collider, Faction]);
@@ -67,8 +68,8 @@ export function createEnemyProjectileSystem(
         const targetX = Position.x[targetEid];
         const targetY = Position.y[targetEid];
         // Use configured collision radii for Kobayashi Maru and turrets
-        const targetRadius = hasComponent(world, Collider, targetEid) 
-          ? Collider.radius[targetEid] 
+        const targetRadius = hasComponent(world, Collider, targetEid)
+          ? Collider.radius[targetEid]
           : (hasComponent(world, Turret, targetEid) ? GAME_CONFIG.TURRET_RADIUS : GAME_CONFIG.KOBAYASHI_MARU_RADIUS);
 
         const dx = x - targetX;
@@ -79,12 +80,12 @@ export function createEnemyProjectileSystem(
         if (distSq <= radiusSum * radiusSum) {
           // Collision!
           const actualDamage = applyDamage(world, targetEid, damage);
-          
+
           // Track damage to Kobayashi Maru specifically
           if (targetEid === kmId && actualDamage > 0) {
             totalDamageToKM += actualDamage;
           }
-          
+
           hit = true;
           break; // Only hit one target
         }
@@ -118,34 +119,6 @@ export function createEnemyProjectileSystem(
     getTotalDamageToKM,
     resetDamageTracking
   };
-}
-
-/**
- * Applies damage to an entity, prioritizing shields over health
- */
-function applyDamage(world: IWorld, entityId: number, damage: number): number {
-  let totalDamageDealt = 0;
-
-  // Apply damage to shields first if entity has Shield component
-  if (hasComponent(world, Shield, entityId)) {
-    const currentShield = Shield.current[entityId];
-    if (currentShield > 0) {
-      const shieldDamage = Math.min(currentShield, damage);
-      Shield.current[entityId] = currentShield - shieldDamage;
-      damage -= shieldDamage;
-      totalDamageDealt += shieldDamage;
-    }
-  }
-
-  // Apply remaining damage to health
-  if (damage > 0) {
-    const currentHealth = Health.current[entityId];
-    const healthDamage = Math.min(currentHealth, damage);
-    Health.current[entityId] = currentHealth - healthDamage;
-    totalDamageDealt += healthDamage;
-  }
-
-  return totalDamageDealt;
 }
 
 export type EnemyProjectileSystem = ReturnType<typeof createEnemyProjectileSystem>;
