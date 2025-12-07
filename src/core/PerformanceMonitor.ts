@@ -15,6 +15,7 @@ export interface PerformanceMetrics {
   entityCount: number;
   drawCalls: number;
   memoryUsed: number;      // If available via performance API
+  poolStats?: { enemies: { inUse: number, available: number }, projectiles: { inUse: number, available: number } };
 }
 
 /**
@@ -263,7 +264,8 @@ export class PerformanceMonitor {
       systemTimes: avgSystemTimes,
       entityCount: this.metrics.entityCount,
       drawCalls: this.metrics.drawCalls,
-      memoryUsed: this.metrics.memoryUsed
+      memoryUsed: this.metrics.memoryUsed,
+      poolStats: this.metrics.poolStats
     };
   }
 

@@ -10,6 +10,7 @@
 import { Application } from 'pixi.js';
 import { getServices } from '../services';
 import { getEntityCount } from '../../ecs';
+import { PoolManager } from '../../ecs/PoolManager';
 import type { GameplaySnapshot } from './GameplayManager';
 import type { CombatSystem } from '../../systems/combatSystem';
 import type { ScoreData } from '../../game/scoreManager';
@@ -212,7 +213,9 @@ export class UIController {
             resources: snapshot.resources,
         });
 
-        debugManager.updatePerformanceStats(perfMon.getMetrics());
+        const perfStats = perfMon.getMetrics();
+        perfStats.poolStats = PoolManager.getInstance().getStats();
+        debugManager.updatePerformanceStats(perfStats);
     }
 
     /**

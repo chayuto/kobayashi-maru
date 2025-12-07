@@ -21,6 +21,7 @@ export interface PerformanceStats {
     systemTimes: Map<string, number>;
     entityCount: number;
     memoryUsed: number;
+    poolStats?: { enemies: { inUse: number, available: number }, projectiles: { inUse: number, available: number } };
 }
 
 // Frame budget threshold for highlighting (in ms)
@@ -44,6 +45,7 @@ export class DebugManager {
     private enemiesElement: HTMLElement | null = null;
     private resourcesElement: HTMLElement | null = null;
     private isVisible: boolean = false;
+    private poolStatsElement: HTMLElement | null = null;
 
     // Bound event handlers for cleanup
     private boundKeyHandler: ((e: KeyboardEvent) => void) | null = null;
@@ -79,6 +81,13 @@ export class DebugManager {
         this.systemTimingsElement = document.createElement('div');
         this.systemTimingsElement.className = 'system-timings';
         timingsSection.appendChild(this.systemTimingsElement);
+
+        // Pool stats
+        this.poolStatsElement = document.createElement('div');
+        this.poolStatsElement.style.marginTop = '8px';
+        this.poolStatsElement.style.fontSize = '10px';
+        this.poolStatsElement.innerHTML = 'Pools: -';
+        timingsSection.appendChild(this.poolStatsElement);
 
         // Game state section
         const stateSection = this.createSection('STATUS');
@@ -215,6 +224,13 @@ export class DebugManager {
                 timingLines.push(`<span style="color:${color}">${indicator} ${name}: ${time.toFixed(2)}ms</span>`);
             }
             this.systemTimingsElement.innerHTML = timingLines.join('<br>');
+        }
+
+        if (this.poolStatsElement && stats.poolStats) {
+            const { enemies, projectiles } = stats.poolStats;
+            this.poolStatsElement.innerHTML =
+                `<span style="color:#aaffaa">Enemies: ${enemies.inUse}/${enemies.available + enemies.inUse}</span><br>` +
+                `<span style="color:#aaffaa">Proj: ${projectiles.inUse}/${projectiles.available + projectiles.inUse}</span>`;
         }
     }
 

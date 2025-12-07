@@ -23,6 +23,7 @@ import { bootstrapGame } from './bootstrap';
 import { getServices, resetServices } from './services';
 import { GameLoopManager } from './loop';
 import { RenderManager, GameplayManager, UIController, InputRouter, InputAction } from './managers';
+import { PoolManager } from '../ecs/PoolManager';
 
 // Query for counting turrets
 const turretQuery = defineQuery([Turret]);
@@ -65,6 +66,9 @@ export class Game {
     const { app, world } = await bootstrapGame(this.containerId);
     this.app = app;
     this.world = world;
+
+    // Initialize entity pools
+    PoolManager.getInstance().init(this.world);
 
     // Create managers
     this.createManagers();
@@ -378,6 +382,7 @@ export class Game {
   restart(): void {
     this.uiController.hideGameOver();
     this.gameplayManager.restart();
+    PoolManager.getInstance().clear();
     this.inputRouter.deselectTurret();
   }
 
@@ -455,6 +460,7 @@ export class Game {
     this.gameplayManager.destroy();
     this.renderManager.destroy();
     this.loopManager.destroy();
+    PoolManager.getInstance().destroy();
 
     resetServices();
     this.app.destroy(true);

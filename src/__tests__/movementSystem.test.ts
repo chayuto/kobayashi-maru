@@ -1,8 +1,10 @@
+
 /**
  * Tests for Movement System
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { createGameWorld } from '../ecs/world';
+import { PoolManager } from '../ecs/PoolManager';
 import { createFederationShip, createKlingonShip } from '../ecs/entityFactory';
 import { Position, Velocity, Projectile } from '../ecs/components';
 import { addComponent } from 'bitecs';
@@ -15,7 +17,12 @@ describe('Movement System', () => {
 
   beforeEach(() => {
     world = createGameWorld();
+    PoolManager.getInstance().init(world);
     movementSystem = createMovementSystem();
+  });
+
+  afterEach(() => {
+    PoolManager.getInstance().destroy();
   });
 
   it('should update position based on velocity and delta time', () => {
@@ -34,40 +41,61 @@ describe('Movement System', () => {
 
   it('should be frame-rate independent (same result for different delta times)', () => {
     // Create two entities at the same position with same velocity
+    // Entity 1 will move in 2 steps
     const eid1 = createFederationShip(world, 100, 100);
-    const eid2 = createKlingonShip(world, 100, 100);
     Velocity.x[eid1] = 100;
     Velocity.y[eid1] = 100;
+
+    // Entity 2 will move in 1 step
+    const eid2 = createFederationShip(world, 100, 100);
     Velocity.x[eid2] = 100;
     Velocity.y[eid2] = 100;
 
-    // Run movement system with different delta times but same total time
-    // Entity 1: two steps of 0.25 seconds
+    // Step 1 for Entity 1: 0.25 seconds
+    // Since movementSystem iterates all entities, both will move 0.25s
+    // But we can simulate this by running:
+    // Run 1 (0.25s) -> Check eid1 (should be at 125)
+    // Run 2 (0.25s) -> Check eid1 (should be at 150)
+
+    // For the "single step" comparison, we can calculate expected values manually
+    // or run a separate test case, but we can verify consistency here.
+
+    // Move 0.25s
     movementSystem(world, 0.25);
-    const x1_after_step1 = Position.x[eid1];
-    const y1_after_step1 = Position.y[eid1];
 
-    // Entity 2 wasn't updated yet in step 1, but we'll check the math
-    // Actually both entities move together, so let's test differently
+    // Expected position: 100 + 100 * 0.25 = 125
+    expect(Position.x[eid1]).toBeCloseTo(125, 5);
+    expect(Position.y[eid1]).toBeCloseTo(125, 5);
 
-    // Reset and test with single step
-    const world2 = createGameWorld();
-    const movementSystem2 = createMovementSystem();
-    const eid3 = createFederationShip(world2, 100, 100);
+    // Move another 0.25s
+    movementSystem(world, 0.25);
+
+    // Expected position: 125 + 100 * 0.25 = 150
+    expect(Position.x[eid1]).toBeCloseTo(150, 5);
+    expect(Position.y[eid1]).toBeCloseTo(150, 5);
+
+    // Capture result of 2 steps
+    const eid1_result_x = Position.x[eid1];
+
+    // Now creates a NEW entity for single-step test to ensure cleanliness?
+    // We can just reuse world since we are creating new entities
+
+    const eid3 = createFederationShip(world, 100, 100);
     Velocity.x[eid3] = 100;
     Velocity.y[eid3] = 100;
 
-    // One step of 0.5 seconds
-    movementSystem2(world2, 0.5);
+    // Check initial pos
+    expect(Position.x[eid3]).toBe(100);
 
-    // The positions should follow the formula: position += velocity * delta
-    // Step 1: 100 + 100 * 0.25 = 125
-    expect(x1_after_step1).toBeCloseTo(125, 5);
-    expect(y1_after_step1).toBeCloseTo(125, 5);
+    // Move 0.5s in one go (Note: this moves eid1/eid2 as well, but we ignore them)
+    movementSystem(world, 0.5);
 
-    // Single step: 100 + 100 * 0.5 = 150
+    // Expected position: 100 + 100 * 0.5 = 150
     expect(Position.x[eid3]).toBeCloseTo(150, 5);
     expect(Position.y[eid3]).toBeCloseTo(150, 5);
+
+    // Result should match eid1's result (which was captured before the 3rd step)
+    expect(Position.x[eid3]).toBeCloseTo(eid1_result_x, 5);
   });
 
   it('should wrap entity position when going off right edge', () => {

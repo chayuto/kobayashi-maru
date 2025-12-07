@@ -1,8 +1,9 @@
 /**
  * Tests for Collision System
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { createGameWorld } from '../ecs/world';
+import { PoolManager } from '../ecs/PoolManager';
 import { createFederationShip } from '../ecs/entityFactory';
 import { Position } from '../ecs/components';
 import { createCollisionSystem } from '../systems/collisionSystem';
@@ -16,9 +17,14 @@ describe('Collision System', () => {
 
   beforeEach(() => {
     world = createGameWorld();
+    PoolManager.getInstance().init(world);
     // Use cell size of 64 for testing
     spatialHash = new SpatialHash(64, GAME_CONFIG.WORLD_WIDTH, GAME_CONFIG.WORLD_HEIGHT);
     collisionSystem = createCollisionSystem(spatialHash);
+  });
+
+  afterEach(() => {
+    PoolManager.getInstance().destroy();
   });
 
   describe('update', () => {
@@ -31,7 +37,7 @@ describe('Collision System', () => {
 
       // Query should find entities
       const result = collisionSystem.queryNearby(150, 150, 200);
-      
+
       expect(result).toContain(eid1);
       expect(result).toContain(eid2);
     });
@@ -46,7 +52,7 @@ describe('Collision System', () => {
       // Entity should only appear once
       const result = collisionSystem.queryNearby(100, 100, 100);
       const count = result.filter(id => id === eid).length;
-      
+
       expect(count).toBe(1);
     });
 
@@ -121,7 +127,7 @@ describe('Collision System', () => {
   describe('getSpatialHash', () => {
     it('should return the underlying spatial hash', () => {
       const hash = collisionSystem.getSpatialHash();
-      
+
       expect(hash).toBe(spatialHash);
     });
   });

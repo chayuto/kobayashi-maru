@@ -1,8 +1,9 @@
 /**
  * Tests for Combat System
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { createGameWorld, createTurret, createKlingonShip } from '../ecs';
+import { PoolManager } from '../ecs/PoolManager';
 import { Target, Health, Shield, Turret } from '../ecs/components';
 import { TurretType, TURRET_CONFIG } from '../types/constants';
 import { createCombatSystem } from '../systems/combatSystem';
@@ -14,7 +15,12 @@ describe('Combat System', () => {
 
   beforeEach(() => {
     world = createGameWorld();
+    PoolManager.getInstance().init(world);
     combatSystem = createCombatSystem();
+  });
+
+  afterEach(() => {
+    PoolManager.getInstance().destroy();
   });
 
   describe('Fire rate cooldown', () => {
@@ -22,19 +28,19 @@ describe('Combat System', () => {
       // Create turret and enemy
       const turretId = createTurret(world, 500, 500, TurretType.PHASER_ARRAY);
       const enemyId = createKlingonShip(world, 550, 500);
-      
+
       // Manually set target
       Target.entityId[turretId] = enemyId;
       Target.hasTarget[turretId] = 1;
-      
+
       // Set lastFired to 0 and current time to 1 (well past cooldown)
       Turret.lastFired[turretId] = 0;
-      
+
       const initialHealth = Health.current[enemyId] + Shield.current[enemyId];
-      
+
       // Run combat system with time = 1 second
       combatSystem.update(world, 0.016, 1);
-      
+
       // Check that damage was applied
       const finalHealth = Health.current[enemyId] + Shield.current[enemyId];
       expect(finalHealth).toBeLessThan(initialHealth);
@@ -44,19 +50,19 @@ describe('Combat System', () => {
       // Create turret and enemy
       const turretId = createTurret(world, 500, 500, TurretType.PHASER_ARRAY);
       const enemyId = createKlingonShip(world, 550, 500);
-      
+
       // Manually set target
       Target.entityId[turretId] = enemyId;
       Target.hasTarget[turretId] = 1;
-      
+
       // Set lastFired very recently (0.1 seconds ago for a 4 shots/sec turret = 0.25s cooldown)
       Turret.lastFired[turretId] = 0.9;
-      
+
       const initialHealth = Health.current[enemyId] + Shield.current[enemyId];
-      
+
       // Run combat system with time = 1 second (only 0.1s since last fire)
       combatSystem.update(world, 0.016, 1);
-      
+
       // Check that no damage was applied
       const finalHealth = Health.current[enemyId] + Shield.current[enemyId];
       expect(finalHealth).toBe(initialHealth);
@@ -68,19 +74,19 @@ describe('Combat System', () => {
       // Create turret and enemy
       const turretId = createTurret(world, 500, 500, TurretType.PHASER_ARRAY);
       const enemyId = createKlingonShip(world, 550, 500);
-      
+
       // Manually set target
       Target.entityId[turretId] = enemyId;
       Target.hasTarget[turretId] = 1;
       Turret.lastFired[turretId] = 0;
-      
+
       const initialShield = Shield.current[enemyId];
       const initialHealth = Health.current[enemyId];
       const damage = TURRET_CONFIG[TurretType.PHASER_ARRAY].damage;
-      
+
       // Run combat system
       combatSystem.update(world, 0.016, 1);
-      
+
       // Shield should be damaged first
       expect(Shield.current[enemyId]).toBe(initialShield - damage);
       expect(Health.current[enemyId]).toBe(initialHealth);
@@ -90,21 +96,21 @@ describe('Combat System', () => {
       // Create turret and enemy
       const turretId = createTurret(world, 500, 500, TurretType.PHASER_ARRAY);
       const enemyId = createKlingonShip(world, 550, 500);
-      
+
       // Manually set target
       Target.entityId[turretId] = enemyId;
       Target.hasTarget[turretId] = 1;
       Turret.lastFired[turretId] = 0;
-      
+
       // Deplete shields
       Shield.current[enemyId] = 0;
-      
+
       const initialHealth = Health.current[enemyId];
       const damage = TURRET_CONFIG[TurretType.PHASER_ARRAY].damage;
-      
+
       // Run combat system
       combatSystem.update(world, 0.016, 1);
-      
+
       // Health should be damaged
       expect(Health.current[enemyId]).toBe(initialHealth - damage);
     });
@@ -113,20 +119,20 @@ describe('Combat System', () => {
       // Create turret and enemy
       const turretId = createTurret(world, 500, 500, TurretType.PHASER_ARRAY);
       const enemyId = createKlingonShip(world, 550, 500);
-      
+
       // Manually set target
       Target.entityId[turretId] = enemyId;
       Target.hasTarget[turretId] = 1;
       Turret.lastFired[turretId] = 0;
-      
+
       // Set shields to less than damage amount
       Shield.current[enemyId] = 5;  // Less than 10 damage
-      
+
       const initialHealth = Health.current[enemyId];
-      
+
       // Run combat system
       combatSystem.update(world, 0.016, 1);
-      
+
       // Shields should be 0 and health should take remaining damage
       expect(Shield.current[enemyId]).toBe(0);
       expect(Health.current[enemyId]).toBe(initialHealth - 5);  // 10 damage - 5 shield = 5 health damage
@@ -138,15 +144,15 @@ describe('Combat System', () => {
       // Create phaser turret (beam weapon) and enemy
       const turretId = createTurret(world, 500, 500, TurretType.PHASER_ARRAY);
       const enemyId = createKlingonShip(world, 550, 500);
-      
+
       // Manually set target
       Target.entityId[turretId] = enemyId;
       Target.hasTarget[turretId] = 1;
       Turret.lastFired[turretId] = 0;
-      
+
       // Run combat system
       combatSystem.update(world, 0.016, 1);
-      
+
       // Check beam visuals
       const beams = combatSystem.getActiveBeams();
       expect(beams.length).toBe(1);
@@ -161,16 +167,16 @@ describe('Combat System', () => {
       // Create phaser turret and enemy
       const turretId = createTurret(world, 500, 500, TurretType.PHASER_ARRAY);
       const enemyId = createKlingonShip(world, 550, 500);
-      
+
       // Manually set target
       Target.entityId[turretId] = enemyId;
       Target.hasTarget[turretId] = 1;
       Turret.lastFired[turretId] = 0;
-      
+
       // Run combat system
       combatSystem.update(world, 0.016, 1);
       expect(combatSystem.getActiveBeams().length).toBe(1);
-      
+
       // Run again but on cooldown
       combatSystem.update(world, 0.016, 1.1);
       expect(combatSystem.getActiveBeams().length).toBe(0);
@@ -182,19 +188,19 @@ describe('Combat System', () => {
       // Create turret and enemy
       const turretId = createTurret(world, 500, 500, TurretType.PHASER_ARRAY);
       const enemyId = createKlingonShip(world, 550, 500);
-      
+
       // Manually set target
       Target.entityId[turretId] = enemyId;
       Target.hasTarget[turretId] = 1;
       Turret.lastFired[turretId] = 0;
-      
+
       // Set enemy to low health (will die from one hit)
       Health.current[enemyId] = 5;
       Shield.current[enemyId] = 0;
-      
+
       // Run combat system
       combatSystem.update(world, 0.016, 1);
-      
+
       // Target should be cleared because enemy health is now 0
       expect(Health.current[enemyId]).toBe(0);
       expect(Target.hasTarget[turretId]).toBe(0);

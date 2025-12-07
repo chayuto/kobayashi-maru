@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { createGameWorld, GameWorld } from '../ecs';
 import { createProjectileSystem } from '../systems/projectileSystem';
 import { createProjectile } from '../ecs/entityFactory';
@@ -6,6 +6,7 @@ import { SpatialHash } from '../collision';
 import { Position, Projectile, Health, Faction, Collider } from '../ecs/components';
 import { ProjectileType, FactionId } from '../types/constants';
 import { addEntity, addComponent, hasComponent } from 'bitecs';
+import { PoolManager } from '../ecs/PoolManager';
 
 describe('Projectile System', () => {
     let world: GameWorld;
@@ -14,8 +15,13 @@ describe('Projectile System', () => {
 
     beforeEach(() => {
         world = createGameWorld();
+        PoolManager.getInstance().init(world);
         spatialHash = new SpatialHash(64, 1000, 1000);
         system = createProjectileSystem(spatialHash);
+    });
+
+    afterEach(() => {
+        PoolManager.getInstance().destroy();
     });
 
     it('should move projectiles based on velocity', () => {

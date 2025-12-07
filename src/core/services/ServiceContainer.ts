@@ -54,6 +54,7 @@ import type { HapticManager } from '../HapticManager';
 import type { DebugManager } from '../DebugManager';
 import type { EventBus } from '../EventBus';
 import type { GameWorld } from '../../ecs/world';
+import type { PoolManager } from '../../ecs/PoolManager';
 
 /**
  * Service registry type map.
@@ -109,6 +110,9 @@ export interface ServiceRegistry {
 
     // Audio
     audioManager: AudioManager;
+
+    // Pools
+    poolManager: PoolManager;
 }
 
 /**

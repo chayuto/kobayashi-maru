@@ -14,6 +14,9 @@ import type { GameWorld } from './world';
 import { incrementEntityCount } from './world';
 import { createEnemy, createEnemyFromTemplate, createEnemies } from './genericFactory';
 import { ENEMY_TEMPLATES, getEnemyTemplate, getEnemyFactionIds } from './entityTemplates';
+import { PoolManager } from './PoolManager';
+
+const USE_POOLING = true;
 
 // Re-export generic factory and templates for convenient access
 export { createEnemy, createEnemyFromTemplate, createEnemies };
@@ -266,7 +269,13 @@ export function createProjectile(
   projectileType: number,
   targetEntityId: number = 0
 ): number {
-  const eid = addEntity(world);
+  const eid = USE_POOLING
+    ? PoolManager.getInstance().acquireProjectile()
+    : addEntity(world);
+
+  if (USE_POOLING) {
+    resetProjectileComponents(eid);
+  }
 
   addComponent(world, Position, eid);
   Position.x[eid] = x;
@@ -308,8 +317,29 @@ export function createProjectile(
   Collider.layer[eid] = 2; // Projectile layer (need to define layers properly later)
   Collider.mask[eid] = 1;  // Collides with enemies (layer 1)
 
-  incrementEntityCount();
+  if (!USE_POOLING) incrementEntityCount();
   return eid;
+}
+
+/**
+ * Reset projectile components
+ */
+function resetProjectileComponents(eid: number): void {
+  Position.x[eid] = 0;
+  Position.y[eid] = 0;
+  Velocity.x[eid] = 0;
+  Velocity.y[eid] = 0;
+  Projectile.damage[eid] = 0;
+  Projectile.projectileType[eid] = 0;
+  Projectile.targetEntityId[eid] = 0;
+  Projectile.speed[eid] = 0;
+  Projectile.lifetime[eid] = 0;
+  Faction.id[eid] = 0;
+  SpriteRef.index[eid] = 0;
+  Collider.radius[eid] = 0;
+  Collider.layer[eid] = 0;
+  Collider.mask[eid] = 0;
+
 }
 
 /**
@@ -332,7 +362,13 @@ export function createEnemyProjectile(
   damage: number,
   projectileType: number
 ): number {
-  const eid = addEntity(world);
+  const eid = USE_POOLING
+    ? PoolManager.getInstance().acquireProjectile()
+    : addEntity(world);
+
+  if (USE_POOLING) {
+    resetProjectileComponents(eid);
+  }
 
   addComponent(world, Position, eid);
   Position.x[eid] = x;
@@ -371,6 +407,6 @@ export function createEnemyProjectile(
   Collider.layer[eid] = 3; // Enemy projectile layer
   Collider.mask[eid] = 0;  // Federation entities (layer 0)
 
-  incrementEntityCount();
+  if (!USE_POOLING) incrementEntityCount();
   return eid;
 }

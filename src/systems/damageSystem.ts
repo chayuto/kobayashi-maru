@@ -10,6 +10,7 @@ import { AudioManager, SoundType } from '../audio';
 import { decrementEntityCount } from '../ecs/world';
 import { ParticleSystem, EFFECTS } from '../rendering';
 import { EventBus } from '../core/EventBus';
+import { PoolManager } from '../ecs/PoolManager';
 
 // Query for entities with Health component
 const healthQuery = defineQuery([Health, Faction, Position]);
@@ -32,6 +33,8 @@ export function createDamageSystem(particleSystem?: ParticleSystem) {
   const destroyedThisFrame: number[] = [];
   // Get the EventBus instance
   const eventBus = EventBus.getInstance();
+  // Get the PoolManager instance
+  const poolManager = PoolManager.getInstance();
 
   function damageSystem(world: IWorld): IWorld {
     // Clear destroyed list from last frame
@@ -95,9 +98,18 @@ export function createDamageSystem(particleSystem?: ParticleSystem) {
       // Track as destroyed
       destroyedThisFrame.push(eid);
 
-      // Remove entity from world
-      removeEntity(world, eid);
-      decrementEntityCount();
+      // Remove entity from world or Return to appropriate pool
+      if (factionId === FactionId.PROJECTILE || factionId === FactionId.ENEMY_PROJECTILE) {
+        // Projectile entity
+        poolManager.releaseProjectile(eid);
+      } else if (factionId !== FactionId.FEDERATION) {
+        // Enemy entity
+        poolManager.releaseEnemy(eid);
+      } else {
+        // Federation entities (turrets, Kobayashi Maru) - actually remove
+        removeEntity(world, eid);
+        decrementEntityCount();
+      }
     }
 
     return world;

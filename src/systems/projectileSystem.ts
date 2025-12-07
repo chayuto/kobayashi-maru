@@ -2,12 +2,12 @@
  * Projectile System for Kobayashi Maru
  * Handles projectile movement, lifetime, and collision detection
  */
-import { defineQuery, hasComponent, IWorld, removeEntity } from 'bitecs';
+import { defineQuery, hasComponent, IWorld } from 'bitecs';
 import { Position, Velocity, Projectile, Collider, Health, Faction } from '../ecs/components';
 import { SpatialHash } from '../collision';
-import { decrementEntityCount } from '../ecs/world';
 import { FactionId } from '../types/constants';
 import { applyDamage } from '../services';
+import { PoolManager } from '../ecs/PoolManager';
 
 // Query for active projectiles
 const projectileQuery = defineQuery([Position, Velocity, Projectile, Collider]);
@@ -32,9 +32,11 @@ export function createProjectileSystem(spatialHash: SpatialHash) {
             // 1. Update lifetime
             Projectile.lifetime[eid] -= deltaTime;
             if (Projectile.lifetime[eid] <= 0) {
-                removeEntity(world, eid);
-                decrementEntityCount();
-                continue;
+                if (Projectile.lifetime[eid] <= 0) {
+                    // Return to pool instead of destroying
+                    PoolManager.getInstance().releaseProjectile(eid);
+                    continue;
+                }
             }
 
             // 2. Movement is handled by movementSystem, but we might want homing logic here later
@@ -93,8 +95,10 @@ export function createProjectileSystem(spatialHash: SpatialHash) {
             }
 
             if (hit) {
-                removeEntity(world, eid);
-                decrementEntityCount();
+                if (hit) {
+                    // Return to pool instead of destroying
+                    PoolManager.getInstance().releaseProjectile(eid);
+                }
             }
         }
 

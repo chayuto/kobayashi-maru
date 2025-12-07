@@ -1,7 +1,7 @@
 /**
  * Tests for Wave Spawner System
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {
   WaveManager,
   getWaveConfig,
@@ -19,6 +19,7 @@ import { createGameWorld, getEntityCount } from '../ecs';
 import { FactionId, GAME_CONFIG } from '../types/constants';
 import { EventBus } from '../core/EventBus';
 import { GameEventType } from '../types/events';
+import { PoolManager } from '../ecs/PoolManager';
 
 describe('Wave Configuration', () => {
   it('should have pre-defined configurations for waves 1-10', () => {
@@ -216,8 +217,13 @@ describe('Wave Manager', () => {
     // Reset EventBus to ensure clean state between tests
     EventBus.resetInstance();
     world = createGameWorld();
+    PoolManager.getInstance().init(world);
     waveManager = new WaveManager();
     waveManager.init(world);
+  });
+
+  afterEach(() => {
+    PoolManager.getInstance().destroy();
   });
 
   it('should initialize in idle state', () => {

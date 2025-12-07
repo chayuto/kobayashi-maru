@@ -8,6 +8,9 @@ import { Position, Velocity, Faction, SpriteRef, Health, Shield, AIBehavior, Ene
 import { getEnemyTemplate, EnemyShipTemplate } from './entityTemplates';
 import type { GameWorld } from './world';
 import { incrementEntityCount } from './world';
+import { PoolManager } from './PoolManager';
+
+const USE_POOLING = true;
 
 // Placeholder sprite index - will be replaced when sprite system is implemented
 const PLACEHOLDER_SPRITE_INDEX = 0;
@@ -64,7 +67,14 @@ export function createEnemyFromTemplate(
     x: number,
     y: number
 ): number {
-    const eid = addEntity(world);
+    const eid = USE_POOLING
+        ? PoolManager.getInstance().acquireEnemy()
+        : addEntity(world);
+
+    // Reset components for recycled entities
+    if (USE_POOLING) {
+        resetEntityComponents(eid);
+    }
 
     // Position component
     addComponent(world, Position, eid);
@@ -114,6 +124,38 @@ export function createEnemyFromTemplate(
 
     incrementEntityCount();
     return eid;
+}
+
+/**
+ * Reset component values for a recycled entity
+ */
+function resetEntityComponents(eid: number): void {
+    // Reset all component arrays to default values
+    // This is crucial to prevent state leaking from previous lives
+    Position.x[eid] = 0;
+    Position.y[eid] = 0;
+    Velocity.x[eid] = 0;
+    Velocity.y[eid] = 0;
+    Health.current[eid] = 0;
+    Health.max[eid] = 0;
+    Shield.current[eid] = 0;
+    Shield.max[eid] = 0;
+
+    // Reset AI
+    AIBehavior.behaviorType[eid] = 0;
+    AIBehavior.aggression[eid] = 0;
+    AIBehavior.stateTimer[eid] = 0;
+
+    // Reset Weapon
+    EnemyWeapon.range[eid] = 0;
+    EnemyWeapon.fireRate[eid] = 0;
+    EnemyWeapon.damage[eid] = 0;
+    EnemyWeapon.lastFired[eid] = 0;
+    EnemyWeapon.projectileType[eid] = 0;
+
+    // Reset Faction/Sprite
+    Faction.id[eid] = 0;
+    SpriteRef.index[eid] = 0;
 }
 
 /**
