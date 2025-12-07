@@ -83,6 +83,7 @@ export class ParticleSystem {
     container: Container;
     private pool: Particle[] = [];
     private app: Application | null = null;
+    private glowContainer: Container | null = null;
 
     private maxParticles: number = 2000;
     private spawnRateMultiplier: number = 1.0;
@@ -92,11 +93,18 @@ export class ParticleSystem {
         this.container = new Container();
     }
 
-    init(app: Application, maxParticles: number = 2000, spawnRateMultiplier: number = 1.0): void {
+    init(app: Application, maxParticles: number = 2000, spawnRateMultiplier: number = 1.0, glowContainer?: Container): void {
         this.app = app;
         this.maxParticles = maxParticles;
         this.spawnRateMultiplier = spawnRateMultiplier;
-        this.app.stage.addChild(this.container);
+        this.glowContainer = glowContainer || null;
+        
+        // Add to glow container if provided, otherwise add to stage
+        if (this.glowContainer) {
+            this.glowContainer.addChild(this.container);
+        } else {
+            this.app.stage.addChild(this.container);
+        }
     }
 
     spawn(config: ParticleConfig): void {

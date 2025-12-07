@@ -21,6 +21,7 @@ export class BeamRenderer {
   private graphics: Graphics;
   private container: Container;
   private initialized: boolean = false;
+  private glowContainer: Container | null = null;
 
   constructor(app: Application) {
     this.app = app;
@@ -30,14 +31,22 @@ export class BeamRenderer {
 
   /**
    * Initialize the beam renderer
+   * @param glowContainer Optional glow container for rendering beams with glow effects
    */
-  init(): void {
+  init(glowContainer?: Container): void {
     if (this.initialized) {
       return;
     }
 
+    this.glowContainer = glowContainer || null;
     this.container.addChild(this.graphics);
-    this.app.stage.addChild(this.container);
+    
+    // Add to glow container if provided, otherwise add to stage
+    if (this.glowContainer) {
+      this.glowContainer.addChild(this.container);
+    } else {
+      this.app.stage.addChild(this.container);
+    }
 
     this.initialized = true;
   }

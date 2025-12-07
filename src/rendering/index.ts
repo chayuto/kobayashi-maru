@@ -13,3 +13,5 @@ export * from './HealthBarRenderer';
 export * from './ScreenShake';
 export * from './TextureCache';
 export * from './PlacementRenderer';
+export * from './ShieldRenderer';
+export * from './filters';
