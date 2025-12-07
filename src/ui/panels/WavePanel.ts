@@ -131,6 +131,13 @@ export class WavePanel {
     }
 
     /**
+     * Set panel scale.
+     */
+    setScale(scale: number): void {
+        this.container.scale.set(scale);
+    }
+
+    /**
      * Update panel with new data.
      * 
      * @param data - Wave data to display

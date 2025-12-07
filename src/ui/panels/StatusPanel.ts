@@ -116,6 +116,13 @@ export class StatusPanel {
     }
 
     /**
+     * Set panel scale.
+     */
+    setScale(scale: number): void {
+        this.container.scale.set(scale);
+    }
+
+    /**
      * Update with new status data.
      */
     update(data: StatusPanelData): void {

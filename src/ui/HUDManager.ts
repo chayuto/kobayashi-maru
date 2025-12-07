@@ -5,7 +5,7 @@
 import { Application, Container, Graphics, Text, TextStyle } from 'pixi.js';
 import { UI_STYLES } from './styles';
 import { HUDData } from './types';
-import { HealthBar } from './HealthBar';
+
 import { GAME_CONFIG } from '../types/constants';
 import { TurretMenu } from './TurretMenu';
 import { TurretUpgradePanel } from './TurretUpgradePanel';
@@ -14,7 +14,7 @@ import { MessageLog } from './MessageLog';
 import { AudioManager } from '../audio';
 import { ResponsiveUIManager } from './ResponsiveUIManager';
 import { UI_CONFIG } from '../config';
-import { WavePanel } from './panels';
+import { WavePanel, ResourcePanel, StatusPanel } from './panels';
 
 // Forward declaration for Game type to avoid circular imports
 interface GameInterface {
@@ -42,13 +42,12 @@ export class HUDManager {
 
   // UI Elements
   private wavePanel: WavePanel | null = null;
-  private resourcesText: Text | null = null;
+  private resourcePanel: ResourcePanel | null = null;
+  private statusPanel: StatusPanel | null = null;
+
   private timeText: Text | null = null;
   private killsText: Text | null = null;
   private turretCountText: Text | null = null;
-  private healthBar: HealthBar | null = null;
-  private shieldBar: HealthBar | null = null;
-  private statusLabel: Text | null = null;
   private turretMenu: TurretMenu | null = null;
   private turretUpgradePanel: TurretUpgradePanel | null = null;
   private mobileControls: MobileControlsOverlay | null = null;
@@ -73,10 +72,8 @@ export class HUDManager {
   private accuracyText: Text | null = null;
   private damageText: Text | null = null;
 
-  // Background panels (wavePanel handled by WavePanel component)
-  private topRightPanel: Graphics | null = null;
+  // Background panels
   private bottomLeftPanel: Graphics | null = null;
-  private bottomCenterPanel: Graphics | null = null;
   private bottomRightPanel: Graphics | null = null;
 
   // Bound event handler for cleanup
@@ -113,10 +110,10 @@ export class HUDManager {
     // Create Turret Menu
     this.turretMenu = new TurretMenu();
     // Position below the top right panel (resources)
-    // Top right panel height is 60, padding is 16. 
+    // Top right panel height is roughly 70 (ResourcePanel.HEIGHT), padding is 16. 
     // Let's give it some extra space.
     const menuX = GAME_CONFIG.WORLD_WIDTH - 180 - UI_STYLES.PADDING;
-    const menuY = UI_STYLES.PADDING + 60 + UI_STYLES.PADDING;
+    const menuY = UI_STYLES.PADDING + 70 + UI_STYLES.PADDING;
     this.turretMenu.setPosition(menuX, menuY);
     this.container.addChild(this.turretMenu.container);
 
@@ -160,15 +157,15 @@ export class HUDManager {
 
     // Update Wave Panel
     if (this.wavePanel) {
-      // WavePanel position is set via setPosition, scaling handled by game's resolution
+      this.wavePanel.setScale(scale);
       this.wavePanel.setPosition(padding, padding);
     }
 
-    // Update Top Right Panel
-    if (this.topRightPanel) {
-      // 180 is original width
-      this.topRightPanel.scale.set(scale);
-      this.topRightPanel.position.set(width - (180 * scale) - padding, padding);
+    // Update Resource Panel
+    if (this.resourcePanel) {
+      const panelWidth = 150; // ResourcePanel.WIDTH
+      this.resourcePanel.setScale(scale);
+      this.resourcePanel.setPosition(width - (panelWidth * scale) - padding, padding);
     }
 
     // Update Bottom Left Panel
@@ -183,11 +180,11 @@ export class HUDManager {
       this.bottomRightPanel.position.set(width - (140 * scale) - padding, height - (60 * scale) - padding);
     }
 
-    // Update Bottom Center Panel
-    if (this.bottomCenterPanel) {
-      const panelWidth = UI_STYLES.BAR_WIDTH + 40;
-      this.bottomCenterPanel.scale.set(scale);
-      this.bottomCenterPanel.position.set((width - (panelWidth * scale)) / 2, height - (90 * scale) - padding);
+    // Update Status Panel (Bottom Center)
+    if (this.statusPanel) {
+      const panelWidth = 280; // StatusPanel.WIDTH
+      this.statusPanel.setScale(scale);
+      this.statusPanel.setPosition((width - (panelWidth * scale)) / 2, height - (120 * scale) - padding);
     }
 
     // Update Mute Button
@@ -205,11 +202,11 @@ export class HUDManager {
     // Update Turret Menu
     if (this.turretMenu) {
       // Turret menu handles its own scaling/positioning internally usually, but we need to position its container
-      // It was positioned at: width - 180 - padding, padding + 60 + padding
+      // It was positioned at: width - 180 - padding, padding + 70 + padding
       this.turretMenu.container.scale.set(scale);
       this.turretMenu.container.position.set(
         width - (180 * scale) - padding,
-        padding + (60 * scale) + padding
+        padding + (70 * scale) + padding // 70 is rough height of resource panel
       );
     }
 
@@ -217,7 +214,7 @@ export class HUDManager {
     if (this.turretUpgradePanel) {
       this.turretUpgradePanel.container.scale.set(scale);
       const menuX = width - (180 * scale) - padding;
-      const menuY = padding + (60 * scale) + padding;
+      const menuY = padding + (70 * scale) + padding;
       this.turretUpgradePanel.container.position.set(
         menuX - (304 * scale) - padding,
         menuY
@@ -255,8 +252,6 @@ export class HUDManager {
    */
   private createTopLeftPanel(): void {
     const padding = UI_STYLES.PADDING;
-
-    // Use modular WavePanel component
     this.wavePanel = new WavePanel();
     this.wavePanel.init(this.container);
     this.wavePanel.setPosition(padding, padding);
@@ -267,37 +262,12 @@ export class HUDManager {
    */
   private createTopRightPanel(): void {
     const padding = UI_STYLES.PADDING;
-    const panelWidth = 180;
+    const panelWidth = 150; // ResourcePanel.WIDTH
     const x = GAME_CONFIG.WORLD_WIDTH - panelWidth - padding;
 
-    // Panel background
-    this.topRightPanel = new Graphics();
-    this.topRightPanel.roundRect(0, 0, panelWidth, 60, 8);
-    this.topRightPanel.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.7 });
-    this.topRightPanel.stroke({ color: UI_STYLES.COLORS.PRIMARY, width: 2 });
-    this.topRightPanel.position.set(x, padding);
-    this.container.addChild(this.topRightPanel);
-
-    // Resource label
-    const labelStyle = new TextStyle({
-      fontFamily: UI_STYLES.FONT_FAMILY,
-      fontSize: UI_STYLES.FONT_SIZE_SMALL,
-      fill: UI_STYLES.COLORS.PRIMARY
-    });
-    const resourceLabel = new Text({ text: 'MATTER', style: labelStyle });
-    resourceLabel.position.set(10, 8);
-    this.topRightPanel.addChild(resourceLabel);
-
-    // Resources amount
-    const resourceStyle = new TextStyle({
-      fontFamily: UI_STYLES.FONT_FAMILY,
-      fontSize: UI_STYLES.FONT_SIZE_LARGE,
-      fill: UI_STYLES.COLORS.PRIMARY,
-      fontWeight: 'bold'
-    });
-    this.resourcesText = new Text({ text: '500', style: resourceStyle });
-    this.resourcesText.position.set(10, 28);
-    this.topRightPanel.addChild(this.resourcesText);
+    this.resourcePanel = new ResourcePanel();
+    this.resourcePanel.init(this.container);
+    this.resourcePanel.setPosition(x, padding);
   }
 
   /**
@@ -340,49 +310,14 @@ export class HUDManager {
    * Create bottom-center panel: Kobayashi Maru status
    */
   private createBottomCenterPanel(): void {
-    const panelWidth = UI_STYLES.BAR_WIDTH + 40;
-    const panelHeight = 90;
+    const panelWidth = 280; // StatusPanel.WIDTH
+    const panelHeight = 120; // StatusPanel.HEIGHT
     const x = (GAME_CONFIG.WORLD_WIDTH - panelWidth) / 2;
     const y = GAME_CONFIG.WORLD_HEIGHT - panelHeight - UI_STYLES.PADDING;
 
-    // Panel background
-    this.bottomCenterPanel = new Graphics();
-    this.bottomCenterPanel.roundRect(0, 0, panelWidth, panelHeight, 8);
-    this.bottomCenterPanel.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.7 });
-    this.bottomCenterPanel.stroke({ color: UI_STYLES.COLORS.PRIMARY, width: 2 });
-    this.bottomCenterPanel.position.set(x, y);
-    this.container.addChild(this.bottomCenterPanel);
-
-    // Status label
-    const labelStyle = new TextStyle({
-      fontFamily: UI_STYLES.FONT_FAMILY,
-      fontSize: UI_STYLES.FONT_SIZE_SMALL,
-      fill: UI_STYLES.COLORS.PRIMARY,
-      fontWeight: 'bold'
-    });
-    this.statusLabel = new Text({ text: 'KOBAYASHI MARU STATUS', style: labelStyle });
-    this.statusLabel.position.set(20, 8);
-    this.bottomCenterPanel.addChild(this.statusLabel);
-
-    // Shield bar
-    this.shieldBar = new HealthBar(
-      UI_STYLES.BAR_WIDTH,
-      UI_STYLES.BAR_HEIGHT,
-      UI_STYLES.COLORS.SHIELD,
-      'SHLD'
-    );
-    this.shieldBar.setPosition(20, 30);
-    this.bottomCenterPanel.addChild(this.shieldBar.container);
-
-    // Health bar
-    this.healthBar = new HealthBar(
-      UI_STYLES.BAR_WIDTH,
-      UI_STYLES.BAR_HEIGHT,
-      UI_STYLES.COLORS.HEALTH,
-      'HULL'
-    );
-    this.healthBar.setPosition(20, 58);
-    this.bottomCenterPanel.addChild(this.healthBar.container);
+    this.statusPanel = new StatusPanel();
+    this.statusPanel.init(this.container);
+    this.statusPanel.setPosition(x, y);
   }
 
   /**
@@ -747,8 +682,8 @@ export class HUDManager {
     }
 
     // Update resources
-    if (this.resourcesText) {
-      this.resourcesText.text = data.resources.toString();
+    if (this.resourcePanel) {
+      this.resourcePanel.update({ resources: data.resources });
     }
 
     // Update score info
@@ -760,20 +695,13 @@ export class HUDManager {
     }
 
     // Update Kobayashi Maru status bars
-    if (this.shieldBar) {
-      this.shieldBar.update(data.kobayashiMaruShield, data.kobayashiMaruMaxShield);
-    }
-    if (this.healthBar) {
-      this.healthBar.update(data.kobayashiMaruHealth, data.kobayashiMaruMaxHealth);
-      // Change color to danger if health is low
-      const healthPercent = data.kobayashiMaruMaxHealth > 0
-        ? data.kobayashiMaruHealth / data.kobayashiMaruMaxHealth
-        : 0;
-      if (healthPercent < 0.25) {
-        this.healthBar.setColor(UI_STYLES.COLORS.DANGER);
-      } else {
-        this.healthBar.setColor(UI_STYLES.COLORS.HEALTH);
-      }
+    if (this.statusPanel) {
+      this.statusPanel.update({
+        health: data.kobayashiMaruHealth,
+        maxHealth: data.kobayashiMaruMaxHealth,
+        shield: data.kobayashiMaruShield,
+        maxShield: data.kobayashiMaruMaxShield
+      });
     }
 
     // Update turret count
@@ -855,11 +783,11 @@ export class HUDManager {
     if (this.wavePanel) {
       this.wavePanel.destroy();
     }
-    if (this.healthBar) {
-      this.healthBar.destroy();
+    if (this.resourcePanel) {
+      this.resourcePanel.destroy();
     }
-    if (this.shieldBar) {
-      this.shieldBar.destroy();
+    if (this.statusPanel) {
+      this.statusPanel.destroy();
     }
     if (this.mobileControls) {
       this.mobileControls.destroy();

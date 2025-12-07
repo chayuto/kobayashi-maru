@@ -85,6 +85,13 @@ export class ResourcePanel {
     }
 
     /**
+     * Set panel scale.
+     */
+    setScale(scale: number): void {
+        this.container.scale.set(scale);
+    }
+
+    /**
      * Update with new resource data.
      */
     update(data: ResourcePanelData): void {
