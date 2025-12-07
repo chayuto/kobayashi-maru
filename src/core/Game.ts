@@ -27,6 +27,9 @@ import { PerformanceMonitor } from './PerformanceMonitor';
 import { QualityManager } from './QualityManager';
 import { HapticManager } from './HapticManager';
 import { EventBus } from './EventBus';
+import { GameInputHandler } from './GameInputHandler';
+import { GameStateController } from './GameStateController';
+
 import { WaveManager, GameState, GameStateType, ScoreManager, HighScoreManager, ResourceManager, PlacementManager, UpgradeManager } from '../game';
 import { HUDManager, GameOverScreen, calculateScore, PauseOverlay } from '../ui';
 import { AudioManager } from '../audio';
@@ -39,6 +42,7 @@ const allEntitiesQuery = defineQuery([Position, Faction, SpriteRef]);
 
 // Click detection radius for selecting turrets (in pixels)
 const TURRET_CLICK_RADIUS = 32;
+
 
 export class Game {
   public app: Application;
@@ -106,6 +110,12 @@ export class Game {
 
   // Bound event handlers for cleanup
   private boundResizeHandler: (() => void) | null = null;
+
+  // Extracted handlers for modular code organization
+  // These can be used for future gradual migration of logic
+  private gameInputHandler: GameInputHandler | null = null;
+  private gameStateController: GameStateController | null = null;
+
 
   constructor(containerId: string = 'app') {
     const container = document.getElementById(containerId);
@@ -1202,5 +1212,21 @@ export class Game {
    */
   getInputManager(): InputManager {
     return this.inputManager;
+  }
+
+  /**
+   * Get the game input handler (for modular input handling)
+   * @returns The game input handler instance or null if not initialized
+   */
+  getGameInputHandler(): GameInputHandler | null {
+    return this.gameInputHandler;
+  }
+
+  /**
+   * Get the game state controller (for modular state management)
+   * @returns The game state controller instance or null if not initialized
+   */
+  getGameStateController(): GameStateController | null {
+    return this.gameStateController;
   }
 }
