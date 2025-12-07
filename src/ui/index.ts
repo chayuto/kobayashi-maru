@@ -14,3 +14,7 @@ export { MobileControlsOverlay } from './MobileControlsOverlay';
 export { OrientationOverlay } from './OrientationOverlay';
 export { MessageLog } from './MessageLog';
 export type { HUDData } from './types';
+
+// Panel components (modular building blocks for HUD)
+export { WavePanel, ResourcePanel, StatusPanel } from './panels';
+export type { WavePanelData, ResourcePanelData, StatusPanelData } from './panels';
