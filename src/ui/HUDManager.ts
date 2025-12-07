@@ -8,6 +8,7 @@ import { HUDData } from './types';
 import { HealthBar } from './HealthBar';
 import { GAME_CONFIG } from '../types/constants';
 import { TurretMenu } from './TurretMenu';
+import { TurretUpgradePanel } from './TurretUpgradePanel';
 import { MobileControlsOverlay } from './MobileControlsOverlay';
 import { MessageLog } from './MessageLog';
 import { AudioManager } from '../audio';
@@ -55,6 +56,7 @@ export class HUDManager {
   private shieldBar: HealthBar | null = null;
   private statusLabel: Text | null = null;
   private turretMenu: TurretMenu | null = null;
+  private turretUpgradePanel: TurretUpgradePanel | null = null;
   private mobileControls: MobileControlsOverlay | null = null;
   private messageLog: MessageLog | null = null;
 
@@ -124,6 +126,14 @@ export class HUDManager {
     const menuY = UI_STYLES.PADDING + 60 + UI_STYLES.PADDING;
     this.turretMenu.setPosition(menuX, menuY);
     this.container.addChild(this.turretMenu.container);
+
+    // Create Turret Upgrade Panel (hidden by default)
+    this.turretUpgradePanel = new TurretUpgradePanel();
+    // Position it to the left of the turret menu
+    const upgradePanelX = menuX - 304 - UI_STYLES.PADDING;
+    const upgradePanelY = menuY;
+    this.turretUpgradePanel.setPosition(upgradePanelX, upgradePanelY);
+    this.container.addChild(this.turretUpgradePanel.container);
 
     // Create Mobile Controls Overlay
     this.mobileControls = new MobileControlsOverlay();
@@ -207,6 +217,17 @@ export class HUDManager {
       this.turretMenu.container.position.set(
         width - (180 * scale) - padding,
         padding + (60 * scale) + padding
+      );
+    }
+
+    // Update Turret Upgrade Panel
+    if (this.turretUpgradePanel) {
+      this.turretUpgradePanel.container.scale.set(scale);
+      const menuX = width - (180 * scale) - padding;
+      const menuY = padding + (60 * scale) + padding;
+      this.turretUpgradePanel.container.position.set(
+        menuX - (304 * scale) - padding,
+        menuY
       );
     }
 
@@ -887,6 +908,9 @@ export class HUDManager {
     if (this.messageLog) {
       this.messageLog.destroy();
     }
+    if (this.turretUpgradePanel) {
+      this.turretUpgradePanel.destroy();
+    }
 
     // Remove event listener
     if (this.boundResizeHandler) {
@@ -905,6 +929,13 @@ export class HUDManager {
    */
   getTurretMenu(): TurretMenu | null {
     return this.turretMenu;
+  }
+
+  /**
+   * Get the turret upgrade panel instance
+   */
+  getTurretUpgradePanel(): TurretUpgradePanel | null {
+    return this.turretUpgradePanel;
   }
 
   /**
