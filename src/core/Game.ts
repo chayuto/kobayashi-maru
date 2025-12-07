@@ -578,8 +578,9 @@ export class Game {
       this.renderSystem(this.world);
     }
 
-    // Render beam visuals
+    // Update and render beam visuals
     if (this.beamRenderer && this.combatSystem) {
+      this.beamRenderer.updateCharges(deltaTime);
       this.beamRenderer.render(this.combatSystem.getActiveBeams());
     }
 
