@@ -1,548 +1,331 @@
 /**
  * Core Game class for Kobayashi Maru
- * Initializes PixiJS with WebGPU preference and manages the game loop
+ * 
+ * Thin facade that orchestrates game managers.
+ * All logic is delegated to specialized managers.
+ * 
+ * @module core/Game
  */
+
 import { Application } from 'pixi.js';
-import { defineQuery, removeEntity } from 'bitecs';
+import { defineQuery } from 'bitecs';
+import { Turret } from '../ecs/components';
+import { GameWorld } from '../ecs';
 import {
-  createGameWorld,
-  GameWorld,
-  getEntityCount,
-  createKobayashiMaru,
-  decrementEntityCount
-} from '../ecs';
-import { Health, Shield, Turret, Position, Faction, SpriteRef } from '../ecs/components';
-import { SpriteManager, BeamRenderer, ParticleSystem, HealthBarRenderer, ScreenShake, PlacementRenderer, GlowManager, GlowLayer, ShieldRenderer, ShockwaveRenderer, ExplosionManager, TurretUpgradeVisuals } from '../rendering';
-import { createRenderSystem, createMovementSystem, createCollisionSystem, CollisionSystem, createTargetingSystem, createCombatSystem, createDamageSystem, createAISystem, createProjectileSystem, statusEffectSystem, TargetingSystem, CombatSystem, DamageSystem, SystemManager, createEnemyCollisionSystem, EnemyCollisionSystem, createEnemyCombatSystem, EnemyCombatSystem, createEnemyProjectileSystem, EnemyProjectileSystem, createAbilitySystem } from '../systems';
+  createRenderSystem, createMovementSystem, createCollisionSystem, createTargetingSystem,
+  createCombatSystem, createDamageSystem, createAISystem, createProjectileSystem,
+  statusEffectSystem, createEnemyCollisionSystem, createEnemyCombatSystem,
+  createEnemyProjectileSystem, createAbilitySystem,
+  CollisionSystem, CombatSystem, BeamVisual
+} from '../systems';
 
-import { GAME_CONFIG, LCARS_COLORS, GameEventType, EnemyKilledPayload, WaveStartedPayload, WaveCompletedPayload } from '../types';
-import { SpatialHash } from '../collision';
-
-import { Starfield } from '../rendering/Starfield';
-
-import { DebugManager } from './DebugManager';
-import { TouchInputManager } from './TouchInputManager';
-import { InputManager } from './InputManager';
-import { PerformanceMonitor } from './PerformanceMonitor';
-import { QualityManager } from './QualityManager';
-import { HapticManager } from './HapticManager';
-import { EventBus } from './EventBus';
-import { GameInputHandler } from './GameInputHandler';
-import { GameStateController } from './GameStateController';
-import { GameTurretController } from './GameTurretController';
-
-import { WaveManager, GameState, GameStateType, ScoreManager, HighScoreManager, ResourceManager, PlacementManager, UpgradeManager } from '../game';
-import { HUDManager, GameOverScreen, calculateScore, PauseOverlay } from '../ui';
-import { AudioManager } from '../audio';
+import { bootstrapGame } from './bootstrap';
+import { getServices, resetServices } from './services';
+import { GameLoopManager } from './loop';
+import { RenderManager, GameplayManager, UIController, InputRouter, InputAction } from './managers';
 
 // Query for counting turrets
 const turretQuery = defineQuery([Turret]);
 
-// Query for all entities (for cleanup during restart)
-const allEntitiesQuery = defineQuery([Position, Faction, SpriteRef]);
-
-
+/**
+ * Main game class - orchestrates all game systems.
+ */
 export class Game {
-  public app: Application;
-  public world: GameWorld;
-  private container: HTMLElement;
-  private spriteManager: SpriteManager;
-  private renderSystem: ReturnType<typeof createRenderSystem> | null = null;
-  private movementSystem: ReturnType<typeof createMovementSystem> | null = null;
-  private collisionSystem: CollisionSystem | null = null;
-  private targetingSystem: TargetingSystem | null = null;
-  private combatSystem: CombatSystem | null = null;
-  private damageSystem: DamageSystem | null = null;
-  private projectileSystem: ReturnType<typeof createProjectileSystem> | null = null;
-  private aiSystem: ReturnType<typeof createAISystem> | null = null;
-  private abilitySystem: ReturnType<typeof createAbilitySystem> | null = null;
-  private enemyCollisionSystem: EnemyCollisionSystem | null = null;
-  private enemyCombatSystem: EnemyCombatSystem | null = null;
-  private enemyProjectileSystem: EnemyProjectileSystem | null = null;
-  private systemManager: SystemManager;
-  private spatialHash: SpatialHash | null = null;
-  private debugManager: DebugManager | null = null;
-  private touchInputManager: TouchInputManager | null = null;
-  private inputManager: InputManager;
-  private hudManager: HUDManager | null = null;
-  private starfield: Starfield | null = null;
-  private beamRenderer: BeamRenderer | null = null;
-  private particleSystem: ParticleSystem | null = null;
-  private healthBarRenderer: HealthBarRenderer | null = null;
-  private screenShake: ScreenShake | null = null;
-  private glowManager: GlowManager | null = null;
-  private shieldRenderer: ShieldRenderer | null = null;
-  private shockwaveRenderer: ShockwaveRenderer | null = null;
-  private explosionManager: ExplosionManager | null = null;
-  private turretUpgradeVisuals: TurretUpgradeVisuals | null = null;
-  private performanceMonitor: PerformanceMonitor;
-  private qualityManager: QualityManager;
-  private hapticManager: HapticManager;
-  private waveManager: WaveManager;
-  private gameState: GameState;
-  private scoreManager: ScoreManager;
-  private highScoreManager: HighScoreManager;
-  private resourceManager: ResourceManager;
-  private upgradeManager: UpgradeManager;
-  private audioManager: AudioManager;
-  private eventBus: EventBus;
-  private placementManager: PlacementManager | null = null;
-  private placementRenderer: PlacementRenderer | null = null;
-  private gameOverScreen: GameOverScreen | null = null;
-  private pauseOverlay: PauseOverlay | null = null;
-  private kobayashiMaruId: number = -1;
-  private initialized: boolean = false;
-  private gameTime: number = 0; // Total game time in seconds
-  private previousKMHealth: number = 0;
-  // Bound event handlers for cleanup
-  private boundHandleEnemyKilled: (payload: EnemyKilledPayload) => void;
-  private boundHandleWaveStarted: (payload: WaveStartedPayload) => void;
-  private boundHandleWaveCompleted: (payload: WaveCompletedPayload) => void;
-  private boundHandleKeyDown: (e: KeyboardEvent) => void;
-  private killCount: number = 0;
-  // God mode and slow mode settings
-  private godModeEnabled: boolean = false;
-  private slowModeEnabled: boolean = true; // Default to slow mode (0.5x speed)
+  public app!: Application;
+  public world!: GameWorld;
 
-  // Bound event handlers for cleanup
+  private containerId: string;
+  private initialized: boolean = false;
+
+  // Managers
+  private loopManager!: GameLoopManager;
+  private renderManager!: RenderManager;
+  private gameplayManager!: GameplayManager;
+  private uiController!: UIController;
+  private inputRouter!: InputRouter;
+
+  // Key Systems (stored for backward compatibility / access)
+  private collisionSystem: CollisionSystem | undefined;
+  private combatSystem: CombatSystem | undefined;
+
+  // Resize handler
   private boundResizeHandler: (() => void) | null = null;
 
-  // Extracted handlers for modular code organization
-  // These can be used for future gradual migration of logic
-  private gameInputHandler: GameInputHandler | null = null;
-  private gameStateController: GameStateController | null = null;
-  private gameTurretController: GameTurretController | null = null;
-
-
   constructor(containerId: string = 'app') {
-    const container = document.getElementById(containerId);
-    if (!container) {
-      throw new Error(`Container element with id "${containerId}" not found`);
-    }
-    this.container = container;
-    this.app = new Application();
-    this.world = createGameWorld();
-    this.spriteManager = new SpriteManager(this.app);
-    this.debugManager = new DebugManager();
-    this.hudManager = new HUDManager();
-    this.starfield = new Starfield(this.app);
-    this.performanceMonitor = new PerformanceMonitor();
-    this.qualityManager = new QualityManager(this.performanceMonitor);
-    this.hapticManager = new HapticManager();
-    this.waveManager = new WaveManager();
-    this.gameState = new GameState();
-    this.scoreManager = new ScoreManager();
-    this.highScoreManager = new HighScoreManager();
-    this.resourceManager = new ResourceManager();
-    this.upgradeManager = new UpgradeManager(this.world, this.resourceManager);
-    this.audioManager = AudioManager.getInstance();
-    this.eventBus = EventBus.getInstance();
-    this.systemManager = new SystemManager();
-    this.inputManager = new InputManager();
-
-    // Bind event handlers
-    this.boundHandleEnemyKilled = this.handleEnemyKilled.bind(this);
-    this.boundHandleWaveStarted = this.handleWaveStarted.bind(this);
-    this.boundHandleWaveCompleted = this.handleWaveCompleted.bind(this);
-    this.boundHandleKeyDown = this.handleKeyDown.bind(this);
+    this.containerId = containerId;
   }
 
   /**
-   * Initialize the game engine
+   * Initialize the game engine.
    */
   async init(): Promise<void> {
-    if (this.initialized) {
-      return;
-    }
+    if (this.initialized) return;
 
-    // Initialize PixiJS Application with WebGPU preference
-    await this.app.init({
-      width: GAME_CONFIG.WORLD_WIDTH,
-      height: GAME_CONFIG.WORLD_HEIGHT,
-      backgroundColor: LCARS_COLORS.BACKGROUND,
-      resolution: window.devicePixelRatio || 1,
-      autoDensity: true,
-      preference: 'webgpu', // Prefer WebGPU for performance
-      antialias: true
-    });
+    // Bootstrap PixiJS and register all services
+    const { app, world } = await bootstrapGame(this.containerId);
+    this.app = app;
+    this.world = world;
 
-    // Add canvas to DOM
-    this.container.appendChild(this.app.canvas);
+    // Create managers
+    this.createManagers();
 
-    // Initialize touch input manager
-    this.touchInputManager = new TouchInputManager(this.app);
-    this.touchInputManager.init();
+    // Register ECS systems
+    this.registerSystems();
 
-    // Initialize input manager
-    this.inputManager.init(this.app.canvas);
+    // Setup game loop callbacks
+    this.setupLoopCallbacks();
 
-    // Add resize handler
-    this.boundResizeHandler = this.handleResize.bind(this);
-    window.addEventListener('resize', this.boundResizeHandler);
-    this.handleResize();
+    // Setup resize handling
+    this.setupResizeHandler();
 
-    // Initialize audio on first user interaction
-    const initAudio = () => {
-      this.audioManager.init();
-      this.audioManager.resume();
-      window.removeEventListener('click', initAudio);
-      window.removeEventListener('keydown', initAudio);
-      window.removeEventListener('touchstart', initAudio);
-    };
-
-    window.addEventListener('click', initAudio);
-    window.addEventListener('keydown', initAudio);
-    window.addEventListener('touchstart', initAudio);
+    // Initialize gameplay
+    this.gameplayManager.init();
 
     this.initialized = true;
     console.log('Kobayashi Maru initialized');
-    console.log(`Renderer: ${this.app.renderer.name}`);
+  }
 
-    // Initialize starfield
-    if (this.starfield) {
-      const settings = this.qualityManager.getSettings();
-      // Calculate multiplier based on default (1000 stars)
-      // High: 1000 -> 1.0, Medium: 500 -> 0.5, Low: 200 -> 0.2
-      const multiplier = settings.starCount / 1000;
-      this.starfield.init(multiplier);
-    }
+  /**
+   * Create all game managers.
+   */
+  private createManagers(): void {
+    const services = getServices();
 
-    // Initialize sprite manager after app is ready
-    this.spriteManager.init();
+    // Game loop manager
+    this.loopManager = new GameLoopManager(this.app);
 
-    // Initialize beam renderer (will be initialized after glow manager)
-    this.beamRenderer = new BeamRenderer(this.app);
+    // Render manager
+    this.renderManager = new RenderManager(this.world);
+    this.renderManager.init();
 
-    // Initialize particle system (will be initialized after glow manager)
-    this.particleSystem = new ParticleSystem();
-
-    // Initialize health bar renderer
-    this.healthBarRenderer = new HealthBarRenderer();
-    this.healthBarRenderer.init(this.app);
-
-    // Initialize screen shake
-    this.screenShake = new ScreenShake();
-
-    // Initialize glow manager
-    this.glowManager = new GlowManager();
-    this.glowManager.init();
-
-    // Add glow layers to stage in correct render order
-    // Order: starfield -> glow layers -> entities -> particles -> UI
-    const weaponsLayer = this.glowManager.getLayer(GlowLayer.WEAPONS);
-    const projectilesLayer = this.glowManager.getLayer(GlowLayer.PROJECTILES);
-    const explosionsLayer = this.glowManager.getLayer(GlowLayer.EXPLOSIONS);
-    const shieldsLayer = this.glowManager.getLayer(GlowLayer.SHIELDS);
-
-    if (weaponsLayer) this.app.stage.addChild(weaponsLayer);
-    if (projectilesLayer) this.app.stage.addChild(projectilesLayer);
-    if (shieldsLayer) this.app.stage.addChild(shieldsLayer);
-    if (explosionsLayer) this.app.stage.addChild(explosionsLayer);
-
-    // Apply glow presets to each layer
-    this.glowManager.applyPreset(GlowLayer.WEAPONS, 'weapons');
-    this.glowManager.applyPreset(GlowLayer.PROJECTILES, 'medium');
-    this.glowManager.applyPreset(GlowLayer.EXPLOSIONS, 'explosions');
-    this.glowManager.applyPreset(GlowLayer.SHIELDS, 'shields');
-
-    // Initialize turret upgrade visuals on the weapons glow layer
-    if (weaponsLayer) {
-      this.turretUpgradeVisuals = new TurretUpgradeVisuals(this.world, weaponsLayer);
-    }
-
-    // Initialize beam renderer with weapons glow layer
-    if (this.beamRenderer && weaponsLayer) {
-      this.beamRenderer.init(weaponsLayer);
-    }
-
-    // Initialize particle system with explosions glow layer
-    if (this.particleSystem && explosionsLayer) {
-      const particleSettings = this.qualityManager.getSettings();
-      this.particleSystem.init(this.app, particleSettings.maxParticles, particleSettings.particleSpawnRate, explosionsLayer);
-    }
-
-    // Initialize shield renderer with shields glow layer
-    this.shieldRenderer = new ShieldRenderer(this.app);
-    if (this.shieldRenderer && shieldsLayer) {
-      this.shieldRenderer.init(shieldsLayer);
-    }
-
-    // Initialize shockwave renderer with explosions glow layer
-    this.shockwaveRenderer = new ShockwaveRenderer();
-    if (explosionsLayer) {
-      this.shockwaveRenderer.init(explosionsLayer);
-    }
-
-    // Initialize explosion manager (requires particle system and shockwave renderer)
-    if (this.particleSystem && this.shockwaveRenderer) {
-      this.explosionManager = new ExplosionManager(this.particleSystem, this.shockwaveRenderer);
-    }
-
-    // Create the render system with the sprite manager
-    this.renderSystem = createRenderSystem(this.spriteManager);
-
-    // Create the movement system with speed multiplier support for slow mode
-    this.movementSystem = createMovementSystem(() => this.getSpeedMultiplier());
-
-    // Initialize spatial hash for collision detection
-    this.spatialHash = new SpatialHash(
-      GAME_CONFIG.COLLISION_CELL_SIZE,
-      GAME_CONFIG.WORLD_WIDTH,
-      GAME_CONFIG.WORLD_HEIGHT
-    );
-    this.collisionSystem = createCollisionSystem(this.spatialHash);
-
-    // Initialize targeting system
-    this.targetingSystem = createTargetingSystem(this.spatialHash);
-
-    // Initialize combat system
-    this.combatSystem = createCombatSystem(this.particleSystem);
-
-    // Initialize damage system
-    this.damageSystem = createDamageSystem(this.particleSystem);
-
-    // Initialize AI system
-    this.aiSystem = createAISystem();
-
-    // Initialize ability system
-    this.abilitySystem = createAbilitySystem(
-      this.particleSystem,
-      this.spriteManager,
-      this.audioManager,
-      this.spatialHash
-    );
-
-    // Initialize projectile system
-    this.projectileSystem = createProjectileSystem(this.spatialHash);
-
-    // Initialize enemy collision system
-    this.enemyCollisionSystem = createEnemyCollisionSystem(
-      this.particleSystem,
-      () => this.kobayashiMaruId
-    );
-
-    // Initialize enemy combat system (for enemies that shoot projectiles)
-    this.enemyCombatSystem = createEnemyCombatSystem(
-      () => this.kobayashiMaruId
-    );
-
-    // Initialize enemy projectile system (handles enemy projectile collisions)
-    this.enemyProjectileSystem = createEnemyProjectileSystem(
-      this.spatialHash,
-      () => this.kobayashiMaruId
-    );
-
-    // Register systems with SystemManager in execution order
-    // Lower priority numbers run first
-    this.systemManager.register('collision', this.collisionSystem, 10, { requiresDelta: false });
-    this.systemManager.register('ai', this.aiSystem, 20, { requiresGameTime: true });
-    this.systemManager.register('ability', this.abilitySystem, 25); // Process abilities after AI
-    this.systemManager.register('movement', this.movementSystem, 30);
-    this.systemManager.register('status-effects', statusEffectSystem, 35); // Process status effects after movement
-    this.systemManager.register('enemy-collision', this.enemyCollisionSystem, 38, { requiresDelta: false }); // Check enemy collisions after movement
-    this.systemManager.register('targeting', this.targetingSystem, 40, { requiresDelta: false });
-    this.systemManager.register('combat', this.combatSystem, 50, { requiresGameTime: true });
-    this.systemManager.register('enemy-combat', this.enemyCombatSystem, 55, { requiresGameTime: true }); // Enemy shooting after player combat
-    this.systemManager.register('projectile', this.projectileSystem, 60);
-    this.systemManager.register('enemy-projectile', this.enemyProjectileSystem, 62); // Enemy projectile collisions after friendly projectiles
-    this.systemManager.register('damage', this.damageSystem, 70, { requiresDelta: false });
-
-    // Initialize placement manager (pure logic)
-    this.placementManager = new PlacementManager(this.world, this.resourceManager);
-
-    // Initialize placement renderer (visual feedback)
-    this.placementRenderer = new PlacementRenderer(this.app, this.placementManager);
-
-    // Initialize HUD manager
-    if (this.hudManager) {
-      this.hudManager.init(this.app, this);
-
-      // Connect Turret Menu to Placement Manager
-      const turretMenu = this.hudManager.getTurretMenu();
-      if (turretMenu && this.placementManager) {
-        turretMenu.onSelect((turretType) => {
-          if (this.placementManager) {
-            this.placementManager.startPlacing(turretType);
-          }
-        });
-      }
-    }
-
-    // Initialize GameTurretController for turret selection and upgrade UI
-    if (this.hudManager) {
-      this.gameTurretController = new GameTurretController({
-        world: this.world,
-        app: this.app,
-        hudManager: this.hudManager,
-        upgradeManager: this.upgradeManager,
-        resourceManager: this.resourceManager,
-        placementManager: this.placementManager
-      });
-      this.gameTurretController.init();
-
-      // Connect Turret Upgrade Panel to Upgrade Manager
-      // Note: Upgrade panel callbacks use GameTurretController for selected turret
-      const upgradePanel = this.hudManager.getTurretUpgradePanel();
-      if (upgradePanel) {
-        upgradePanel.onUpgrade((upgradePath) => {
-          const turretId = this.gameTurretController?.getSelectedTurretId() ?? -1;
-          if (turretId !== -1) {
-            const result = this.upgradeManager.applyUpgrade(turretId, upgradePath);
-            if (result.success) {
-              // Refresh the panel with updated info
-              this.gameTurretController?.showTurretUpgradePanel(turretId);
-            }
-          }
-        });
-
-        upgradePanel.onSell(() => {
-          const turretId = this.gameTurretController?.getSelectedTurretId() ?? -1;
-          if (turretId !== -1) {
-            const refund = this.upgradeManager.sellTurret(turretId);
-            if (refund > 0) {
-              // Remove the turret entity
-              removeEntity(this.world, turretId);
-              // Deselect and hide panel
-              this.gameTurretController?.deselectTurret();
-            }
-          }
-        });
-      }
-    }
-
-    // Initialize game over screen
-    this.gameOverScreen = new GameOverScreen();
-    this.gameOverScreen.init(this.app);
-    this.gameOverScreen.setOnRestart(() => this.restart());
-
-    // Initialize pause overlay
-    this.pauseOverlay = new PauseOverlay();
-    this.pauseOverlay.init(this.app);
-    this.pauseOverlay.setOnResume(() => this.resume());
-    this.pauseOverlay.setOnRestart(() => {
-      this.resume();
-      this.restart();
-    });
-    this.pauseOverlay.setOnQuit(() => {
-      this.resume();
-      // TODO: Return to main menu when implemented
-      console.log('Quit to main menu (not yet implemented)');
+    // Gameplay manager
+    this.gameplayManager = new GameplayManager(this.world);
+    this.gameplayManager.setCallbacks({
+      onGameOver: (score, isHighScore) => {
+        this.uiController.showGameOver(score, isHighScore, 0);
+      },
+      onWaveStart: (waveNumber, enemyCount) => {
+        this.uiController.addLogMessage(`⚠ Wave ${waveNumber} started!`, 'wave');
+        if (enemyCount > 0) {
+          this.uiController.addLogMessage(`${enemyCount} enemies incoming`, 'warning');
+        }
+      },
+      onWaveComplete: (waveNumber) => {
+        this.uiController.addLogMessage(`✓ Wave ${waveNumber} complete!`, 'wave');
+      },
+      onEnemyKilled: (reward) => {
+        this.uiController.addLogMessage(`Enemy destroyed (+${reward} matter)`, 'kill');
+      },
+      onKobayashiMaruDamaged: () => {
+        this.renderManager.shake(5, 0.3);
+      },
     });
 
-    // Add keyboard listener for pause
-    window.addEventListener('keydown', this.boundHandleKeyDown);
+    // UI controller
+    this.uiController = new UIController(this.app);
+    this.uiController.setGameRef(this);
+    this.uiController.setCallbacks({
+      onRestart: () => this.restart(),
+      onResume: () => this.resume(),
+      onQuit: () => console.log('Quit to main menu (not yet implemented)'),
+      onTurretSelect: (type) => {
+        services.get('placementManager').startPlacing(type);
+      },
+    });
+    this.uiController.init();
 
-    // Turret click handling is now done by GameTurretController (initialized above)
-
-    // Initialize wave manager and spawn Kobayashi Maru
-    this.initializeGameplay();
-  }
-
-  /**
-   * Initializes gameplay elements (Kobayashi Maru and wave system)
-   */
-  private initializeGameplay(): void {
-    const centerX = GAME_CONFIG.WORLD_WIDTH / 2;
-    const centerY = GAME_CONFIG.WORLD_HEIGHT / 2;
-
-    // Spawn Kobayashi Maru at center and store its ID for health monitoring
-    this.kobayashiMaruId = createKobayashiMaru(this.world, centerX, centerY);
-    this.previousKMHealth = Health.max[this.kobayashiMaruId];
-    console.log('Kobayashi Maru spawned at center');
-
-    // Initialize wave manager
-    this.waveManager.init(this.world);
-    this.waveManager.setRenderingDependencies(this.particleSystem, this.spriteManager);
-
-    // Subscribe to EventBus for enemy kills
-    // This handles: wave manager tracking, score manager kills, and resource rewards
-    // Note: ScoreManager now automatically subscribes to ENEMY_KILLED via EventBus
-    this.eventBus.on(GameEventType.ENEMY_KILLED, this.boundHandleEnemyKilled);
-    this.eventBus.on(GameEventType.WAVE_STARTED, this.boundHandleWaveStarted);
-    this.eventBus.on(GameEventType.WAVE_COMPLETED, this.boundHandleWaveCompleted);
-
-    // Start playing and wave 1
-    this.gameState.setState(GameStateType.PLAYING);
-    this.waveManager.startWave(1);
-    console.log(`Total entity count: ${getEntityCount()}`);
-  }
-
-  /**
-   * Handle ENEMY_KILLED event from EventBus
-   * Updates wave manager tracking and awards resources
-   */
-  private handleEnemyKilled(payload: EnemyKilledPayload): void {
-    // Remove enemy from wave manager tracking
-    this.waveManager.removeEnemy(payload.entityId);
-    // Award resources (ScoreManager handles kill counting via its own EventBus subscription)
-    this.resourceManager.addResources(GAME_CONFIG.RESOURCE_REWARD);
-    // Add message to log
-    this.killCount++;
-    if (this.hudManager) {
-      this.hudManager.addLogMessage(`Enemy destroyed (+${GAME_CONFIG.RESOURCE_REWARD} matter)`, 'kill');
-    }
-  }
-
-  /**
-   * Handle WAVE_STARTED event from EventBus
-   * Displays wave start message in the log
-   */
-  private handleWaveStarted(payload: WaveStartedPayload): void {
-    if (this.hudManager) {
-      this.hudManager.addLogMessage(`⚠ Wave ${payload.waveNumber} started!`, 'wave');
-      if (payload.totalEnemies) {
-        this.hudManager.addLogMessage(`${payload.totalEnemies} enemies incoming`, 'warning');
+    // Connect turret upgrade callbacks
+    this.uiController.connectTurretUpgradeCallbacks(
+      (upgradePath) => {
+        const turretId = this.inputRouter.getSelectedTurretId();
+        if (turretId !== -1) {
+          const result = services.get('upgradeManager').applyUpgrade(turretId, upgradePath);
+          if (result.success) {
+            this.uiController.showTurretUpgradePanel(turretId);
+          }
+        }
+      },
+      () => {
+        const turretId = this.inputRouter.getSelectedTurretId();
+        if (turretId !== -1) {
+          const refund = services.get('upgradeManager').sellTurret(turretId);
+          if (refund > 0) {
+            // Remove turret entity handled by upgrade manager
+            this.inputRouter.deselectTurret();
+          }
+        }
       }
-    }
+    );
+
+    // Input router
+    this.inputRouter = new InputRouter(this.app, this.world);
+    this.inputRouter.setStateCheckers({
+      isPlaying: () => services.get('gameState').isPlaying(),
+      isPaused: () => services.get('gameState').isPaused(),
+      isGameOver: () => services.get('gameState').isGameOver(),
+      isPlacingTurret: () => services.get('placementManager').isPlacing(),
+    });
+    this.setupInputHandlers();
+    this.inputRouter.init();
   }
 
   /**
-   * Handle WAVE_COMPLETED event from EventBus
-   * Displays wave completion message in the log
+   * Register ECS systems with SystemManager.
    */
-  private handleWaveCompleted(payload: WaveCompletedPayload): void {
-    if (this.hudManager) {
-      this.hudManager.addLogMessage(`✓ Wave ${payload.waveNumber} complete!`, 'wave');
-    }
+  private registerSystems(): void {
+    const services = getServices();
+    const systemManager = services.get('systemManager');
+    const spatialHash = services.get('spatialHash');
+    const particleSystem = services.get('particleSystem');
+    const spriteManager = services.get('spriteManager');
+    const audioManager = services.get('audioManager');
+
+    // Create systems
+    const renderSystem = createRenderSystem(spriteManager);
+    const movementSystem = createMovementSystem(() => this.gameplayManager.getSpeedMultiplier());
+    const collisionSystem = createCollisionSystem(spatialHash);
+    const targetingSystem = createTargetingSystem(spatialHash);
+    const combatSystem = createCombatSystem(particleSystem);
+    const damageSystem = createDamageSystem(particleSystem);
+    const aiSystem = createAISystem();
+    const abilitySystem = createAbilitySystem(particleSystem, spriteManager, audioManager, spatialHash);
+    const projectileSystem = createProjectileSystem(spatialHash);
+    const enemyCollisionSystem = createEnemyCollisionSystem(
+      particleSystem,
+      () => this.gameplayManager.getKobayashiMaruId()
+    );
+    const enemyCombatSystem = createEnemyCombatSystem(
+      () => this.gameplayManager.getKobayashiMaruId()
+    );
+    const enemyProjectileSystem = createEnemyProjectileSystem(
+      spatialHash,
+      () => this.gameplayManager.getKobayashiMaruId()
+    );
+
+    // Store systems locally
+    this.collisionSystem = collisionSystem;
+    this.combatSystem = combatSystem;
+
+    // Set render system on render manager
+    this.renderManager.setRenderSystem(renderSystem);
+
+    // Register systems in execution order
+    systemManager.register('collision', collisionSystem, 10, { requiresDelta: false });
+    systemManager.register('ai', aiSystem, 20, { requiresGameTime: true });
+    systemManager.register('ability', abilitySystem, 25);
+    systemManager.register('movement', movementSystem, 30);
+    systemManager.register('status-effects', statusEffectSystem, 35);
+    systemManager.register('enemy-collision', enemyCollisionSystem, 38, { requiresDelta: false });
+    systemManager.register('targeting', targetingSystem, 40, { requiresDelta: false });
+    systemManager.register('combat', combatSystem, 50, { requiresGameTime: true });
+    systemManager.register('enemy-combat', enemyCombatSystem, 55, { requiresGameTime: true });
+    systemManager.register('projectile', projectileSystem, 60);
+    systemManager.register('enemy-projectile', enemyProjectileSystem, 62);
+    systemManager.register('damage', damageSystem, 70, { requiresDelta: false });
   }
 
   /**
-   * Handle keyboard input for pause and other shortcuts
+   * Setup game loop callbacks.
    */
-  private handleKeyDown(e: KeyboardEvent): void {
-    // ESC key - Toggle pause
-    if (e.key === 'Escape') {
-      if (this.gameState.isPlaying()) {
-        this.pause();
-      } else if (this.gameState.isPaused()) {
-        this.resume();
-      }
-    }
+  private setupLoopCallbacks(): void {
+    const services = getServices();
 
-    // R key - Restart (when paused)
-    if (e.key === 'r' || e.key === 'R') {
-      if (this.gameState.isPaused()) {
-        this.resume();
-        this.restart();
-      }
-    }
+    // Pre-update: background
+    this.loopManager.onPreUpdate((dt) => {
+      this.renderManager.updateBackground(dt);
+    });
 
-    // Q key - Quit (when paused)
-    if (e.key === 'q' || e.key === 'Q') {
-      if (this.gameState.isPaused()) {
-        this.resume();
-        // TODO: Return to main menu when implemented
-        console.log('Quit to main menu (not yet implemented)');
-      }
-    }
+    // Gameplay: game logic
+    this.loopManager.onGameplay((dt) => {
+      this.gameplayManager.update(dt);
+    });
+
+    // Physics: ECS systems
+    this.loopManager.onPhysics((dt, gameTime) => {
+      services.get('systemManager').run(this.world, dt, gameTime);
+    });
+
+    // Render: visual updates
+    this.loopManager.onRender((dt) => {
+      this.renderManager.updateEffects(dt);
+
+      const activeBeams = this.combatSystem?.getActiveBeams() ?? [];
+      this.renderManager.render(activeBeams as BeamVisual[]);
+    });
+
+    // Post-render: screen effects
+    this.loopManager.onPostRender((dt) => {
+      this.renderManager.applyPostEffects(dt);
+    });
+
+    // UI: HUD and debug
+    this.loopManager.onUI(() => {
+      const snapshot = this.gameplayManager.getSnapshot();
+      const turretCount = turretQuery(this.world).length;
+
+      this.uiController.updateHUD(snapshot, this.combatSystem, turretCount);
+      this.uiController.updateDebug(this.app.ticker.deltaMS, snapshot);
+      this.uiController.updateEntityCount();
+    });
   }
 
   /**
-   * Handle window resize to maintain aspect ratio
+   * Setup input action handlers.
+   */
+  private setupInputHandlers(): void {
+    const services = getServices();
+
+    this.inputRouter.on(InputAction.PAUSE, () => this.pause());
+    this.inputRouter.on(InputAction.RESUME, () => this.resume());
+    this.inputRouter.on(InputAction.RESTART, () => this.restart());
+    this.inputRouter.on(InputAction.QUIT, () => console.log('Quit not implemented'));
+
+    this.inputRouter.on(InputAction.SELECT_TURRET, ({ data }) => {
+      if (data?.turretId !== undefined) {
+        this.uiController.showTurretUpgradePanel(data.turretId);
+      }
+    });
+
+    this.inputRouter.on(InputAction.DESELECT_TURRET, () => {
+      this.uiController.hideTurretUpgradePanel();
+    });
+
+    this.inputRouter.on(InputAction.PLACE_TURRET, ({ data }) => {
+      if (data?.worldX !== undefined && data?.worldY !== undefined) {
+        services.get('placementManager').placeTurret(data.worldX, data.worldY);
+      }
+    });
+
+    this.inputRouter.on(InputAction.CANCEL_PLACEMENT, () => {
+      services.get('placementManager').cancelPlacement();
+    });
+
+    this.inputRouter.on(InputAction.TOGGLE_GOD_MODE, () => {
+      this.gameplayManager.toggleGodMode();
+    });
+
+    this.inputRouter.on(InputAction.TOGGLE_SLOW_MODE, () => {
+      this.gameplayManager.toggleSlowMode();
+    });
+  }
+
+  /**
+   * Setup window resize handler.
+   */
+  private setupResizeHandler(): void {
+    this.boundResizeHandler = this.handleResize.bind(this);
+    window.addEventListener('resize', this.boundResizeHandler);
+    this.handleResize();
+  }
+
+  /**
+   * Handle window resize.
    */
   private handleResize(): void {
     const { innerWidth, innerHeight } = window;
-    const aspectRatio = GAME_CONFIG.WORLD_WIDTH / GAME_CONFIG.WORLD_HEIGHT;
+    const WORLD_WIDTH = 1920;
+    const WORLD_HEIGHT = 1080;
+    const aspectRatio = WORLD_WIDTH / WORLD_HEIGHT;
 
     let width = innerWidth;
     let height = innerWidth / aspectRatio;
@@ -553,611 +336,128 @@ export class Game {
     }
 
     this.app.renderer.resize(width, height);
-    this.app.stage.scale.set(
-      width / GAME_CONFIG.WORLD_WIDTH,
-      height / GAME_CONFIG.WORLD_HEIGHT
-    );
+    this.app.stage.scale.set(width / WORLD_WIDTH, height / WORLD_HEIGHT);
   }
 
+  // ==========================================================================
+  // PUBLIC API (Backward Compatible)
+  // ==========================================================================
+
   /**
-   * Start the game loop
+   * Start the game loop.
    */
   start(): void {
     if (!this.initialized) {
       throw new Error('Game not initialized. Call init() first.');
     }
-
-    this.app.ticker.add(this.update.bind(this));
+    this.loopManager.start();
     console.log('Game loop started');
   }
 
   /**
-   * Main update loop
-   */
-  private update(): void {
-    // Start frame timing
-    this.performanceMonitor.startFrame();
-
-    // Convert PixiJS ticker delta (in milliseconds) to seconds for frame-independent movement
-    const deltaTime = this.app.ticker.deltaMS / 1000;
-
-    // Update starfield (always runs regardless of game state)
-    if (this.starfield) {
-      // Scroll slowly downwards
-      this.starfield.update(deltaTime, 0, 50);
-    }
-
-    // Only run gameplay systems when playing
-    if (this.gameState.isPlaying()) {
-      // Update game time
-      this.gameTime += deltaTime;
-
-      // Update score manager time
-      this.scoreManager.update(deltaTime);
-
-      // Update wave manager to handle spawning
-      this.waveManager.update(deltaTime);
-
-      // Run all gameplay systems via SystemManager
-      // Systems run in priority order: collision, ai, movement, targeting, combat, projectile, damage
-      this.performanceMonitor.startMeasure('systems');
-      this.systemManager.run(this.world, deltaTime, this.gameTime);
-      this.performanceMonitor.endMeasure('systems');
-
-      // Check for game over (Kobayashi Maru destroyed)
-      this.checkGameOver();
-
-      // Check for damage to Kobayashi Maru for screen shake
-      if (this.kobayashiMaruId !== -1 && this.screenShake) {
-        const currentHealth = Health.current[this.kobayashiMaruId];
-        if (currentHealth < this.previousKMHealth) {
-          // Trigger screen shake
-          this.screenShake.shake(5, 0.3);
-          this.previousKMHealth = currentHealth;
-        }
-        // Update previous health if it increased (healing)
-        if (currentHealth > this.previousKMHealth) {
-          this.previousKMHealth = currentHealth;
-        }
-      }
-    }
-
-    // Render system always runs to show current state
-    this.performanceMonitor.startRender();
-    if (this.renderSystem) {
-      this.renderSystem(this.world);
-    }
-
-    // Update and render beam visuals
-    if (this.beamRenderer && this.combatSystem) {
-      this.beamRenderer.updateCharges(deltaTime);
-      this.beamRenderer.render(this.combatSystem.getActiveBeams());
-    }
-
-    // Update particle system
-    if (this.particleSystem) {
-      this.particleSystem.update(deltaTime);
-    }
-
-    // Update shockwave renderer
-    if (this.shockwaveRenderer) {
-      this.shockwaveRenderer.render(deltaTime);
-    }
-
-    // Update explosion manager
-    if (this.explosionManager) {
-      this.explosionManager.update(deltaTime);
-    }
-
-    // Update health bar renderer
-    if (this.healthBarRenderer) {
-      this.healthBarRenderer.update(this.world);
-    }
-
-    // Update shield renderer
-    if (this.shieldRenderer) {
-      this.shieldRenderer.update(this.world, deltaTime);
-    }
-
-    // Update turret upgrade visuals
-    if (this.turretUpgradeVisuals) {
-      this.turretUpgradeVisuals.update();
-    }
-    this.performanceMonitor.endRender();
-
-    // Update screen shake
-    if (this.screenShake) {
-      const { offsetX, offsetY } = this.screenShake.update(deltaTime);
-      // Apply shake to stage position (reset to 0,0 first if needed, but stage usually stays at 0,0)
-      // We need to be careful not to accumulate offsets if we don't reset.
-      // Since we are setting scale in resize, we should probably add a container for game content if we want to shake everything.
-      // Or just set position.
-      this.app.stage.position.set(offsetX, offsetY);
-    }
-
-    // Update performance monitor entity count
-    this.performanceMonitor.setEntityCount(getEntityCount());
-
-    // Update debug overlay
-    if (this.debugManager) {
-      this.debugManager.update(this.app.ticker.deltaMS);
-      this.debugManager.updateEntityCount(getEntityCount());
-
-      // Update game stats
-      this.debugManager.updateGameStats({
-        gameState: this.gameState.getState(),
-        waveNumber: this.waveManager.getCurrentWave(),
-        waveState: this.waveManager.getState(),
-        timeSurvived: this.scoreManager.getTimeSurvived(),
-        enemiesDefeated: this.scoreManager.getEnemiesDefeated(),
-        activeEnemies: this.waveManager.getActiveEnemyCount(),
-        resources: this.resourceManager.getResources()
-      });
-
-      // Update performance stats
-      this.debugManager.updatePerformanceStats(this.performanceMonitor.getMetrics());
-    }
-
-    // Update HUD
-    if (this.hudManager) {
-      // Get Kobayashi Maru status
-      let kmHealth = 0, kmMaxHealth = 0, kmShield = 0, kmMaxShield = 0;
-      if (this.kobayashiMaruId !== -1) {
-        kmHealth = Health.current[this.kobayashiMaruId] ?? 0;
-        kmMaxHealth = Health.max[this.kobayashiMaruId] ?? 0;
-        kmShield = Shield.current[this.kobayashiMaruId] ?? 0;
-        kmMaxShield = Shield.max[this.kobayashiMaruId] ?? 0;
-      }
-
-      // Get turret count
-      const turretCount = turretQuery(this.world).length;
-
-      // Get combat stats
-      const combatStats = this.combatSystem?.getStats();
-
-      this.hudManager.update({
-        waveNumber: this.waveManager.getCurrentWave(),
-        waveState: this.waveManager.getState(),
-        activeEnemies: this.waveManager.getActiveEnemyCount(),
-        resources: this.resourceManager.getResources(),
-        timeSurvived: this.scoreManager.getTimeSurvived(),
-        enemiesDefeated: this.scoreManager.getEnemiesDefeated(),
-        kobayashiMaruHealth: kmHealth,
-        kobayashiMaruMaxHealth: kmMaxHealth,
-        kobayashiMaruShield: kmShield,
-        kobayashiMaruMaxShield: kmMaxShield,
-        turretCount: turretCount,
-        // Extended stats
-        totalDamageDealt: combatStats?.totalDamageDealt ?? 0,
-        totalShotsFired: combatStats?.totalShotsFired ?? 0,
-        accuracy: combatStats?.accuracy ?? 0,
-        dps: combatStats?.dps ?? 0
-      });
-    }
-
-    // End frame timing
-    this.performanceMonitor.endFrame();
-  }
-
-  /**
-   * Checks if the Kobayashi Maru has been destroyed and triggers game over
-   */
-  private checkGameOver(): void {
-    // Skip game over check if god mode is enabled
-    if (this.godModeEnabled) {
-      return;
-    }
-
-    if (this.kobayashiMaruId === -1) {
-      return;
-    }
-
-    const health = Health.current[this.kobayashiMaruId];
-    if (health === undefined || health <= 0) {
-      this.triggerGameOver();
-    }
-  }
-
-  /**
-   * Triggers the game over state
-   */
-  private triggerGameOver(): void {
-    // Set game state to game over
-    this.gameState.setState(GameStateType.GAME_OVER);
-
-    // Stop wave spawning
-    this.waveManager.setAutoStartNextWave(false);
-
-    // Get previous high score before saving
-    const previousHighScore = this.highScoreManager.getHighestScore();
-    const previousBestScore = previousHighScore ? calculateScore(previousHighScore) : 0;
-
-    // Save final score
-    const finalScore = this.scoreManager.getScoreData();
-    const saved = this.highScoreManager.saveScore(finalScore);
-
-    console.log('Game Over!');
-    console.log(`Time Survived: ${finalScore.timeSurvived.toFixed(2)}s`);
-    console.log(`Wave Reached: ${finalScore.waveReached}`);
-    console.log(`Enemies Defeated: ${finalScore.enemiesDefeated}`);
-    if (saved) {
-      console.log('New high score!');
-    }
-
-    // Show game over screen
-    if (this.gameOverScreen) {
-      this.gameOverScreen.show(finalScore, saved, previousBestScore);
-    }
-  }
-
-  /**
-   * Restart the game after game over
-   */
-  restart(): void {
-    // Hide game over screen
-    if (this.gameOverScreen) {
-      this.gameOverScreen.hide();
-    }
-
-    // Clear all existing entities
-    this.clearAllEntities();
-
-    // Reset all managers
-    this.scoreManager.reset();
-    this.resourceManager.reset();
-    this.killCount = 0;
-    this.waveManager.reset();
-    this.gameTime = 0;
-
-    // Reset combat stats
-    if (this.combatSystem) {
-      this.combatSystem.resetStats();
-    }
-
-    // Reset game state to MENU then PLAYING (to follow valid state transitions)
-    this.gameState.reset();
-
-    // Re-enable auto wave progression
-    this.waveManager.setAutoStartNextWave(true);
-
-    // Re-initialize gameplay (spawn new Kobayashi Maru and start wave 1)
-    this.initializeGameplay();
-
-    console.log('Game restarted');
-  }
-
-  /**
-   * Pause the game
+   * Pause the game.
    */
   pause(): void {
-    if (!this.gameState.isPlaying()) {
-      return;
-    }
-
-    this.gameState.setState(GameStateType.PAUSED);
-
-    // Show pause overlay
-    if (this.pauseOverlay) {
-      this.pauseOverlay.show();
-    }
-
-    console.log('Game paused');
+    this.gameplayManager.pause();
+    this.loopManager.pause();
+    this.uiController.showPause();
   }
 
   /**
-   * Resume the game
+   * Resume the game.
    */
   resume(): void {
-    if (!this.gameState.isPaused()) {
-      return;
-    }
-
-    this.gameState.setState(GameStateType.PLAYING);
-
-    // Hide pause overlay
-    if (this.pauseOverlay) {
-      this.pauseOverlay.hide();
-    }
-
-    console.log('Game resumed');
+    this.gameplayManager.resume();
+    this.loopManager.resume();
+    this.uiController.hidePause();
   }
 
   /**
-   * Get pause state
+   * Restart the game.
+   */
+  restart(): void {
+    this.uiController.hideGameOver();
+    this.gameplayManager.restart();
+    this.inputRouter.deselectTurret();
+  }
+
+  /**
+   * Check if game is paused.
    */
   isPaused(): boolean {
-    return this.gameState.isPaused();
+    return this.loopManager.isPaused();
   }
 
-  /**
-   * Enable or disable god mode
-   * @param enabled - Whether god mode should be enabled
-   */
+  // Cheat mode methods (delegate to gameplay manager)
   setGodMode(enabled: boolean): void {
-    this.godModeEnabled = enabled;
-    console.log(`God mode ${enabled ? 'enabled' : 'disabled'}`);
+    if (enabled) {
+      if (!this.isGodModeEnabled()) this.gameplayManager.toggleGodMode();
+    } else {
+      if (this.isGodModeEnabled()) this.gameplayManager.toggleGodMode();
+    }
   }
 
-  /**
-   * Toggle god mode on/off
-   * @returns The new god mode state
-   */
   toggleGodMode(): boolean {
-    this.godModeEnabled = !this.godModeEnabled;
-    console.log(`God mode ${this.godModeEnabled ? 'enabled' : 'disabled'}`);
-    return this.godModeEnabled;
+    return this.gameplayManager.toggleGodMode();
   }
 
-  /**
-   * Check if god mode is enabled
-   * @returns Whether god mode is enabled
-   */
   isGodModeEnabled(): boolean {
-    return this.godModeEnabled;
+    return this.gameplayManager.isGodModeEnabled();
   }
 
-  /**
-   * Enable or disable slow mode (half speed for all enemies)
-   * @param enabled - Whether slow mode should be enabled
-   */
   setSlowMode(enabled: boolean): void {
-    this.slowModeEnabled = enabled;
-    console.log(`Slow mode ${enabled ? 'enabled' : 'disabled'}`);
+    if (enabled) {
+      if (!this.isSlowModeEnabled()) this.gameplayManager.toggleSlowMode();
+    } else {
+      if (this.isSlowModeEnabled()) this.gameplayManager.toggleSlowMode();
+    }
   }
 
-  /**
-   * Toggle slow mode on/off
-   * @returns The new slow mode state
-   */
   toggleSlowMode(): boolean {
-    this.slowModeEnabled = !this.slowModeEnabled;
-    console.log(`Slow mode ${this.slowModeEnabled ? 'enabled' : 'disabled'}`);
-    return this.slowModeEnabled;
+    return this.gameplayManager.toggleSlowMode();
   }
 
-  /**
-   * Check if slow mode is enabled
-   * @returns Whether slow mode is enabled
-   */
   isSlowModeEnabled(): boolean {
-    return this.slowModeEnabled;
+    return this.gameplayManager.isSlowModeEnabled();
   }
 
-  /**
-   * Get the slow mode speed multiplier
-   * @returns The speed multiplier (1.0 if slow mode disabled, 0.5 if enabled)
-   */
   getSpeedMultiplier(): number {
-    return this.slowModeEnabled ? GAME_CONFIG.SLOW_MODE_MULTIPLIER : 1.0;
+    return this.gameplayManager.getSpeedMultiplier();
   }
 
-  /**
-   * Clear all entities from the world for restart
-   */
-  private clearAllEntities(): void {
-    const entities = allEntitiesQuery(this.world);
-
-    for (const eid of entities) {
-      removeEntity(this.world, eid);
-      decrementEntityCount();
-    }
-
-    // Reset Kobayashi Maru tracking
-    this.kobayashiMaruId = -1;
-
-    // Run render system once to clean up sprites for removed entities
-    if (this.renderSystem) {
-      this.renderSystem(this.world);
-    }
-  }
+  // Getter methods (delegate to services)
+  getCollisionSystem() { return this.collisionSystem || null; }
+  getSpatialHash() { return getServices().tryGet('spatialHash'); }
+  getWaveManager() { return getServices().get('waveManager'); }
+  getGameState() { return getServices().get('gameState'); }
+  getScoreManager() { return getServices().get('scoreManager'); }
+  getHighScoreManager() { return getServices().get('highScoreManager'); }
+  getResourceManager() { return getServices().get('resourceManager'); }
+  getPlacementManager() { return getServices().tryGet('placementManager'); }
+  getCombatSystem() { return this.combatSystem || null; }
+  getDamageSystem() { return null; } // TODO: Store reference if needed
+  getPerformanceMonitor() { return getServices().get('performanceMonitor'); }
+  getQualityManager() { return getServices().get('qualityManager'); }
+  getSystemManager() { return getServices().get('systemManager'); }
+  getHapticManager() { return getServices().get('hapticManager'); }
+  getInputManager() { return getServices().get('inputManager'); }
 
   /**
-   * Clean up resources
+   * Clean up resources.
    */
   destroy(): void {
-    // Remove event listeners
     if (this.boundResizeHandler) {
       window.removeEventListener('resize', this.boundResizeHandler);
-      this.boundResizeHandler = null;
-    }
-    window.removeEventListener('keydown', this.boundHandleKeyDown);
-
-    // Clean up turret controller
-    if (this.gameTurretController) {
-      this.gameTurretController.destroy();
     }
 
-    // Unsubscribe from EventBus
-    this.eventBus.off(GameEventType.ENEMY_KILLED, this.boundHandleEnemyKilled);
-    this.eventBus.off(GameEventType.WAVE_STARTED, this.boundHandleWaveStarted);
-    this.eventBus.off(GameEventType.WAVE_COMPLETED, this.boundHandleWaveCompleted);
-    this.scoreManager.unsubscribe();
-    if (this.placementRenderer) {
-      this.placementRenderer.destroy();
-    }
-    if (this.placementManager) {
-      this.placementManager.destroy();
-    }
-    if (this.beamRenderer) {
-      this.beamRenderer.destroy();
-    }
-    if (this.hudManager) {
-      this.hudManager.destroy();
-    }
-    if (this.gameOverScreen) {
-      this.gameOverScreen.destroy();
-    }
-    if (this.pauseOverlay) {
-      this.pauseOverlay.destroy();
-    }
-    if (this.particleSystem) {
-      this.particleSystem.destroy();
-    }
-    if (this.healthBarRenderer) {
-      this.healthBarRenderer.destroy();
-    }
-    if (this.shieldRenderer) {
-      this.shieldRenderer.destroy();
-    }
-    if (this.shockwaveRenderer) {
-      this.shockwaveRenderer.destroy();
-    }
-    if (this.glowManager) {
-      this.glowManager.destroy();
-    }
-    if (this.turretUpgradeVisuals) {
-      this.turretUpgradeVisuals.destroy();
-    }
-    this.spriteManager.destroy();
-    if (this.touchInputManager) {
-      this.touchInputManager.destroy();
-    }
-    this.inputManager.destroy();
+    this.inputRouter.destroy();
+    this.uiController.destroy();
+    this.gameplayManager.destroy();
+    this.renderManager.destroy();
+    this.loopManager.destroy();
+
+    resetServices();
     this.app.destroy(true);
     this.initialized = false;
-  }
-
-  /**
-   * Get the collision system for querying nearby entities
-   * @returns The collision system or null if not initialized
-   */
-  getCollisionSystem(): CollisionSystem | null {
-    return this.collisionSystem;
-  }
-
-  /**
-   * Get the spatial hash for direct access
-   * @returns The spatial hash or null if not initialized
-   */
-  getSpatialHash(): SpatialHash | null {
-    return this.spatialHash;
-  }
-
-  /**
-   * Get the wave manager for external control
-   * @returns The wave manager instance
-   */
-  getWaveManager(): WaveManager {
-    return this.waveManager;
-  }
-
-  /**
-   * Get the game state manager
-   * @returns The game state instance
-   */
-  getGameState(): GameState {
-    return this.gameState;
-  }
-
-  /**
-   * Get the score manager
-   * @returns The score manager instance
-   */
-  getScoreManager(): ScoreManager {
-    return this.scoreManager;
-  }
-
-  /**
-   * Get the high score manager
-   * @returns The high score manager instance
-   */
-  getHighScoreManager(): HighScoreManager {
-    return this.highScoreManager;
-  }
-
-  /**
-   * Records an enemy kill in the score manager
-   * @param factionId - The faction ID of the defeated enemy
-   */
-  recordEnemyKill(factionId: number): void {
-    this.scoreManager.addKill(factionId);
-  }
-
-  /**
-   * Get the resource manager
-   * @returns The resource manager instance
-   */
-  getResourceManager(): ResourceManager {
-    return this.resourceManager;
-  }
-
-  /**
-   * Get the placement manager
-   * @returns The placement manager or null if not initialized
-   */
-  getPlacementManager(): PlacementManager | null {
-    return this.placementManager;
-  }
-
-  /**
-   * Get the combat system for access to beam visuals
-   * @returns The combat system or null if not initialized
-   */
-  getCombatSystem(): CombatSystem | null {
-    return this.combatSystem;
-  }
-
-  /**
-   * Get the damage system
-   * @returns The damage system or null if not initialized
-   */
-  getDamageSystem(): DamageSystem | null {
-    return this.damageSystem;
-  }
-
-  /**
-   * Get the performance monitor
-   * @returns The performance monitor instance
-   */
-  getPerformanceMonitor(): PerformanceMonitor {
-    return this.performanceMonitor;
-  }
-
-  /**
-   * Get the quality manager
-   * @returns The quality manager instance
-   */
-  getQualityManager(): QualityManager {
-    return this.qualityManager;
-  }
-
-  /**
-   * Get the system manager
-   * @returns The system manager instance for managing ECS systems
-   */
-  getSystemManager(): SystemManager {
-    return this.systemManager;
-  }
-
-  /**
-   * Get the haptic manager
-   * @returns The haptic manager instance
-   */
-  getHapticManager(): HapticManager {
-    return this.hapticManager;
-  }
-
-  /**
-   * Get the input manager
-   * @returns The input manager instance
-   */
-  getInputManager(): InputManager {
-    return this.inputManager;
-  }
-
-  /**
-   * Get the game input handler (for modular input handling)
-   * @returns The game input handler instance or null if not initialized
-   */
-  getGameInputHandler(): GameInputHandler | null {
-    return this.gameInputHandler;
-  }
-
-  /**
-   * Get the game state controller (for modular state management)
-   * @returns The game state controller instance or null if not initialized
-   */
-  getGameStateController(): GameStateController | null {
-    return this.gameStateController;
   }
 }
