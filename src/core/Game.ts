@@ -190,7 +190,7 @@ export class Game {
     const collisionSystem = createCollisionSystem(spatialHash);
     const targetingSystem = createTargetingSystem(spatialHash);
     const combatSystem = createCombatSystem(particleSystem);
-    const damageSystem = createDamageSystem(particleSystem);
+    const damageSystem = createDamageSystem(particleSystem, spriteManager);
     const aiSystem = createAISystem();
     const abilitySystem = createAbilitySystem(particleSystem, spriteManager, audioManager, spatialHash);
     const projectileSystem = createProjectileSystem(spatialHash);

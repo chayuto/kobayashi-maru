@@ -3,7 +3,7 @@
  * Handles entity destruction when health reaches 0 and returns entities to pool
  */
 import { defineQuery, removeEntity, IWorld } from 'bitecs';
-import { Health, Faction, Position } from '../ecs/components';
+import { Health, Faction, Position, SpriteRef } from '../ecs/components';
 import { FactionId } from '../types/constants';
 import { GameEventType } from '../types/events';
 import { AudioManager, SoundType } from '../audio';
@@ -11,16 +11,22 @@ import { decrementEntityCount } from '../ecs/world';
 import { ParticleSystem, EFFECTS } from '../rendering';
 import { EventBus } from '../core/EventBus';
 import { PoolManager } from '../ecs/PoolManager';
+import type { SpriteManager } from '../rendering/spriteManager';
 
 // Query for entities with Health component
 const healthQuery = defineQuery([Health, Faction, Position]);
 
+// Special value for unset sprite index (matches renderSystem)
+const SPRITE_INDEX_UNSET = 0;
+
+
 /**
  * Creates the damage system that handles entity destruction
  * @param particleSystem - Optional particle system for explosion effects
+ * @param spriteManager - Optional sprite manager for immediate sprite removal
  * @returns A system function that processes entity deaths
  */
-export function createDamageSystem(particleSystem?: ParticleSystem) {
+export function createDamageSystem(particleSystem?: ParticleSystem, spriteManager?: SpriteManager) {
   // Track entities destroyed this frame
   const destroyedThisFrame: number[] = [];
   // Get the EventBus instance
@@ -84,6 +90,13 @@ export function createDamageSystem(particleSystem?: ParticleSystem) {
 
       // Track as destroyed
       destroyedThisFrame.push(eid);
+
+      // Immediately remove sprite before releasing to pool (fixes visual delay)
+      const spriteIndex = SpriteRef.index[eid];
+      if (spriteIndex !== SPRITE_INDEX_UNSET && spriteManager) {
+        spriteManager.removeSprite(spriteIndex);
+        SpriteRef.index[eid] = SPRITE_INDEX_UNSET;
+      }
 
       // Remove entity from world or Return to appropriate pool
       if (factionId === FactionId.PROJECTILE || factionId === FactionId.ENEMY_PROJECTILE) {
