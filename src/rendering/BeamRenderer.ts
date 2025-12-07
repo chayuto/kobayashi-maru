@@ -28,6 +28,12 @@ export interface ChargeEffect {
   color: number;
 }
 
+// Charging effect constants
+const MAX_CHARGE_RADIUS = 15;
+const BASE_CORE_ALPHA = 0.3;
+const PULSE_AMPLITUDE = 0.2;
+const PULSE_FREQUENCY = 4;
+
 /**
  * BeamRenderer renders weapon beam effects
  */
@@ -127,7 +133,7 @@ export class BeamRenderer {
    */
   private renderCharges(): void {
     for (const charge of this.charges.values()) {
-      const radius = 15 * charge.progress;
+      const radius = MAX_CHARGE_RADIUS * charge.progress;
       const alpha = (1 - charge.progress) * 0.6;
       
       // Draw expanding charge ring
@@ -135,7 +141,7 @@ export class BeamRenderer {
       this.graphics.stroke({ width: 2, color: charge.color, alpha });
       
       // Draw pulsing core
-      const coreAlpha = 0.3 + Math.sin(charge.progress * Math.PI * 4) * 0.2;
+      const coreAlpha = BASE_CORE_ALPHA + Math.sin(charge.progress * Math.PI * PULSE_FREQUENCY) * PULSE_AMPLITUDE;
       this.graphics.circle(charge.x, charge.y, 8);
       this.graphics.fill({ color: charge.color, alpha: coreAlpha });
     }

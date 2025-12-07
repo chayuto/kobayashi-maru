@@ -49,8 +49,12 @@ export interface CombatStats {
   accuracy: number;
 }
 
+// Beam generation constants
+const MIN_BEAM_LENGTH = 0.001;
+const BEAM_SEGMENT_COUNT = 5;
+
 /**
- * Generate beam segments with electricity jitter effect
+ * Generate beam segments with electricity jitter effect (private helper function)
  * @param startX - Beam start X coordinate
  * @param startY - Beam start Y coordinate
  * @param endX - Beam end X coordinate
@@ -60,7 +64,6 @@ export interface CombatStats {
  */
 function generateBeamSegments(startX: number, startY: number, endX: number, endY: number, turretType: number): BeamSegment[] {
   const segments: BeamSegment[] = [];
-  const segmentCount = 5;
   
   // Jitter amount varies by weapon type
   let jitter = 8; // Default jitter
@@ -80,16 +83,16 @@ function generateBeamSegments(startX: number, startY: number, endX: number, endY
   const length = Math.sqrt(dx * dx + dy * dy);
   
   // Handle zero-length beams
-  if (length < 0.001) {
+  if (length < MIN_BEAM_LENGTH) {
     return segments;
   }
   
   const perpX = -dy / length;
   const perpY = dx / length;
   
-  for (let i = 0; i < segmentCount; i++) {
-    const t1 = i / segmentCount;
-    const t2 = (i + 1) / segmentCount;
+  for (let i = 0; i < BEAM_SEGMENT_COUNT; i++) {
+    const t1 = i / BEAM_SEGMENT_COUNT;
+    const t2 = (i + 1) / BEAM_SEGMENT_COUNT;
     
     // Interpolate along beam path
     const x1 = startX + dx * t1;
@@ -98,6 +101,8 @@ function generateBeamSegments(startX: number, startY: number, endX: number, endY
     const y2 = startY + dy * t2;
     
     // Add random offset (less at endpoints for smooth connection)
+    // midFactor ranges from 0 at endpoints to 1 at beam center
+    // This creates stronger jitter in the middle and smoother connections at the ends
     const midFactor = 1 - Math.abs(t1 - 0.5) * 2;
     const offset = (Math.random() - 0.5) * jitter * midFactor;
     
