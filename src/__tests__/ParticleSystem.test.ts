@@ -5,11 +5,21 @@ import { Application } from 'pixi.js';
 // Mock PIXI
 vi.mock('pixi.js', () => {
     const Graphics = vi.fn();
-    Graphics.prototype.clear = vi.fn();
-    Graphics.prototype.beginFill = vi.fn();
-    Graphics.prototype.drawCircle = vi.fn();
-    Graphics.prototype.endFill = vi.fn();
+    Graphics.prototype.clear = vi.fn().mockReturnThis();
+    Graphics.prototype.beginFill = vi.fn().mockReturnThis();
+    Graphics.prototype.drawCircle = vi.fn().mockReturnThis();
+    Graphics.prototype.drawRect = vi.fn().mockReturnThis();
+    Graphics.prototype.moveTo = vi.fn().mockReturnThis();
+    Graphics.prototype.lineTo = vi.fn().mockReturnThis();
+    Graphics.prototype.closePath = vi.fn().mockReturnThis();
+    Graphics.prototype.lineStyle = vi.fn().mockReturnThis();
+    Graphics.prototype.endFill = vi.fn().mockReturnThis();
     Graphics.prototype.destroy = vi.fn();
+    Graphics.prototype.x = 0;
+    Graphics.prototype.y = 0;
+    Graphics.prototype.alpha = 1;
+    Graphics.prototype.rotation = 0;
+    Graphics.prototype.scale = { set: vi.fn() };
 
     const Container = vi.fn();
     Container.prototype.addChild = vi.fn();
