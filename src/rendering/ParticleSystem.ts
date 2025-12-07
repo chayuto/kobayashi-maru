@@ -66,7 +66,7 @@ export interface ParticleConfig {
     size: { min: number; max: number };
     color?: number;  // Optional if gradient provided
     spread: number; // Angle spread in radians (2*PI for full circle)
-    
+
     // New optional fields
     sprite?: ParticleSpriteType;
     colorGradient?: ColorGradient;
@@ -106,7 +106,7 @@ export class ParticleSystem {
         this.maxParticles = maxParticles;
         this.spawnRateMultiplier = spawnRateMultiplier;
         this.glowContainer = glowContainer || null;
-        
+
         // Add to glow container if provided, otherwise add to stage
         if (this.glowContainer) {
             this.glowContainer.addChild(this.container);
@@ -148,7 +148,7 @@ export class ParticleSystem {
             particle.life = particle.maxLife;
 
             particle.size = config.size.min + Math.random() * (config.size.max - config.size.min);
-            
+
             // Set initial color
             if (config.colorGradient) {
                 particle.colorGradient = config.colorGradient;
@@ -236,7 +236,7 @@ export class ParticleSystem {
                     const outerRadius = size;
                     const innerRadius = size * 0.5;
                     const points = 5;
-                    
+
                     particle.sprite.moveTo(0, -outerRadius);
                     for (let i = 0; i < points * 2; i++) {
                         const radius = i % 2 === 0 ? outerRadius : innerRadius;
@@ -302,7 +302,10 @@ export class ParticleSystem {
     }
 
     update(deltaTime: number): void {
-        for (let i = this.particles.length - 1; i >= 0; i--) {
+        // Track how many particles to keep
+        let writeIndex = 0;
+
+        for (let i = 0; i < this.particles.length; i++) {
             const p = this.particles[i];
 
             // Apply physics
@@ -341,13 +344,24 @@ export class ParticleSystem {
             // Update life
             p.life -= deltaTime;
 
+            // Check if particle is dead
+            if (p.life <= 0) {
+                this.returnToPool(p);
+                continue; // Skip this particle, don't increment writeIndex
+            }
+
             // Calculate normalized life (0 = dead, 1 = just born)
             const normalizedLife = Math.max(0, p.life / p.maxLife);
 
             // Update color gradient if present
+            let colorChanged = false;
             if (p.colorGradient) {
                 const gradientColor = this.interpolateColorGradient(p.colorGradient, normalizedLife);
-                p.color = gradientColor.color;
+                // Only mark as changed if color differs significantly
+                if (p.color !== gradientColor.color) {
+                    p.color = gradientColor.color;
+                    colorChanged = true;
+                }
                 p.alpha = gradientColor.alpha;
             } else {
                 // Calculate alpha based on remaining life
@@ -380,18 +394,21 @@ export class ParticleSystem {
             p.sprite.alpha = p.alpha;
             p.sprite.rotation = p.rotation;
             p.sprite.scale.set(p.scale);
-            
-            // Redraw sprite if color changed (for gradient support)
-            if (p.colorGradient) {
+
+            // Only redraw sprite if color actually changed (optimization)
+            if (colorChanged) {
                 this.drawParticle(p);
             }
 
-            // Remove dead particles
-            if (p.life <= 0) {
-                this.returnToPool(p);
-                this.particles.splice(i, 1);
+            // Keep this particle - use swap-and-pop pattern
+            if (writeIndex !== i) {
+                this.particles[writeIndex] = p;
             }
+            writeIndex++;
         }
+
+        // Truncate array to remove dead particles (O(1) operation)
+        this.particles.length = writeIndex;
     }
 
     private renderTrail(particle: Particle): void {
@@ -406,10 +423,10 @@ export class ParticleSystem {
         for (let i = 1; i < trail.positions.length; i++) {
             const prev = trail.positions[i - 1];
             const curr = trail.positions[i];
-            
+
             // Calculate alpha fade (head is brightest, tail fades)
             const segmentAlpha = (i / trail.positions.length) * particle.alpha * (1 - trail.config.fadeRate);
-            
+
             trail.graphics.lineStyle(trail.config.width, particle.color, segmentAlpha);
             trail.graphics.moveTo(prev.x, prev.y);
             trail.graphics.lineTo(curr.x, curr.y);
@@ -427,11 +444,11 @@ export class ParticleSystem {
 
     private interpolateColorGradient(gradient: ColorGradient, normalizedLife: number): { color: number; alpha: number } {
         const time = 1 - normalizedLife; // Convert remaining life to elapsed time
-        
+
         if (gradient.stops.length === 0) {
             return { color: 0xFFFFFF, alpha: 1 };
         }
-        
+
         if (gradient.stops.length === 1) {
             return { color: gradient.stops[0].color, alpha: gradient.stops[0].alpha };
         }
@@ -439,7 +456,7 @@ export class ParticleSystem {
         // Find the two stops to interpolate between
         let startStop = gradient.stops[0];
         let endStop = gradient.stops[gradient.stops.length - 1];
-        
+
         for (let i = 0; i < gradient.stops.length - 1; i++) {
             if (time >= gradient.stops[i].time && time <= gradient.stops[i + 1].time) {
                 startStop = gradient.stops[i];
@@ -474,42 +491,42 @@ export class ParticleSystem {
     private calculateEmitterVelocity(config: ParticleConfig): { vx: number; vy: number } {
         const pattern = config.emitterPattern || EmitterPattern.CIRCULAR;
         const speed = config.speed.min + Math.random() * (config.speed.max - config.speed.min);
-        
+
         let angle = 0;
-        
+
         switch (pattern) {
             case EmitterPattern.CIRCULAR:
                 // Random angle within spread
                 angle = (Math.random() - 0.5) * config.spread;
                 break;
-                
+
             case EmitterPattern.CONE:
                 // Random angle within cone
                 angle = (config.emitterAngle || 0) + (Math.random() - 0.5) * (config.emitterWidth || config.spread);
                 break;
-                
+
             case EmitterPattern.RING:
                 // Evenly distributed around a ring
                 angle = (Math.PI * 2 * Math.random());
                 break;
-                
+
             case EmitterPattern.SPIRAL:
                 // Spiral pattern
                 angle = this.spiralCounter * 0.5;
                 this.spiralCounter++;
                 break;
-                
+
             case EmitterPattern.BURST:
                 // All particles in same direction
                 angle = config.emitterAngle || 0;
                 break;
-                
+
             case EmitterPattern.FOUNTAIN:
                 // Arc upward
                 angle = (config.emitterAngle || -Math.PI / 2) + (Math.random() - 0.5) * (config.emitterWidth || Math.PI / 4);
                 break;
         }
-        
+
         return {
             vx: Math.cos(angle) * speed,
             vy: Math.sin(angle) * speed
@@ -553,13 +570,13 @@ export class ParticleSystem {
 
     private returnToPool(particle: Particle): void {
         this.container.removeChild(particle.sprite);
-        
+
         // Clean up trail graphics
         if (particle.trail) {
             this.container.removeChild(particle.trail.graphics);
             particle.trail.positions = [];
         }
-        
+
         this.pool.push(particle);
     }
 }
