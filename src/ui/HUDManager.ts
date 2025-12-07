@@ -13,8 +13,8 @@ import { MobileControlsOverlay } from './MobileControlsOverlay';
 import { MessageLog } from './MessageLog';
 import { AudioManager } from '../audio';
 import { ResponsiveUIManager } from './ResponsiveUIManager';
-import { UI_CONFIG } from '../config';
-import { WavePanel, ResourcePanel, StatusPanel } from './panels';
+import { WavePanel, ResourcePanel, StatusPanel, CombatStatsPanel, ScorePanel, TurretCountPanel } from './panels';
+import { ToggleButton } from './components';
 
 // Forward declaration for Game type to avoid circular imports
 interface GameInterface {
@@ -23,12 +23,6 @@ interface GameInterface {
   isGodModeEnabled(): boolean;
   isSlowModeEnabled(): boolean;
 }
-
-
-
-// Toggle button dimensions (from centralized config)
-const TOGGLE_BUTTON_WIDTH = UI_CONFIG.BUTTONS.TOGGLE_WIDTH;
-const TOGGLE_BUTTON_HEIGHT = UI_CONFIG.BUTTONS.TOGGLE_HEIGHT;
 
 /**
  * HUDManager class - manages all HUD display elements
@@ -40,14 +34,15 @@ export class HUDManager {
   private game: GameInterface | null = null;
   private responsiveUIManager: ResponsiveUIManager | null = null;
 
-  // UI Elements
+  // UI Panels
   private wavePanel: WavePanel | null = null;
   private resourcePanel: ResourcePanel | null = null;
   private statusPanel: StatusPanel | null = null;
+  private scorePanel: ScorePanel | null = null;
+  private turretCountPanel: TurretCountPanel | null = null;
+  private combatStatsPanel: CombatStatsPanel | null = null;
 
-  private timeText: Text | null = null;
-  private killsText: Text | null = null;
-  private turretCountText: Text | null = null;
+  // UI Components
   private turretMenu: TurretMenu | null = null;
   private turretUpgradePanel: TurretUpgradePanel | null = null;
   private mobileControls: MobileControlsOverlay | null = null;
@@ -58,23 +53,9 @@ export class HUDManager {
   private muteIcon: Graphics | null = null;
   private muteLabel: Text | null = null;
 
-  // God mode button
-  private godModeButton: Container | null = null;
-  private godModeLabel: Text | null = null;
-
-  // Slow mode button
-  private slowModeButton: Container | null = null;
-  private slowModeLabel: Text | null = null;
-
-  // Extended stats
-  private statsPanel: Graphics | null = null;
-  private dpsText: Text | null = null;
-  private accuracyText: Text | null = null;
-  private damageText: Text | null = null;
-
-  // Background panels
-  private bottomLeftPanel: Graphics | null = null;
-  private bottomRightPanel: Graphics | null = null;
+  // Toggle buttons
+  private godModeButton: ToggleButton | null = null;
+  private slowModeButton: ToggleButton | null = null;
 
   // Bound event handler for cleanup
   private boundResizeHandler: (() => void) | null = null;
@@ -109,9 +90,6 @@ export class HUDManager {
 
     // Create Turret Menu
     this.turretMenu = new TurretMenu();
-    // Position below the top right panel (resources)
-    // Top right panel height is roughly 70 (ResourcePanel.HEIGHT), padding is 16. 
-    // Let's give it some extra space.
     const menuX = GAME_CONFIG.WORLD_WIDTH - 180 - UI_STYLES.PADDING;
     const menuY = UI_STYLES.PADDING + 70 + UI_STYLES.PADDING;
     this.turretMenu.setPosition(menuX, menuY);
@@ -119,7 +97,6 @@ export class HUDManager {
 
     // Create Turret Upgrade Panel (hidden by default)
     this.turretUpgradePanel = new TurretUpgradePanel();
-    // Position it to the left of the turret menu
     const upgradePanelX = menuX - 304 - UI_STYLES.PADDING;
     const upgradePanelY = menuY;
     this.turretUpgradePanel.setPosition(upgradePanelX, upgradePanelY);
@@ -148,12 +125,9 @@ export class HUDManager {
 
     const scale = this.responsiveUIManager.getScaleFactor();
     const padding = UI_STYLES.PADDING * scale;
-    // Use game world dimensions instead of window dimensions for HUD positioning
     const width = GAME_CONFIG.WORLD_WIDTH;
     const height = GAME_CONFIG.WORLD_HEIGHT;
-
-    // Scale container based on device type if needed, or just scale elements
-    // For now, let's just reposition panels based on new width/height
+    const toggleBtnHeight = ToggleButton.getDimensions().height;
 
     // Update Wave Panel
     if (this.wavePanel) {
@@ -163,26 +137,26 @@ export class HUDManager {
 
     // Update Resource Panel
     if (this.resourcePanel) {
-      const panelWidth = 150; // ResourcePanel.WIDTH
+      const panelWidth = 150;
       this.resourcePanel.setScale(scale);
       this.resourcePanel.setPosition(width - (panelWidth * scale) - padding, padding);
     }
 
-    // Update Bottom Left Panel
-    if (this.bottomLeftPanel) {
-      this.bottomLeftPanel.scale.set(scale);
-      this.bottomLeftPanel.position.set(padding, height - (80 * scale) - padding);
+    // Update Score Panel (Bottom Left)
+    if (this.scorePanel) {
+      this.scorePanel.setScale(scale);
+      this.scorePanel.setPosition(padding, height - (80 * scale) - padding);
     }
 
-    // Update Bottom Right Panel
-    if (this.bottomRightPanel) {
-      this.bottomRightPanel.scale.set(scale);
-      this.bottomRightPanel.position.set(width - (140 * scale) - padding, height - (60 * scale) - padding);
+    // Update Turret Count Panel (Bottom Right)
+    if (this.turretCountPanel) {
+      this.turretCountPanel.setScale(scale);
+      this.turretCountPanel.setPosition(width - (140 * scale) - padding, height - (60 * scale) - padding);
     }
 
     // Update Status Panel (Bottom Center)
     if (this.statusPanel) {
-      const panelWidth = 280; // StatusPanel.WIDTH
+      const panelWidth = 280;
       this.statusPanel.setScale(scale);
       this.statusPanel.setPosition((width - (panelWidth * scale)) / 2, height - (120 * scale) - padding);
     }
@@ -193,20 +167,18 @@ export class HUDManager {
       this.muteButton.position.set(padding, padding + (100 * scale) + padding);
     }
 
-    // Update Stats Panel
-    if (this.statsPanel) {
-      this.statsPanel.scale.set(scale);
-      this.statsPanel.position.set(padding, padding + (100 * scale) + padding + (40 * scale) + padding);
+    // Update Combat Stats Panel
+    if (this.combatStatsPanel) {
+      this.combatStatsPanel.setScale(scale);
+      this.combatStatsPanel.setPosition(padding, padding + (100 * scale) + padding + (40 * scale) + padding);
     }
 
     // Update Turret Menu
     if (this.turretMenu) {
-      // Turret menu handles its own scaling/positioning internally usually, but we need to position its container
-      // It was positioned at: width - 180 - padding, padding + 70 + padding
       this.turretMenu.container.scale.set(scale);
       this.turretMenu.container.position.set(
         width - (180 * scale) - padding,
-        padding + (70 * scale) + padding // 70 is rough height of resource panel
+        padding + (70 * scale) + padding
       );
     }
 
@@ -234,16 +206,14 @@ export class HUDManager {
 
     // Update God Mode Button
     if (this.godModeButton) {
-      this.godModeButton.scale.set(scale);
-      // Position below stats panel
-      this.godModeButton.position.set(padding, padding + (100 * scale) + padding + (40 * scale) + padding + (90 * scale) + padding);
+      this.godModeButton.setScale(scale);
+      this.godModeButton.setPosition(padding, padding + (100 * scale) + padding + (40 * scale) + padding + (90 * scale) + padding);
     }
 
     // Update Slow Mode Button
     if (this.slowModeButton) {
-      this.slowModeButton.scale.set(scale);
-      // Position below god mode button
-      this.slowModeButton.position.set(padding, padding + (100 * scale) + padding + (40 * scale) + padding + (90 * scale) + padding + (TOGGLE_BUTTON_HEIGHT * scale) + padding);
+      this.slowModeButton.setScale(scale);
+      this.slowModeButton.setPosition(padding, padding + (100 * scale) + padding + (40 * scale) + padding + (90 * scale) + padding + (toggleBtnHeight * scale) + padding);
     }
   }
 
@@ -262,7 +232,7 @@ export class HUDManager {
    */
   private createTopRightPanel(): void {
     const padding = UI_STYLES.PADDING;
-    const panelWidth = 150; // ResourcePanel.WIDTH
+    const panelWidth = 150;
     const x = GAME_CONFIG.WORLD_WIDTH - panelWidth - padding;
 
     this.resourcePanel = new ResourcePanel();
@@ -271,47 +241,23 @@ export class HUDManager {
   }
 
   /**
-   * Create bottom-left panel: Score info
+   * Create bottom-left panel: Score info using ScorePanel component
    */
   private createBottomLeftPanel(): void {
     const padding = UI_STYLES.PADDING;
     const y = GAME_CONFIG.WORLD_HEIGHT - 80 - padding;
 
-    // Panel background
-    this.bottomLeftPanel = new Graphics();
-    this.bottomLeftPanel.roundRect(0, 0, 180, 80, 8);
-    this.bottomLeftPanel.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.7 });
-    this.bottomLeftPanel.stroke({ color: UI_STYLES.COLORS.PRIMARY, width: 2 });
-    this.bottomLeftPanel.position.set(padding, y);
-    this.container.addChild(this.bottomLeftPanel);
-
-    // Time survived
-    const timeStyle = new TextStyle({
-      fontFamily: UI_STYLES.FONT_FAMILY,
-      fontSize: UI_STYLES.FONT_SIZE_MEDIUM,
-      fill: UI_STYLES.COLORS.TEXT
-    });
-    this.timeText = new Text({ text: 'TIME: 00:00', style: timeStyle });
-    this.timeText.position.set(10, 15);
-    this.bottomLeftPanel.addChild(this.timeText);
-
-    // Enemies defeated
-    const killsStyle = new TextStyle({
-      fontFamily: UI_STYLES.FONT_FAMILY,
-      fontSize: UI_STYLES.FONT_SIZE_MEDIUM,
-      fill: UI_STYLES.COLORS.TEXT
-    });
-    this.killsText = new Text({ text: 'KILLS: 0', style: killsStyle });
-    this.killsText.position.set(10, 45);
-    this.bottomLeftPanel.addChild(this.killsText);
+    this.scorePanel = new ScorePanel();
+    this.scorePanel.init(this.container);
+    this.scorePanel.setPosition(padding, y);
   }
 
   /**
    * Create bottom-center panel: Kobayashi Maru status
    */
   private createBottomCenterPanel(): void {
-    const panelWidth = 280; // StatusPanel.WIDTH
-    const panelHeight = 120; // StatusPanel.HEIGHT
+    const panelWidth = 280;
+    const panelHeight = 120;
     const x = (GAME_CONFIG.WORLD_WIDTH - panelWidth) / 2;
     const y = GAME_CONFIG.WORLD_HEIGHT - panelHeight - UI_STYLES.PADDING;
 
@@ -321,7 +267,7 @@ export class HUDManager {
   }
 
   /**
-   * Create bottom-right panel: Turret count
+   * Create bottom-right panel: Turret count using TurretCountPanel component
    */
   private createBottomRightPanel(): void {
     const padding = UI_STYLES.PADDING;
@@ -329,34 +275,9 @@ export class HUDManager {
     const x = GAME_CONFIG.WORLD_WIDTH - panelWidth - padding;
     const y = GAME_CONFIG.WORLD_HEIGHT - 60 - padding;
 
-    // Panel background
-    this.bottomRightPanel = new Graphics();
-    this.bottomRightPanel.roundRect(0, 0, panelWidth, 60, 8);
-    this.bottomRightPanel.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.7 });
-    this.bottomRightPanel.stroke({ color: UI_STYLES.COLORS.PRIMARY, width: 2 });
-    this.bottomRightPanel.position.set(x, y);
-    this.container.addChild(this.bottomRightPanel);
-
-    // Turret label
-    const labelStyle = new TextStyle({
-      fontFamily: UI_STYLES.FONT_FAMILY,
-      fontSize: UI_STYLES.FONT_SIZE_SMALL,
-      fill: UI_STYLES.COLORS.PRIMARY
-    });
-    const turretLabel = new Text({ text: 'TURRETS', style: labelStyle });
-    turretLabel.position.set(10, 8);
-    this.bottomRightPanel.addChild(turretLabel);
-
-    // Turret count
-    const countStyle = new TextStyle({
-      fontFamily: UI_STYLES.FONT_FAMILY,
-      fontSize: UI_STYLES.FONT_SIZE_LARGE,
-      fill: UI_STYLES.COLORS.PRIMARY,
-      fontWeight: 'bold'
-    });
-    this.turretCountText = new Text({ text: '0', style: countStyle });
-    this.turretCountText.position.set(10, 28);
-    this.bottomRightPanel.addChild(this.turretCountText);
+    this.turretCountPanel = new TurretCountPanel();
+    this.turretCountPanel.init(this.container);
+    this.turretCountPanel.setPosition(x, y);
   }
 
   /**
@@ -366,28 +287,24 @@ export class HUDManager {
     const padding = UI_STYLES.PADDING;
     const buttonSize = 40;
     const x = padding;
-    const y = padding + 100 + padding; // Below wave panel
+    const y = padding + 100 + padding;
 
-    // Create button container
     this.muteButton = new Container();
     this.muteButton.position.set(x, y);
     this.muteButton.eventMode = 'static';
     this.muteButton.cursor = 'pointer';
 
-    // Button background
     const bg = new Graphics();
     bg.roundRect(0, 0, buttonSize + 60, buttonSize, 8);
     bg.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.7 });
     bg.stroke({ color: UI_STYLES.COLORS.SECONDARY, width: 2 });
     this.muteButton.addChild(bg);
 
-    // Speaker icon (drawn programmatically)
     this.muteIcon = new Graphics();
     this.updateMuteIcon();
     this.muteIcon.position.set(8, 8);
     this.muteButton.addChild(this.muteIcon);
 
-    // Label
     const labelStyle = new TextStyle({
       fontFamily: UI_STYLES.FONT_FAMILY,
       fontSize: UI_STYLES.FONT_SIZE_SMALL,
@@ -397,14 +314,12 @@ export class HUDManager {
     this.muteLabel.position.set(buttonSize + 2, 12);
     this.muteButton.addChild(this.muteLabel);
 
-    // Click handler
     this.muteButton.on('pointerdown', () => {
       const audioManager = AudioManager.getInstance();
       audioManager.toggleMute();
       this.updateMuteIcon();
     });
 
-    // Hover effects
     this.muteButton.on('pointerover', () => {
       bg.stroke({ color: UI_STYLES.COLORS.PRIMARY, width: 3 });
     });
@@ -426,11 +341,9 @@ export class HUDManager {
 
     this.muteIcon.clear();
 
-    // Draw speaker body
     this.muteIcon.rect(0, 8, 8, 10);
     this.muteIcon.fill({ color: isMuted ? 0x888888 : UI_STYLES.COLORS.PRIMARY });
 
-    // Draw speaker cone
     this.muteIcon.moveTo(8, 8);
     this.muteIcon.lineTo(16, 2);
     this.muteIcon.lineTo(16, 24);
@@ -439,7 +352,6 @@ export class HUDManager {
     this.muteIcon.fill({ color: isMuted ? 0x888888 : UI_STYLES.COLORS.PRIMARY });
 
     if (isMuted) {
-      // Draw X over speaker
       this.muteIcon.moveTo(18, 6);
       this.muteIcon.lineTo(26, 20);
       this.muteIcon.stroke({ color: UI_STYLES.COLORS.DANGER, width: 3 });
@@ -449,7 +361,6 @@ export class HUDManager {
       this.muteLabel.text = 'MUTED';
       this.muteLabel.style.fill = 0x888888;
     } else {
-      // Draw sound waves
       this.muteIcon.arc(16, 13, 6, -0.8, 0.8, false);
       this.muteIcon.stroke({ color: UI_STYLES.COLORS.PRIMARY, width: 2 });
       this.muteIcon.arc(16, 13, 10, -0.6, 0.6, false);
@@ -460,209 +371,59 @@ export class HUDManager {
   }
 
   /**
-   * Create stats panel with extended game statistics
+   * Create stats panel using CombatStatsPanel component
    */
   private createStatsPanel(): void {
     const padding = UI_STYLES.PADDING;
-    const panelWidth = 160;
-    const panelHeight = 90;
     const x = padding;
-    const y = padding + 100 + padding + 40 + padding; // Below mute button
+    const y = padding + 100 + padding + 40 + padding;
 
-    // Panel background
-    this.statsPanel = new Graphics();
-    this.statsPanel.roundRect(0, 0, panelWidth, panelHeight, 8);
-    this.statsPanel.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.7 });
-    this.statsPanel.stroke({ color: UI_STYLES.COLORS.PRIMARY, width: 2 });
-    this.statsPanel.position.set(x, y);
-    this.container.addChild(this.statsPanel);
-
-    // Stats header
-    const headerStyle = new TextStyle({
-      fontFamily: UI_STYLES.FONT_FAMILY,
-      fontSize: UI_STYLES.FONT_SIZE_SMALL,
-      fill: UI_STYLES.COLORS.PRIMARY,
-      fontWeight: 'bold'
-    });
-    const header = new Text({ text: 'COMBAT STATS', style: headerStyle });
-    header.position.set(10, 8);
-    this.statsPanel.addChild(header);
-
-    // Stats text style
-    const statStyle = new TextStyle({
-      fontFamily: UI_STYLES.FONT_FAMILY,
-      fontSize: UI_STYLES.FONT_SIZE_SMALL,
-      fill: UI_STYLES.COLORS.TEXT
-    });
-
-    // DPS text
-    this.dpsText = new Text({ text: 'DPS: 0', style: statStyle });
-    this.dpsText.position.set(10, 30);
-    this.statsPanel.addChild(this.dpsText);
-
-    // Accuracy text
-    this.accuracyText = new Text({ text: 'ACC: 0%', style: statStyle });
-    this.accuracyText.position.set(10, 50);
-    this.statsPanel.addChild(this.accuracyText);
-
-    // Total damage text
-    this.damageText = new Text({ text: 'DMG: 0', style: statStyle });
-    this.damageText.position.set(10, 70);
-    this.statsPanel.addChild(this.damageText);
+    this.combatStatsPanel = new CombatStatsPanel();
+    this.combatStatsPanel.init(this.container);
+    this.combatStatsPanel.setPosition(x, y);
   }
 
   /**
-   * Create god mode toggle button
+   * Create god mode toggle button using ToggleButton component
    */
   private createGodModeButton(): void {
+    if (!this.game) return;
+
     const padding = UI_STYLES.PADDING;
     const x = padding;
-    const y = padding + 100 + padding + 40 + padding + 90 + padding; // Below stats panel
+    const y = padding + 100 + padding + 40 + padding + 90 + padding;
 
-    // Create button container
-    this.godModeButton = new Container();
-    this.godModeButton.position.set(x, y);
-    this.godModeButton.eventMode = 'static';
-    this.godModeButton.cursor = 'pointer';
-
-    // Button background
-    const bg = new Graphics();
-    bg.roundRect(0, 0, TOGGLE_BUTTON_WIDTH, TOGGLE_BUTTON_HEIGHT, 6);
-    bg.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.7 });
-    bg.stroke({ color: 0x888888, width: 2 });
-    this.godModeButton.addChild(bg);
-
-    // Label
-    const labelStyle = new TextStyle({
-      fontFamily: UI_STYLES.FONT_FAMILY,
-      fontSize: UI_STYLES.FONT_SIZE_SMALL,
-      fill: 0x888888
+    const game = this.game;
+    this.godModeButton = new ToggleButton({
+      label: 'GOD MODE',
+      enabledColor: UI_STYLES.COLORS.HEALTH,
+      onClick: () => game.toggleGodMode(),
+      isEnabled: () => game.isGodModeEnabled()
     });
-    this.godModeLabel = new Text({ text: 'GOD MODE', style: labelStyle });
-    this.godModeLabel.position.set(10, 8);
-    this.godModeButton.addChild(this.godModeLabel);
-
-    // Click handler
-    this.godModeButton.on('pointerdown', () => {
-      if (this.game) {
-        const enabled = this.game.toggleGodMode();
-        this.updateGodModeButton(enabled);
-      }
-    });
-
-    // Hover effects
-    this.godModeButton.on('pointerover', () => {
-      const isEnabled = this.game?.isGodModeEnabled() ?? false;
-      bg.clear();
-      bg.roundRect(0, 0, TOGGLE_BUTTON_WIDTH, TOGGLE_BUTTON_HEIGHT, 6);
-      bg.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.9 });
-      bg.stroke({ color: isEnabled ? UI_STYLES.COLORS.HEALTH : UI_STYLES.COLORS.PRIMARY, width: 3 });
-    });
-    this.godModeButton.on('pointerout', () => {
-      const isEnabled = this.game?.isGodModeEnabled() ?? false;
-      bg.clear();
-      bg.roundRect(0, 0, TOGGLE_BUTTON_WIDTH, TOGGLE_BUTTON_HEIGHT, 6);
-      bg.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.7 });
-      bg.stroke({ color: isEnabled ? UI_STYLES.COLORS.HEALTH : 0x888888, width: 2 });
-    });
-
-    this.container.addChild(this.godModeButton);
+    this.godModeButton.init(this.container);
+    this.godModeButton.setPosition(x, y);
   }
 
   /**
-   * Update god mode button visual state
-   */
-  private updateGodModeButton(enabled: boolean): void {
-    if (!this.godModeButton || !this.godModeLabel) return;
-
-    // Update label color
-    this.godModeLabel.style.fill = enabled ? UI_STYLES.COLORS.HEALTH : 0x888888;
-
-    // Update background border color
-    const bg = this.godModeButton.children[0] as Graphics;
-    if (bg) {
-      bg.clear();
-      bg.roundRect(0, 0, TOGGLE_BUTTON_WIDTH, TOGGLE_BUTTON_HEIGHT, 6);
-      bg.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.7 });
-      bg.stroke({ color: enabled ? UI_STYLES.COLORS.HEALTH : 0x888888, width: 2 });
-    }
-  }
-
-  /**
-   * Create slow mode toggle button
+   * Create slow mode toggle button using ToggleButton component
    */
   private createSlowModeButton(): void {
+    if (!this.game) return;
+
     const padding = UI_STYLES.PADDING;
+    const toggleBtnHeight = ToggleButton.getDimensions().height;
     const x = padding;
-    const y = padding + 100 + padding + 40 + padding + 90 + padding + TOGGLE_BUTTON_HEIGHT + padding; // Below god mode button
+    const y = padding + 100 + padding + 40 + padding + 90 + padding + toggleBtnHeight + padding;
 
-    // Create button container
-    this.slowModeButton = new Container();
-    this.slowModeButton.position.set(x, y);
-    this.slowModeButton.eventMode = 'static';
-    this.slowModeButton.cursor = 'pointer';
-
-    // Button background
-    const bg = new Graphics();
-    bg.roundRect(0, 0, TOGGLE_BUTTON_WIDTH, TOGGLE_BUTTON_HEIGHT, 6);
-    bg.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.7 });
-    bg.stroke({ color: 0x888888, width: 2 });
-    this.slowModeButton.addChild(bg);
-
-    // Label
-    const labelStyle = new TextStyle({
-      fontFamily: UI_STYLES.FONT_FAMILY,
-      fontSize: UI_STYLES.FONT_SIZE_SMALL,
-      fill: 0x888888
+    const game = this.game;
+    this.slowModeButton = new ToggleButton({
+      label: 'SLOW MODE',
+      enabledColor: UI_STYLES.COLORS.SECONDARY,
+      onClick: () => game.toggleSlowMode(),
+      isEnabled: () => game.isSlowModeEnabled()
     });
-    this.slowModeLabel = new Text({ text: 'SLOW MODE', style: labelStyle });
-    this.slowModeLabel.position.set(8, 8);
-    this.slowModeButton.addChild(this.slowModeLabel);
-
-    // Click handler
-    this.slowModeButton.on('pointerdown', () => {
-      if (this.game) {
-        const enabled = this.game.toggleSlowMode();
-        this.updateSlowModeButton(enabled);
-      }
-    });
-
-    // Hover effects
-    this.slowModeButton.on('pointerover', () => {
-      const isEnabled = this.game?.isSlowModeEnabled() ?? false;
-      bg.clear();
-      bg.roundRect(0, 0, TOGGLE_BUTTON_WIDTH, TOGGLE_BUTTON_HEIGHT, 6);
-      bg.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.9 });
-      bg.stroke({ color: isEnabled ? UI_STYLES.COLORS.SECONDARY : UI_STYLES.COLORS.PRIMARY, width: 3 });
-    });
-    this.slowModeButton.on('pointerout', () => {
-      const isEnabled = this.game?.isSlowModeEnabled() ?? false;
-      bg.clear();
-      bg.roundRect(0, 0, TOGGLE_BUTTON_WIDTH, TOGGLE_BUTTON_HEIGHT, 6);
-      bg.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.7 });
-      bg.stroke({ color: isEnabled ? UI_STYLES.COLORS.SECONDARY : 0x888888, width: 2 });
-    });
-
-    this.container.addChild(this.slowModeButton);
-  }
-
-  /**
-   * Update slow mode button visual state
-   */
-  private updateSlowModeButton(enabled: boolean): void {
-    if (!this.slowModeButton || !this.slowModeLabel) return;
-
-    // Update label color
-    this.slowModeLabel.style.fill = enabled ? UI_STYLES.COLORS.SECONDARY : 0x888888;
-
-    // Update background border color
-    const bg = this.slowModeButton.children[0] as Graphics;
-    if (bg) {
-      bg.clear();
-      bg.roundRect(0, 0, TOGGLE_BUTTON_WIDTH, TOGGLE_BUTTON_HEIGHT, 6);
-      bg.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.7 });
-      bg.stroke({ color: enabled ? UI_STYLES.COLORS.SECONDARY : 0x888888, width: 2 });
-    }
+    this.slowModeButton.init(this.container);
+    this.slowModeButton.setPosition(x, y);
   }
 
   /**
@@ -686,12 +447,12 @@ export class HUDManager {
       this.resourcePanel.update({ resources: data.resources });
     }
 
-    // Update score info
-    if (this.timeText) {
-      this.timeText.text = `TIME: ${this.formatTime(data.timeSurvived)}`;
-    }
-    if (this.killsText) {
-      this.killsText.text = `KILLS: ${data.enemiesDefeated}`;
+    // Update score panel
+    if (this.scorePanel) {
+      this.scorePanel.update({
+        timeSurvived: data.timeSurvived,
+        enemiesDefeated: data.enemiesDefeated
+      });
     }
 
     // Update Kobayashi Maru status bars
@@ -705,51 +466,26 @@ export class HUDManager {
     }
 
     // Update turret count
-    if (this.turretCountText) {
-      this.turretCountText.text = data.turretCount.toString();
-      if (this.turretMenu) {
-        this.turretMenu.update(data.resources);
-      }
+    if (this.turretCountPanel) {
+      this.turretCountPanel.update({ turretCount: data.turretCount });
+    }
+    if (this.turretMenu) {
+      this.turretMenu.update(data.resources);
     }
 
-    // Update extended stats
-    if (this.dpsText && data.dps !== undefined) {
-      this.dpsText.text = `DPS: ${data.dps.toFixed(1)}`;
-    }
-    if (this.accuracyText && data.accuracy !== undefined) {
-      this.accuracyText.text = `ACC: ${(data.accuracy * 100).toFixed(0)}%`;
-    }
-    if (this.damageText && data.totalDamageDealt !== undefined) {
-      this.damageText.text = `DMG: ${this.formatNumber(data.totalDamageDealt)}`;
+    // Update combat stats
+    if (this.combatStatsPanel) {
+      this.combatStatsPanel.update({
+        dps: data.dps,
+        accuracy: data.accuracy,
+        totalDamageDealt: data.totalDamageDealt
+      });
     }
 
     // Update message log fade effect
     if (this.messageLog) {
       this.messageLog.update();
     }
-  }
-
-  /**
-   * Format large numbers with K/M suffixes
-   */
-  private formatNumber(num: number): string {
-    if (num >= 1000000) {
-      return (num / 1000000).toFixed(1) + 'M';
-    } else if (num >= 1000) {
-      return (num / 1000).toFixed(1) + 'K';
-    }
-    return num.toFixed(0);
-  }
-
-  /**
-   * Format time in seconds to MM:SS format
-   * @param seconds - Time in seconds
-   * @returns Formatted time string
-   */
-  private formatTime(seconds: number): string {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   }
 
   /**
@@ -780,35 +516,25 @@ export class HUDManager {
    */
   destroy(): void {
     // Clean up panel components
-    if (this.wavePanel) {
-      this.wavePanel.destroy();
-    }
-    if (this.resourcePanel) {
-      this.resourcePanel.destroy();
-    }
-    if (this.statusPanel) {
-      this.statusPanel.destroy();
-    }
-    if (this.mobileControls) {
-      this.mobileControls.destroy();
-    }
-    if (this.messageLog) {
-      this.messageLog.destroy();
-    }
-    if (this.turretUpgradePanel) {
-      this.turretUpgradePanel.destroy();
-    }
+    if (this.wavePanel) this.wavePanel.destroy();
+    if (this.resourcePanel) this.resourcePanel.destroy();
+    if (this.statusPanel) this.statusPanel.destroy();
+    if (this.scorePanel) this.scorePanel.destroy();
+    if (this.turretCountPanel) this.turretCountPanel.destroy();
+    if (this.combatStatsPanel) this.combatStatsPanel.destroy();
+    if (this.mobileControls) this.mobileControls.destroy();
+    if (this.messageLog) this.messageLog.destroy();
+    if (this.turretUpgradePanel) this.turretUpgradePanel.destroy();
+    if (this.godModeButton) this.godModeButton.destroy();
+    if (this.slowModeButton) this.slowModeButton.destroy();
 
-    // Remove event listener
+    // Remove resize listener
     if (this.boundResizeHandler) {
       window.removeEventListener('resize', this.boundResizeHandler);
-      this.boundResizeHandler = null;
     }
 
+    // Destroy container
     this.container.destroy({ children: true });
-    if (this.responsiveUIManager) {
-      this.responsiveUIManager.destroy();
-    }
   }
 
   /**

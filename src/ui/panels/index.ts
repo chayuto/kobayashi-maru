@@ -15,3 +15,12 @@ export type { ResourcePanelData } from './ResourcePanel';
 
 export { StatusPanel } from './StatusPanel';
 export type { StatusPanelData } from './StatusPanel';
+
+export { CombatStatsPanel } from './CombatStatsPanel';
+export type { CombatStatsPanelData } from './CombatStatsPanel';
+
+export { ScorePanel } from './ScorePanel';
+export type { ScorePanelData } from './ScorePanel';
+
+export { TurretCountPanel } from './TurretCountPanel';
+export type { TurretCountPanelData } from './TurretCountPanel';
