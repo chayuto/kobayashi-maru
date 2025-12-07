@@ -7,12 +7,7 @@ import { PoolManager } from '../ecs/PoolManager';
 import {
   createGameWorld,
   getEntityCount,
-  createFederationShip,
-  createKlingonShip,
-  createRomulanShip,
-  createBorgShip,
-  createTholianShip,
-  createSpecies8472Ship,
+  createEnemy,
   createKobayashiMaru
 } from '../ecs';
 import { Position, Velocity, Faction, Health, Shield, Turret, Target } from '../ecs/components';
@@ -42,10 +37,10 @@ describe('ECS World', () => {
     PoolManager.getInstance().init(world);
     expect(getEntityCount()).toBe(0);
 
-    createFederationShip(world, 100, 100);
+    createEnemy(world, FactionId.FEDERATION, 100, 100);
     expect(getEntityCount()).toBe(1);
 
-    createKlingonShip(world, 200, 200);
+    createEnemy(world, FactionId.KLINGON, 200, 200);
     expect(getEntityCount()).toBe(2);
 
     PoolManager.getInstance().destroy();
@@ -65,7 +60,7 @@ describe('Entity Factory - Federation Ships', () => {
   });
 
   it('should create a Federation ship with correct components', () => {
-    const eid = createFederationShip(world, 100, 200);
+    const eid = createEnemy(world, FactionId.FEDERATION, 100, 200);
 
     expect(eid).toBeDefined();
     expect(Position.x[eid]).toBe(100);
@@ -93,7 +88,7 @@ describe('Entity Factory - Enemy Ships', () => {
   });
 
   it('should create a Klingon ship with correct faction', () => {
-    const eid = createKlingonShip(world, 50, 75);
+    const eid = createEnemy(world, FactionId.KLINGON, 50, 75);
 
     expect(Faction.id[eid]).toBe(FactionId.KLINGON);
     expect(Position.x[eid]).toBe(50);
@@ -103,7 +98,7 @@ describe('Entity Factory - Enemy Ships', () => {
   });
 
   it('should create a Romulan ship with correct faction', () => {
-    const eid = createRomulanShip(world, 300, 400);
+    const eid = createEnemy(world, FactionId.ROMULAN, 300, 400);
 
     expect(Faction.id[eid]).toBe(FactionId.ROMULAN);
     expect(Health.current[eid]).toBe(70);
@@ -111,7 +106,7 @@ describe('Entity Factory - Enemy Ships', () => {
   });
 
   it('should create a Borg ship with high health and shields', () => {
-    const eid = createBorgShip(world, 500, 500);
+    const eid = createEnemy(world, FactionId.BORG, 500, 500);
 
     expect(Faction.id[eid]).toBe(FactionId.BORG);
     expect(Health.current[eid]).toBe(150);
@@ -119,7 +114,7 @@ describe('Entity Factory - Enemy Ships', () => {
   });
 
   it('should create a Tholian ship with correct faction', () => {
-    const eid = createTholianShip(world, 600, 700);
+    const eid = createEnemy(world, FactionId.THOLIAN, 600, 700);
 
     expect(Faction.id[eid]).toBe(FactionId.THOLIAN);
     expect(Health.current[eid]).toBe(60);
@@ -127,7 +122,7 @@ describe('Entity Factory - Enemy Ships', () => {
   });
 
   it('should create a Species 8472 ship with high health and no shields', () => {
-    const eid = createSpecies8472Ship(world, 800, 900);
+    const eid = createEnemy(world, FactionId.SPECIES_8472, 800, 900);
 
     expect(Faction.id[eid]).toBe(FactionId.SPECIES_8472);
     expect(Health.current[eid]).toBe(200);

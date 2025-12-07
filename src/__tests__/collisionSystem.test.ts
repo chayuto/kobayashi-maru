@@ -4,11 +4,11 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { createGameWorld } from '../ecs/world';
 import { PoolManager } from '../ecs/PoolManager';
-import { createFederationShip } from '../ecs/entityFactory';
+import { createEnemy } from '../ecs/entityFactory';
 import { Position } from '../ecs/components';
 import { createCollisionSystem } from '../systems/collisionSystem';
 import { SpatialHash } from '../collision/spatialHash';
-import { GAME_CONFIG } from '../types/constants';
+import { GAME_CONFIG, FactionId } from '../types/constants';
 
 describe('Collision System', () => {
   let world: ReturnType<typeof createGameWorld>;
@@ -29,8 +29,8 @@ describe('Collision System', () => {
 
   describe('update', () => {
     it('should insert entities into spatial hash based on position', () => {
-      const eid1 = createFederationShip(world, 100, 100);
-      const eid2 = createFederationShip(world, 200, 200);
+      const eid1 = createEnemy(world, FactionId.FEDERATION, 100, 100);
+      const eid2 = createEnemy(world, FactionId.FEDERATION, 200, 200);
 
       // Run the collision system
       collisionSystem.update(world);
@@ -43,7 +43,7 @@ describe('Collision System', () => {
     });
 
     it('should clear hash before inserting', () => {
-      const eid = createFederationShip(world, 100, 100);
+      const eid = createEnemy(world, FactionId.FEDERATION, 100, 100);
 
       // Run collision system twice
       collisionSystem.update(world);
@@ -57,7 +57,7 @@ describe('Collision System', () => {
     });
 
     it('should update hash when entity position changes', () => {
-      const eid = createFederationShip(world, 100, 100);
+      const eid = createEnemy(world, FactionId.FEDERATION, 100, 100);
 
       // Run collision system
       collisionSystem.update(world);
@@ -84,9 +84,9 @@ describe('Collision System', () => {
 
   describe('queryNearby', () => {
     it('should return entities within circular radius', () => {
-      const eid1 = createFederationShip(world, 100, 100);
-      const eid2 = createFederationShip(world, 150, 100);
-      const eid3 = createFederationShip(world, 500, 500);
+      const eid1 = createEnemy(world, FactionId.FEDERATION, 100, 100);
+      const eid2 = createEnemy(world, FactionId.FEDERATION, 150, 100);
+      const eid3 = createEnemy(world, FactionId.FEDERATION, 500, 500);
 
       collisionSystem.update(world);
 
@@ -98,7 +98,7 @@ describe('Collision System', () => {
     });
 
     it('should return empty array when no entities nearby', () => {
-      createFederationShip(world, 100, 100);
+      createEnemy(world, FactionId.FEDERATION, 100, 100);
 
       collisionSystem.update(world);
 
@@ -110,9 +110,9 @@ describe('Collision System', () => {
 
   describe('queryRect', () => {
     it('should return entities within rectangle', () => {
-      const eid1 = createFederationShip(world, 100, 100);
-      const eid2 = createFederationShip(world, 150, 150);
-      const eid3 = createFederationShip(world, 500, 500);
+      const eid1 = createEnemy(world, FactionId.FEDERATION, 100, 100);
+      const eid2 = createEnemy(world, FactionId.FEDERATION, 150, 150);
+      const eid3 = createEnemy(world, FactionId.FEDERATION, 500, 500);
 
       collisionSystem.update(world);
 
@@ -139,7 +139,7 @@ describe('Collision System', () => {
       for (let i = 0; i < 100; i++) {
         const x = Math.random() * GAME_CONFIG.WORLD_WIDTH;
         const y = Math.random() * GAME_CONFIG.WORLD_HEIGHT;
-        entities.push(createFederationShip(world, x, y));
+        entities.push(createEnemy(world, FactionId.FEDERATION, x, y));
       }
 
       // Run collision system

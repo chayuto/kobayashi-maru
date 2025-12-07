@@ -5,7 +5,8 @@
 import { defineQuery, hasComponent, IWorld } from 'bitecs';
 import { Position, Velocity, Health, Shield, SpecialAbility, Faction } from '../ecs/components';
 import { AbilityType, ABILITY_CONFIG, GAME_CONFIG, FactionId } from '../types/constants';
-import { createKlingonShip, createRomulanShip, createBorgShip, createTholianShip, createSpecies8472Ship } from '../ecs/entityFactory';
+import { createEnemy } from '../ecs/entityFactory';
+import type { GameWorld } from '../ecs/world';
 import { ParticleSystem } from '../rendering';
 import { SpriteManager } from '../rendering';
 import { AudioManager } from '../audio';
@@ -75,7 +76,7 @@ export function createAbilitySystem(
  * Teleport ability - relocates enemy to safe position when in danger
  */
 function processTeleportAbility(
-  _world: IWorld, 
+  _world: IWorld,
   entity: number,
   particleSystem?: ParticleSystem,
   _audioManager?: AudioManager,
@@ -289,10 +290,10 @@ function processSplitAbility(
   const x = Position.x[entity];
   const y = Position.y[entity];
   const faction = Faction.id[entity];
-  
+
   const config = ABILITY_CONFIG[AbilityType.SPLIT];
-  const splitCount = config.splitCount ? 
-    config.splitCount.min + Math.floor(Math.random() * (config.splitCount.max - config.splitCount.min + 1)) : 
+  const splitCount = config.splitCount ?
+    config.splitCount.min + Math.floor(Math.random() * (config.splitCount.max - config.splitCount.min + 1)) :
     2;
 
   for (let i = 0; i < splitCount; i++) {
@@ -350,16 +351,16 @@ function processSummonAbility(
     const x = Position.x[entity];
     const y = Position.y[entity];
     const faction = Faction.id[entity];
-    
+
     // Spawn 2-3 reinforcements
     const summonCount = 2 + Math.floor(Math.random() * 2);
-    
+
     for (let i = 0; i < summonCount; i++) {
       const angle = (Math.PI * 2 * i) / summonCount;
       const spawnRadius = ABILITY_CONFIG[AbilityType.SUMMON].range ?? 100;
       const offsetX = Math.cos(angle) * spawnRadius;
       const offsetY = Math.sin(angle) * spawnRadius;
-      
+
       createEnemyByFaction(world, faction, x + offsetX, y + offsetY);
     }
 
@@ -411,18 +412,18 @@ function processRammingSpeedAbility(
     const dx = centerX - Position.x[entity];
     const dy = centerY - Position.y[entity];
     const distance = Math.sqrt(dx * dx + dy * dy);
-    
+
     if (distance < 400 && gameTime - SpecialAbility.lastUsed[entity] >= SpecialAbility.cooldown[entity]) {
       // Activate ramming speed
       SpecialAbility.active[entity] = 1;
       SpecialAbility.lastUsed[entity] = gameTime;
-      
+
       // Double velocity
       if (hasComponent(world, Velocity, entity)) {
         Velocity.x[entity] *= 2;
         Velocity.y[entity] *= 2;
       }
-      
+
       // Trail particles
       if (particleSystem) {
         particleSystem.spawn({
@@ -438,12 +439,12 @@ function processRammingSpeedAbility(
       }
     }
   }
-  
+
   // Deactivate after duration
   if (SpecialAbility.active[entity] === 1) {
     if (gameTime - SpecialAbility.lastUsed[entity] >= SpecialAbility.duration[entity]) {
       SpecialAbility.active[entity] = 0;
-      
+
       // Restore normal velocity
       if (hasComponent(world, Velocity, entity)) {
         Velocity.x[entity] *= 0.5;
@@ -492,7 +493,7 @@ function isSafePosition(x: number, y: number, minDistance: number, spatialHash?:
   const centerX = GAME_CONFIG.WORLD_WIDTH / 2;
   const centerY = GAME_CONFIG.WORLD_HEIGHT / 2;
   const centerDist = Math.sqrt((x - centerX) ** 2 + (y - centerY) ** 2);
-  
+
   if (centerDist < minDistance) {
     return false;
   }
@@ -526,20 +527,11 @@ function isBeingTargeted(): boolean {
  * Creates an enemy by faction type
  */
 function createEnemyByFaction(world: IWorld, faction: number, x: number, y: number): number {
-  switch (faction) {
-    case FactionId.KLINGON:
-      return createKlingonShip(world, x, y);
-    case FactionId.ROMULAN:
-      return createRomulanShip(world, x, y);
-    case FactionId.BORG:
-      return createBorgShip(world, x, y);
-    case FactionId.THOLIAN:
-      return createTholianShip(world, x, y);
-    case FactionId.SPECIES_8472:
-      return createSpecies8472Ship(world, x, y);
-    default:
-      return -1;
+  // Federation faction doesn't have enemy ships to spawn
+  if (faction === FactionId.FEDERATION) {
+    return -1;
   }
+  return createEnemy(world as GameWorld, faction, x, y);
 }
 
 /**

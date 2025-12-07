@@ -4,12 +4,7 @@
  */
 import { createWorld, IWorld } from 'bitecs';
 import {
-  createFederationShip,
-  createKlingonShip,
-  createRomulanShip,
-  createBorgShip,
-  createTholianShip,
-  createSpecies8472Ship,
+  createEnemy,
   createKobayashiMaru,
   createTurret
 } from './entityFactory';
@@ -52,12 +47,7 @@ export function getEntityCount(): number {
 
 // Re-export entity creation utilities
 export {
-  createFederationShip,
-  createKlingonShip,
-  createRomulanShip,
-  createBorgShip,
-  createTholianShip,
-  createSpecies8472Ship,
+  createEnemy,
   createKobayashiMaru,
   createTurret
 };

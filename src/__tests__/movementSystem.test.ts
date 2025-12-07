@@ -5,11 +5,11 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { createGameWorld } from '../ecs/world';
 import { PoolManager } from '../ecs/PoolManager';
-import { createFederationShip, createKlingonShip } from '../ecs/entityFactory';
+import { createEnemy } from '../ecs/entityFactory';
 import { Position, Velocity, Projectile } from '../ecs/components';
 import { addComponent } from 'bitecs';
 import { createMovementSystem } from '../systems/movementSystem';
-import { GAME_CONFIG } from '../types/constants';
+import { GAME_CONFIG, FactionId } from '../types/constants';
 
 describe('Movement System', () => {
   let world: ReturnType<typeof createGameWorld>;
@@ -27,7 +27,7 @@ describe('Movement System', () => {
 
   it('should update position based on velocity and delta time', () => {
     // Create an entity at position (100, 100) with velocity (50, 100)
-    const eid = createFederationShip(world, 100, 100);
+    const eid = createEnemy(world, FactionId.FEDERATION, 100, 100);
     Velocity.x[eid] = 50;  // 50 pixels per second
     Velocity.y[eid] = 100; // 100 pixels per second
 
@@ -42,12 +42,12 @@ describe('Movement System', () => {
   it('should be frame-rate independent (same result for different delta times)', () => {
     // Create two entities at the same position with same velocity
     // Entity 1 will move in 2 steps
-    const eid1 = createFederationShip(world, 100, 100);
+    const eid1 = createEnemy(world, FactionId.FEDERATION, 100, 100);
     Velocity.x[eid1] = 100;
     Velocity.y[eid1] = 100;
 
     // Entity 2 will move in 1 step
-    const eid2 = createFederationShip(world, 100, 100);
+    const eid2 = createEnemy(world, FactionId.FEDERATION, 100, 100);
     Velocity.x[eid2] = 100;
     Velocity.y[eid2] = 100;
 
@@ -80,7 +80,7 @@ describe('Movement System', () => {
     // Now creates a NEW entity for single-step test to ensure cleanliness?
     // We can just reuse world since we are creating new entities
 
-    const eid3 = createFederationShip(world, 100, 100);
+    const eid3 = createEnemy(world, FactionId.FEDERATION, 100, 100);
     Velocity.x[eid3] = 100;
     Velocity.y[eid3] = 100;
 
@@ -100,7 +100,7 @@ describe('Movement System', () => {
 
   it('should wrap entity position when going off right edge', () => {
     // Create entity near right edge
-    const eid = createFederationShip(world, GAME_CONFIG.WORLD_WIDTH - 10, 500);
+    const eid = createEnemy(world, FactionId.FEDERATION, GAME_CONFIG.WORLD_WIDTH - 10, 500);
     Velocity.x[eid] = 100; // Moving right
     Velocity.y[eid] = 0;
 
@@ -114,7 +114,7 @@ describe('Movement System', () => {
 
   it('should wrap entity position when going off left edge', () => {
     // Create entity near left edge
-    const eid = createFederationShip(world, 10, 500);
+    const eid = createEnemy(world, FactionId.FEDERATION, 10, 500);
     Velocity.x[eid] = -100; // Moving left
     Velocity.y[eid] = 0;
 
@@ -128,7 +128,7 @@ describe('Movement System', () => {
 
   it('should wrap entity position when going off bottom edge', () => {
     // Create entity near bottom edge
-    const eid = createFederationShip(world, 500, GAME_CONFIG.WORLD_HEIGHT - 10);
+    const eid = createEnemy(world, FactionId.FEDERATION, 500, GAME_CONFIG.WORLD_HEIGHT - 10);
     Velocity.x[eid] = 0;
     Velocity.y[eid] = 100; // Moving down
 
@@ -142,7 +142,7 @@ describe('Movement System', () => {
 
   it('should wrap entity position when going off top edge', () => {
     // Create entity near top edge
-    const eid = createFederationShip(world, 500, 10);
+    const eid = createEnemy(world, FactionId.FEDERATION, 500, 10);
     Velocity.x[eid] = 0;
     Velocity.y[eid] = -100; // Moving up
 
@@ -156,9 +156,9 @@ describe('Movement System', () => {
 
   it('should handle multiple entities simultaneously', () => {
     // Create multiple entities with different velocities
-    const eid1 = createFederationShip(world, 100, 100);
-    const eid2 = createKlingonShip(world, 200, 200);
-    const eid3 = createFederationShip(world, 300, 300);
+    const eid1 = createEnemy(world, FactionId.FEDERATION, 100, 100);
+    const eid2 = createEnemy(world, FactionId.KLINGON, 200, 200);
+    const eid3 = createEnemy(world, FactionId.FEDERATION, 300, 300);
 
     Velocity.x[eid1] = 10;
     Velocity.y[eid1] = 20;
@@ -180,7 +180,7 @@ describe('Movement System', () => {
   });
 
   it('should handle zero velocity (stationary entities)', () => {
-    const eid = createFederationShip(world, 500, 500);
+    const eid = createEnemy(world, FactionId.FEDERATION, 500, 500);
     Velocity.x[eid] = 0;
     Velocity.y[eid] = 0;
 
@@ -192,7 +192,7 @@ describe('Movement System', () => {
   });
 
   it('should handle very small delta times', () => {
-    const eid = createFederationShip(world, 100, 100);
+    const eid = createEnemy(world, FactionId.FEDERATION, 100, 100);
     Velocity.x[eid] = 1000;
     Velocity.y[eid] = 1000;
 
@@ -205,7 +205,7 @@ describe('Movement System', () => {
 
   it('should NOT wrap projectile position when going off edge', () => {
     // Create projectile entity near right edge
-    const eid = createFederationShip(world, GAME_CONFIG.WORLD_WIDTH - 10, 500);
+    const eid = createEnemy(world, FactionId.FEDERATION, GAME_CONFIG.WORLD_WIDTH - 10, 500);
     addComponent(world, Projectile, eid); // Make it a projectile
     Velocity.x[eid] = 100; // Moving right
     Velocity.y[eid] = 0;

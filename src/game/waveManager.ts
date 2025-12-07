@@ -5,13 +5,7 @@
 import { FactionId, GAME_CONFIG, EnemyRank, RANK_MULTIPLIERS, ABILITY_CONFIG } from '../types/constants';
 import { WAVE_CONFIG } from '../config';
 import { GameEventType } from '../types/events';
-import {
-  createKlingonShip,
-  createRomulanShip,
-  createBorgShip,
-  createTholianShip,
-  createSpecies8472Ship
-} from '../ecs/entityFactory';
+import { createEnemy } from '../ecs/entityFactory';
 import { AudioManager, SoundType } from '../audio';
 import { Velocity, Health, Shield, EnemyVariant, SpecialAbility, SpriteRef, EnemyWeapon, Position } from '../ecs/components';
 import { addComponent, hasComponent } from 'bitecs';
@@ -26,6 +20,7 @@ import {
 } from './waveConfig';
 import { SpawnPoints, SpawnPosition } from './spawnPoints';
 import { EventBus } from '../core/EventBus';
+
 
 
 
@@ -238,22 +233,7 @@ export class WaveManager {
    */
   private createEnemyByFaction(faction: number, x: number, y: number): number {
     if (!this.world) return -1;
-
-    switch (faction) {
-      case FactionId.KLINGON:
-        return createKlingonShip(this.world, x, y);
-      case FactionId.ROMULAN:
-        return createRomulanShip(this.world, x, y);
-      case FactionId.BORG:
-        return createBorgShip(this.world, x, y);
-      case FactionId.THOLIAN:
-        return createTholianShip(this.world, x, y);
-      case FactionId.SPECIES_8472:
-        return createSpecies8472Ship(this.world, x, y);
-      default:
-        console.warn(`Unknown faction: ${faction} `);
-        return -1;
-    }
+    return createEnemy(this.world, faction, x, y);
   }
 
   /**

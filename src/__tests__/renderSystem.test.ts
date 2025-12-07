@@ -4,10 +4,11 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { createGameWorld } from '../ecs/world';
 import { PoolManager } from '../ecs/PoolManager';
-import { createFederationShip, createKlingonShip } from '../ecs/entityFactory';
+import { createEnemy } from '../ecs/entityFactory';
 import { Position, SpriteRef } from '../ecs/components';
 import { createRenderSystem } from '../systems/renderSystem';
 import type { SpriteManager } from '../rendering/spriteManager';
+import { FactionId } from '../types/constants';
 
 // Mock SpriteManager
 function createMockSpriteManager(): SpriteManager {
@@ -54,7 +55,7 @@ describe('Render System', () => {
 
   it('should create sprites for new entities', () => {
     // Create an entity
-    const eid = createFederationShip(world, 100, 200);
+    const eid = createEnemy(world, FactionId.FEDERATION, 100, 200);
 
     // Run the render system
     renderSystem(world);
@@ -66,7 +67,7 @@ describe('Render System', () => {
 
   it('should update sprite positions for existing entities', () => {
     // Create an entity
-    const eid = createFederationShip(world, 100, 200);
+    const eid = createEnemy(world, FactionId.FEDERATION, 100, 200);
 
     // Run render system to create sprite
     renderSystem(world);
@@ -86,9 +87,9 @@ describe('Render System', () => {
 
   it('should handle multiple entities', () => {
     // Create multiple entities
-    createFederationShip(world, 100, 100);
-    createKlingonShip(world, 200, 200);
-    createFederationShip(world, 300, 300);
+    createEnemy(world, FactionId.FEDERATION, 100, 100);
+    createEnemy(world, FactionId.KLINGON, 200, 200);
+    createEnemy(world, FactionId.FEDERATION, 300, 300);
 
     // Run render system
     renderSystem(world);
@@ -99,7 +100,7 @@ describe('Render System', () => {
 
   it('should create sprites with correct faction', () => {
     // Create a Klingon ship (faction 1)
-    createKlingonShip(world, 100, 200);
+    createEnemy(world, FactionId.KLINGON, 100, 200);
 
     // Run render system
     renderSystem(world);

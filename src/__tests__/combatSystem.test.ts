@@ -2,10 +2,10 @@
  * Tests for Combat System
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { createGameWorld, createTurret, createKlingonShip } from '../ecs';
+import { createGameWorld, createTurret, createEnemy } from '../ecs';
 import { PoolManager } from '../ecs/PoolManager';
 import { Target, Health, Shield, Turret } from '../ecs/components';
-import { TurretType, TURRET_CONFIG } from '../types/constants';
+import { TurretType, TURRET_CONFIG, FactionId } from '../types/constants';
 import { createCombatSystem } from '../systems/combatSystem';
 import type { GameWorld } from '../ecs/world';
 
@@ -27,7 +27,7 @@ describe('Combat System', () => {
     it('should fire when cooldown has passed', () => {
       // Create turret and enemy
       const turretId = createTurret(world, 500, 500, TurretType.PHASER_ARRAY);
-      const enemyId = createKlingonShip(world, 550, 500);
+      const enemyId = createEnemy(world, FactionId.KLINGON, 550, 500);
 
       // Manually set target
       Target.entityId[turretId] = enemyId;
@@ -49,7 +49,7 @@ describe('Combat System', () => {
     it('should not fire when on cooldown', () => {
       // Create turret and enemy
       const turretId = createTurret(world, 500, 500, TurretType.PHASER_ARRAY);
-      const enemyId = createKlingonShip(world, 550, 500);
+      const enemyId = createEnemy(world, FactionId.KLINGON, 550, 500);
 
       // Manually set target
       Target.entityId[turretId] = enemyId;
@@ -73,7 +73,7 @@ describe('Combat System', () => {
     it('should damage shields first', () => {
       // Create turret and enemy
       const turretId = createTurret(world, 500, 500, TurretType.PHASER_ARRAY);
-      const enemyId = createKlingonShip(world, 550, 500);
+      const enemyId = createEnemy(world, FactionId.KLINGON, 550, 500);
 
       // Manually set target
       Target.entityId[turretId] = enemyId;
@@ -95,7 +95,7 @@ describe('Combat System', () => {
     it('should damage health after shields are depleted', () => {
       // Create turret and enemy
       const turretId = createTurret(world, 500, 500, TurretType.PHASER_ARRAY);
-      const enemyId = createKlingonShip(world, 550, 500);
+      const enemyId = createEnemy(world, FactionId.KLINGON, 550, 500);
 
       // Manually set target
       Target.entityId[turretId] = enemyId;
@@ -118,7 +118,7 @@ describe('Combat System', () => {
     it('should apply remaining damage to health when shields partially absorb', () => {
       // Create turret and enemy
       const turretId = createTurret(world, 500, 500, TurretType.PHASER_ARRAY);
-      const enemyId = createKlingonShip(world, 550, 500);
+      const enemyId = createEnemy(world, FactionId.KLINGON, 550, 500);
 
       // Manually set target
       Target.entityId[turretId] = enemyId;
@@ -143,7 +143,7 @@ describe('Combat System', () => {
     it('should create beam visual for beam weapons', () => {
       // Create phaser turret (beam weapon) and enemy
       const turretId = createTurret(world, 500, 500, TurretType.PHASER_ARRAY);
-      const enemyId = createKlingonShip(world, 550, 500);
+      const enemyId = createEnemy(world, FactionId.KLINGON, 550, 500);
 
       // Manually set target
       Target.entityId[turretId] = enemyId;
@@ -166,7 +166,7 @@ describe('Combat System', () => {
     it('should clear beam visuals each frame', () => {
       // Create phaser turret and enemy
       const turretId = createTurret(world, 500, 500, TurretType.PHASER_ARRAY);
-      const enemyId = createKlingonShip(world, 550, 500);
+      const enemyId = createEnemy(world, FactionId.KLINGON, 550, 500);
 
       // Manually set target
       Target.entityId[turretId] = enemyId;
@@ -187,7 +187,7 @@ describe('Combat System', () => {
     it('should clear target when target health reaches 0', () => {
       // Create turret and enemy
       const turretId = createTurret(world, 500, 500, TurretType.PHASER_ARRAY);
-      const enemyId = createKlingonShip(world, 550, 500);
+      const enemyId = createEnemy(world, FactionId.KLINGON, 550, 500);
 
       // Manually set target
       Target.entityId[turretId] = enemyId;

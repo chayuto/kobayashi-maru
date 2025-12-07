@@ -2,7 +2,7 @@
  * Tests for Damage System
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { createGameWorld, createKlingonShip, createFederationShip, getEntityCount } from '../ecs';
+import { createGameWorld, createEnemy, getEntityCount } from '../ecs';
 import { PoolManager } from '../ecs/PoolManager';
 import { Health } from '../ecs/components';
 import { FactionId } from '../types/constants';
@@ -29,7 +29,7 @@ describe('Damage System', () => {
   describe('Entity destruction', () => {
     it('should remove entity when health reaches 0', () => {
       // Create enemy
-      const enemyId = createKlingonShip(world, 500, 500);
+      const enemyId = createEnemy(world, FactionId.KLINGON, 500, 500);
       const initialCount = getEntityCount();
 
       // Set health to 0
@@ -44,7 +44,7 @@ describe('Damage System', () => {
 
     it('should not remove entity when health is above 0', () => {
       // Create enemy
-      createKlingonShip(world, 500, 500);
+      createEnemy(world, FactionId.KLINGON, 500, 500);
       const initialCount = getEntityCount();
 
       // Run damage system (health is still positive)
@@ -56,7 +56,7 @@ describe('Damage System', () => {
 
     it('should track destroyed entities', () => {
       // Create enemy
-      const enemyId = createKlingonShip(world, 500, 500);
+      const enemyId = createEnemy(world, FactionId.KLINGON, 500, 500);
 
       // Set health to 0
       Health.current[enemyId] = 0;
@@ -71,7 +71,7 @@ describe('Damage System', () => {
 
     it('should clear destroyed list each frame', () => {
       // Create enemy
-      const enemyId = createKlingonShip(world, 500, 500);
+      const enemyId = createEnemy(world, FactionId.KLINGON, 500, 500);
 
       // Set health to 0
       Health.current[enemyId] = 0;
@@ -92,7 +92,7 @@ describe('Damage System', () => {
       damageSystem.onEnemyDeath(callback);
 
       // Create enemy
-      const enemyId = createKlingonShip(world, 500, 500);
+      const enemyId = createEnemy(world, FactionId.KLINGON, 500, 500);
 
       // Set health to 0
       Health.current[enemyId] = 0;
@@ -109,7 +109,7 @@ describe('Damage System', () => {
       damageSystem.onEnemyDeath(callback);
 
       // Create federation ship
-      const shipId = createFederationShip(world, 500, 500);
+      const shipId = createEnemy(world, FactionId.FEDERATION, 500, 500);
 
       // Set health to 0
       Health.current[shipId] = 0;
@@ -127,7 +127,7 @@ describe('Damage System', () => {
       damageSystem.offEnemyDeath(callback);
 
       // Create enemy
-      const enemyId = createKlingonShip(world, 500, 500);
+      const enemyId = createEnemy(world, FactionId.KLINGON, 500, 500);
 
       // Set health to 0
       Health.current[enemyId] = 0;
@@ -146,7 +146,7 @@ describe('Damage System', () => {
       damageSystem.onEnemyDeath(callback2);
 
       // Create enemy
-      const enemyId = createKlingonShip(world, 500, 500);
+      const enemyId = createEnemy(world, FactionId.KLINGON, 500, 500);
 
       // Set health to 0
       Health.current[enemyId] = 0;
@@ -166,8 +166,8 @@ describe('Damage System', () => {
       damageSystem.onEnemyDeath(callback);
 
       // Create multiple enemies
-      const enemy1 = createKlingonShip(world, 500, 500);
-      const enemy2 = createKlingonShip(world, 600, 600);
+      const enemy1 = createEnemy(world, FactionId.KLINGON, 500, 500);
+      const enemy2 = createEnemy(world, FactionId.KLINGON, 600, 600);
       const initialCount = getEntityCount();
 
       // Set both to 0 health
@@ -192,7 +192,7 @@ describe('Damage System', () => {
       eventBus.on(GameEventType.ENEMY_KILLED, eventHandler);
 
       // Create enemy
-      const enemyId = createKlingonShip(world, 500, 500);
+      const enemyId = createEnemy(world, FactionId.KLINGON, 500, 500);
 
       // Set health to 0
       Health.current[enemyId] = 0;
@@ -216,7 +216,7 @@ describe('Damage System', () => {
       eventBus.on(GameEventType.ENEMY_KILLED, eventHandler);
 
       // Create federation ship
-      const shipId = createFederationShip(world, 500, 500);
+      const shipId = createEnemy(world, FactionId.FEDERATION, 500, 500);
 
       // Set health to 0
       Health.current[shipId] = 0;

@@ -2,10 +2,10 @@
  * Tests for Targeting System
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { createGameWorld, createTurret, createKlingonShip } from '../ecs';
+import { createGameWorld, createTurret, createEnemy } from '../ecs';
 import { PoolManager } from '../ecs/PoolManager';
 import { Position, Target, Health } from '../ecs/components';
-import { TurretType, GAME_CONFIG } from '../types/constants';
+import { TurretType, GAME_CONFIG, FactionId } from '../types/constants';
 import { SpatialHash } from '../collision/spatialHash';
 import { createTargetingSystem } from '../systems/targetingSystem';
 import type { GameWorld } from '../ecs/world';
@@ -36,7 +36,7 @@ describe('Targeting System', () => {
       const turretId = createTurret(world, 500, 500, TurretType.PHASER_ARRAY);
 
       // Create enemy within range (phaser range is 200)
-      const enemyId = createKlingonShip(world, 550, 500);
+      const enemyId = createEnemy(world, FactionId.KLINGON, 550, 500);
 
       // Update spatial hash with entity positions
       spatialHash.clear();
@@ -56,7 +56,7 @@ describe('Targeting System', () => {
       const turretId = createTurret(world, 500, 500, TurretType.PHASER_ARRAY);
 
       // Create enemy outside range (phaser range is 200)
-      const enemyId = createKlingonShip(world, 1000, 500);
+      const enemyId = createEnemy(world, FactionId.KLINGON, 1000, 500);
 
       // Update spatial hash with entity positions
       spatialHash.clear();
@@ -75,8 +75,8 @@ describe('Targeting System', () => {
       const turretId = createTurret(world, 500, 500, TurretType.PHASER_ARRAY);
 
       // Create two enemies, one closer than the other
-      const farEnemyId = createKlingonShip(world, 600, 500);    // 100 units away
-      const closeEnemyId = createKlingonShip(world, 550, 500);  // 50 units away
+      const farEnemyId = createEnemy(world, FactionId.KLINGON, 600, 500);    // 100 units away
+      const closeEnemyId = createEnemy(world, FactionId.KLINGON, 550, 500);  // 50 units away
 
       // Update spatial hash with entity positions
       spatialHash.clear();
@@ -118,7 +118,7 @@ describe('Targeting System', () => {
       const turretId = createTurret(world, 500, 500, TurretType.PHASER_ARRAY);
 
       // Create enemy within range
-      const enemyId = createKlingonShip(world, 550, 500);
+      const enemyId = createEnemy(world, FactionId.KLINGON, 550, 500);
 
       // Update spatial hash
       spatialHash.clear();
@@ -144,7 +144,7 @@ describe('Targeting System', () => {
       const turretId = createTurret(world, 500, 500, TurretType.PHASER_ARRAY);
 
       // Create enemy within range
-      const enemyId = createKlingonShip(world, 550, 500);
+      const enemyId = createEnemy(world, FactionId.KLINGON, 550, 500);
 
       // Update spatial hash
       spatialHash.clear();
@@ -172,7 +172,7 @@ describe('Targeting System', () => {
       const turretId = createTurret(world, 500, 500, TurretType.PHASER_ARRAY);
 
       // Create enemy within range
-      const enemyId = createKlingonShip(world, 550, 500);
+      const enemyId = createEnemy(world, FactionId.KLINGON, 550, 500);
 
       // Update spatial hash
       spatialHash.clear();
