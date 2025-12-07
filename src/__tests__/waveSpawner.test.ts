@@ -18,6 +18,7 @@ import {
 import { createGameWorld, getEntityCount } from '../ecs';
 import { FactionId, GAME_CONFIG } from '../types/constants';
 import { EventBus } from '../core/EventBus';
+import { GameEventType } from '../types/events';
 
 describe('Wave Configuration', () => {
   it('should have pre-defined configurations for waves 1-10', () => {
@@ -45,7 +46,7 @@ describe('Wave Configuration', () => {
   it('should default to wave 1 for invalid wave numbers', () => {
     const config = getWaveConfig(0);
     expect(config.waveNumber).toBe(1);
-    
+
     const configNegative = getWaveConfig(-1);
     expect(configNegative.waveNumber).toBe(1);
   });
@@ -106,7 +107,7 @@ describe('Spawn Points', () => {
     for (let i = 0; i < 100; i++) {
       const pos = getRandomEdgePosition();
       // Positions should be around the edges (including slightly outside)
-      const isNearEdge = 
+      const isNearEdge =
         pos.x <= 0 || pos.x >= GAME_CONFIG.WORLD_WIDTH ||
         pos.y <= 0 || pos.y >= GAME_CONFIG.WORLD_HEIGHT;
       expect(isNearEdge).toBe(true);
@@ -197,7 +198,7 @@ describe('Spawn Points', () => {
   it('should reset spawn points', () => {
     const spawnPoints = new SpawnPoints();
     spawnPoints.setupFormation(5, 'random');
-    
+
     spawnPoints.getSpawnPosition();
     spawnPoints.getSpawnPosition();
     expect(spawnPoints.getRemainingCount()).toBe(3);
@@ -226,7 +227,7 @@ describe('Wave Manager', () => {
 
   it('should start a wave', () => {
     waveManager.startWave(1);
-    
+
     expect(waveManager.getState()).toBe('spawning');
     expect(waveManager.getCurrentWave()).toBe(1);
   });
@@ -235,9 +236,11 @@ describe('Wave Manager', () => {
     let eventReceived = false;
     let receivedWaveNumber = 0;
 
-    waveManager.on('waveStart', (event) => {
+    // Use EventBus instead of deprecated waveManager.on()
+    const eventBus = EventBus.getInstance();
+    eventBus.on(GameEventType.WAVE_STARTED, (data) => {
       eventReceived = true;
-      receivedWaveNumber = event.waveNumber;
+      receivedWaveNumber = data.waveNumber;
     });
 
     waveManager.startWave(1);
@@ -248,45 +251,45 @@ describe('Wave Manager', () => {
 
   it('should spawn enemies over time', () => {
     waveManager.startWave(1);
-    
+
     const initialCount = getEntityCount();
-    
+
     // Update for enough time to spawn at least one enemy
     // Wave 1 has spawn delay of 500ms
     waveManager.update(0.6); // 600ms
-    
+
     expect(getEntityCount()).toBeGreaterThan(initialCount);
   });
 
   it('should transition from spawning to active state', () => {
     waveManager.startWave(1);
     expect(waveManager.getState()).toBe('spawning');
-    
+
     // Wave 1 has 5 enemies with 500ms delay = 2.5s minimum
     // Update for enough time to complete spawning
     for (let i = 0; i < 10; i++) {
       waveManager.update(0.5);
     }
-    
+
     expect(waveManager.getState()).toBe('active');
   });
 
   it('should track active enemy count', () => {
     waveManager.startWave(1);
-    
+
     // Spawn some enemies
     waveManager.update(0.6);
-    
+
     expect(waveManager.getActiveEnemyCount()).toBeGreaterThan(0);
   });
 
   it('should allow removing enemies', () => {
     waveManager.startWave(1);
     waveManager.update(0.6);
-    
+
     const activeCount = waveManager.getActiveEnemyCount();
     expect(activeCount).toBeGreaterThan(0);
-    
+
     // Can't easily get the entity IDs without more implementation,
     // but we can test that the method exists and doesn't throw
     expect(() => waveManager.removeEnemy(999)).not.toThrow();
@@ -296,11 +299,13 @@ describe('Wave Manager', () => {
     let callCount = 0;
     const callback = () => { callCount++; };
 
-    waveManager.on('waveStart', callback);
+    // Use EventBus instead of deprecated waveManager.on()
+    const eventBus = EventBus.getInstance();
+    eventBus.on(GameEventType.WAVE_STARTED, callback);
     waveManager.startWave(1);
     expect(callCount).toBe(1);
 
-    waveManager.off('waveStart', callback);
+    eventBus.off(GameEventType.WAVE_STARTED, callback);
     waveManager.startWave(2);
     expect(callCount).toBe(1); // Should not increment
   });
@@ -308,9 +313,9 @@ describe('Wave Manager', () => {
   it('should reset properly', () => {
     waveManager.startWave(1);
     waveManager.update(0.6);
-    
+
     waveManager.reset();
-    
+
     expect(waveManager.getState()).toBe('idle');
     expect(waveManager.getCurrentWave()).toBe(0);
     expect(waveManager.getActiveEnemyCount()).toBe(0);
@@ -319,7 +324,7 @@ describe('Wave Manager', () => {
   it('should report wave completion correctly', () => {
     // Initially complete (idle)
     expect(waveManager.isWaveComplete()).toBe(true);
-    
+
     waveManager.startWave(1);
     expect(waveManager.isWaveComplete()).toBe(false);
   });
@@ -332,7 +337,7 @@ describe('Wave Manager', () => {
   it('should handle multiple waves sequentially', () => {
     waveManager.startWave(1);
     expect(waveManager.getCurrentWave()).toBe(1);
-    
+
     waveManager.startWave(2);
     expect(waveManager.getCurrentWave()).toBe(2);
   });
