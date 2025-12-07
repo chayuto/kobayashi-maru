@@ -10,6 +10,29 @@ import { Position, Shield, Health } from '../ecs/components';
 const shieldQuery = defineQuery([Position, Shield, Health]);
 
 /**
+ * Shield rendering configuration constants
+ */
+const SHIELD_CONFIG = {
+  BASE_RADIUS: 50,              // Base shield bubble radius in pixels
+  OUTER_RING_OFFSET: 8,         // Offset for outer glow ring
+  MIDDLE_RING_OFFSET: 4,        // Offset for middle ring
+  OUTER_RING_WIDTH: 8,          // Stroke width for outer ring
+  MIDDLE_RING_WIDTH: 4,         // Stroke width for middle ring
+  INNER_RING_WIDTH: 2,          // Stroke width for inner ring
+  // Animation parameters
+  BASE_PULSE_SPEED: 2.0,        // Base pulse animation speed
+  DAMAGE_PULSE_MULTIPLIER: 3.0, // Additional pulse speed when damaged
+  BASE_ALPHA: 0.2,              // Minimum alpha value
+  DAMAGE_ALPHA_INCREASE: 0.3,   // Additional alpha when damaged
+  PULSE_AMOUNT: 0.15,           // Pulse magnitude for healthy shields
+  // Visual parameters
+  OUTER_RING_ALPHA: 0.3,        // Alpha for outer glow ring
+  MIDDLE_RING_ALPHA: 0.5,       // Alpha for middle ring
+  BUBBLE_ALPHA: 0.15,           // Alpha for main shield bubble
+  FLASH_ALPHA: 0.8              // Alpha for impact flash effect
+} as const;
+
+/**
  * ShieldRenderer renders shield visual effects
  */
 export class ShieldRenderer {
@@ -94,9 +117,9 @@ export class ShieldRenderer {
 
       // Animate alpha based on shield strength
       // Full shields pulse gently, damaged shields are more visible
-      const pulseSpeed = 2.0 + (1.0 - shieldPercent) * 3.0; // Faster pulse when damaged
-      const baseAlpha = 0.2 + (1.0 - shieldPercent) * 0.3; // More visible when damaged
-      const pulseAmount = 0.15 * shieldPercent; // Less pulse when damaged
+      const pulseSpeed = SHIELD_CONFIG.BASE_PULSE_SPEED + (1.0 - shieldPercent) * SHIELD_CONFIG.DAMAGE_PULSE_MULTIPLIER;
+      const baseAlpha = SHIELD_CONFIG.BASE_ALPHA + (1.0 - shieldPercent) * SHIELD_CONFIG.DAMAGE_ALPHA_INCREASE;
+      const pulseAmount = SHIELD_CONFIG.PULSE_AMOUNT * shieldPercent;
       
       alpha = baseAlpha + Math.sin(this.animationTime * pulseSpeed) * pulseAmount;
       this.shieldAlphaMap.set(eid, alpha);
@@ -112,20 +135,28 @@ export class ShieldRenderer {
       }
 
       // Draw shield bubble/ring
-      const radius = 50; // Base shield radius
+      const radius = SHIELD_CONFIG.BASE_RADIUS;
 
       // Outer glow ring (wider, more transparent)
-      this.graphics.circle(x, y, radius + 8);
-      this.graphics.stroke({ width: 8, color: shieldColor, alpha: alpha * 0.3 });
+      this.graphics.circle(x, y, radius + SHIELD_CONFIG.OUTER_RING_OFFSET);
+      this.graphics.stroke({ 
+        width: SHIELD_CONFIG.OUTER_RING_WIDTH, 
+        color: shieldColor, 
+        alpha: alpha * SHIELD_CONFIG.OUTER_RING_ALPHA 
+      });
 
       // Middle ring
-      this.graphics.circle(x, y, radius + 4);
-      this.graphics.stroke({ width: 4, color: shieldColor, alpha: alpha * 0.5 });
+      this.graphics.circle(x, y, radius + SHIELD_CONFIG.MIDDLE_RING_OFFSET);
+      this.graphics.stroke({ 
+        width: SHIELD_CONFIG.MIDDLE_RING_WIDTH, 
+        color: shieldColor, 
+        alpha: alpha * SHIELD_CONFIG.MIDDLE_RING_ALPHA 
+      });
 
       // Inner shield bubble (main visual)
       this.graphics.circle(x, y, radius);
-      this.graphics.fill({ color: shieldColor, alpha: alpha * 0.15 });
-      this.graphics.stroke({ width: 2, color: shieldColor, alpha: alpha });
+      this.graphics.fill({ color: shieldColor, alpha: alpha * SHIELD_CONFIG.BUBBLE_ALPHA });
+      this.graphics.stroke({ width: SHIELD_CONFIG.INNER_RING_WIDTH, color: shieldColor, alpha: alpha });
     }
 
     // Clean up alpha map for entities that no longer exist
@@ -143,7 +174,7 @@ export class ShieldRenderer {
    */
   flashShield(entityId: number): void {
     // Set alpha to maximum for flash effect
-    this.shieldAlphaMap.set(entityId, 0.8);
+    this.shieldAlphaMap.set(entityId, SHIELD_CONFIG.FLASH_ALPHA);
   }
 
   /**

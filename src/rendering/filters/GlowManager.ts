@@ -68,6 +68,11 @@ export const GLOW_PRESETS: Record<string, GlowConfig> = {
 };
 
 /**
+ * Constants for glow calculations
+ */
+const MAX_STRENGTH_VALUE = 10;
+
+/**
  * GlowManager handles glow/bloom effects for various game elements
  */
 export class GlowManager {
@@ -79,6 +84,13 @@ export class GlowManager {
 
   constructor() {
     // Initialize empty maps
+  }
+
+  /**
+   * Calculate brightness multiplier from strength value
+   */
+  private calculateBrightnessMultiplier(strength: number): number {
+    return 1 + (strength / MAX_STRENGTH_VALUE);
   }
 
   /**
@@ -125,7 +137,7 @@ export class GlowManager {
     // Create color matrix filter for brightness adjustment
     const colorMatrixFilter = new ColorMatrixFilter();
     // Increase brightness based on strength
-    const brightnessMultiplier = 1 + (config.strength / 10);
+    const brightnessMultiplier = this.calculateBrightnessMultiplier(config.strength);
     colorMatrixFilter.brightness(brightnessMultiplier, false);
 
     // Store filters
@@ -173,7 +185,7 @@ export class GlowManager {
     }
 
     if (config.strength !== undefined) {
-      const brightnessMultiplier = 1 + (config.strength / 10);
+      const brightnessMultiplier = this.calculateBrightnessMultiplier(config.strength);
       colorMatrixFilter.brightness(brightnessMultiplier, false);
     }
   }
