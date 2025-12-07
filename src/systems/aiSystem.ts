@@ -1,26 +1,72 @@
 /**
- * AI System
- * Controls enemy behavior based on assigned patterns (Direct, Strafe, Flank, etc.)
+ * AI System for Kobayashi Maru
+ * 
+ * Controls enemy movement behavior based on assigned AI patterns.
+ * Each enemy has an AIBehavior component that determines how it moves.
+ * 
+ * ## Behavior Types
+ * - **DIRECT** (Klingon) - Straight line to target, fastest approach
+ * - **STRAFE** (Romulan) - Sinusoidal weaving while approaching
+ * - **FLANK** (unused) - Circle around to attack from side
+ * - **SWARM** (Borg) - Group movement with slight noise
+ * - **HUNTER** (Species 8472) - Prioritizes nearest turret over Kobayashi Maru
+ * - **ORBIT** (Tholian) - Slow approach, then circles at fixed distance
+ * 
+ * ## Usage
+ * The system is created once and called each frame:
+ * ```typescript
+ * const aiSystem = createAISystem();
+ * systemManager.register('ai', { update: aiSystem }, 200);
+ * ```
+ * 
+ * @module systems/aiSystem
+ * @see AIBehaviorType in constants.ts for behavior type values
+ * @see AIBehavior component for entity AI data
  */
 import { defineQuery } from 'bitecs';
 import { GameWorld } from '../ecs/world';
 import { Position, Velocity, AIBehavior, Faction, Turret } from '../ecs/components';
 import { AIBehaviorType, GAME_CONFIG } from '../types/constants';
 
-// Query for entities with AI behavior
+/** Query for entities with AI behavior (all enemies) */
 const aiQuery = defineQuery([Position, Velocity, AIBehavior, Faction]);
 
-// Query for turrets (for Hunter behavior)
+/** Query for turrets (used by Hunter behavior to find targets) */
 const turretQuery = defineQuery([Position, Turret]);
 
 /**
- * Creates the AI system
- * @returns The system update function
+ * Creates the AI system that controls enemy movement.
+ * 
+ * The returned function should be called each frame to update
+ * all enemy velocities based on their assigned behavior type.
+ * 
+ * @returns System update function `(world, deltaTime, gameTime) => void`
+ * 
+ * @example
+ * ```typescript
+ * const aiSystem = createAISystem();
+ * 
+ * // In game loop
+ * aiSystem(world, deltaTime, gameTime);
+ * 
+ * // Or register with SystemManager
+ * systemManager.register('ai', { 
+ *   update: aiSystem 
+ * }, 200, { requiresGameTime: true });
+ * ```
  */
 export function createAISystem() {
+    /** Center of screen - default target (Kobayashi Maru position) */
     const centerX = GAME_CONFIG.WORLD_WIDTH / 2;
     const centerY = GAME_CONFIG.WORLD_HEIGHT / 2;
 
+    /**
+     * AI system update function.
+     * 
+     * @param world - The ECS world containing entities
+     * @param _deltaTime - Time since last frame (unused, velocity-based)
+     * @param gameTime - Total elapsed game time (for oscillation effects)
+     */
     return function aiSystem(world: GameWorld, _deltaTime: number, gameTime: number) {
         const entities = aiQuery(world);
         const turrets = turretQuery(world);
@@ -28,42 +74,39 @@ export function createAISystem() {
         for (let i = 0; i < entities.length; i++) {
             const eid = entities[i];
             const behaviorType = AIBehavior.behaviorType[eid];
-            // aggression is available for future use or fine-tuning behaviors
-            // const aggression = AIBehavior.aggression[eid]; 
 
             // Current position
             const posX = Position.x[eid];
             const posY = Position.y[eid];
 
-            // Default target: Kobayashi Maru (Center)
+            // Default target: Kobayashi Maru (center of screen)
             let targetX = centerX;
             let targetY = centerY;
 
-            // Behavior-specific logic
+            // Execute behavior-specific movement logic
             switch (behaviorType) {
                 case AIBehaviorType.DIRECT:
-                    // Simple bee-line to target
+                    // Klingon: Aggressive straight-line approach
                     updateDirectBehavior(eid, posX, posY, targetX, targetY);
                     break;
 
                 case AIBehaviorType.STRAFE:
-                    // Sinusoidal movement while approaching
+                    // Romulan: Evasive weaving approach
                     updateStrafeBehavior(eid, posX, posY, targetX, targetY, gameTime);
                     break;
 
                 case AIBehaviorType.FLANK:
-                    // Circle around to attack from side
+                    // Unused: Flanking maneuver
                     updateFlankBehavior(eid, posX, posY, targetX, targetY);
                     break;
 
                 case AIBehaviorType.SWARM:
-                    // Move as group (simplified: similar to direct but with some noise/separation)
-                    // For MVP, we'll use a modified direct behavior with some noise
+                    // Borg: Coordinated group movement
                     updateSwarmBehavior(eid, posX, posY, targetX, targetY, gameTime);
                     break;
 
                 case AIBehaviorType.HUNTER: {
-                    // Prioritize nearest turret
+                    // Species 8472: Hunt nearest turret first
                     const nearestTurret = findNearestTurret(posX, posY, turrets);
                     if (nearestTurret !== -1) {
                         targetX = Position.x[nearestTurret];
@@ -74,7 +117,7 @@ export function createAISystem() {
                 }
 
                 case AIBehaviorType.ORBIT:
-                    // Slow approach then orbit around target
+                    // Tholian: Slow approach then orbit at distance
                     updateOrbitBehavior(eid, posX, posY, targetX, targetY, gameTime);
                     break;
             }
@@ -83,8 +126,18 @@ export function createAISystem() {
 }
 
 /**
- * Updates velocity for Direct behavior
+ * DIRECT behavior: Straight line to target.
+ * 
+ * Used by Klingons for aggressive, fastest approach.
+ * Maintains current speed magnitude while updating direction.
+ * 
+ * @param eid - Entity ID
+ * @param posX - Current X position
+ * @param posY - Current Y position
+ * @param targetX - Target X position
+ * @param targetY - Target Y position
  */
+
 function updateDirectBehavior(eid: number, posX: number, posY: number, targetX: number, targetY: number) {
     const dx = targetX - posX;
     const dy = targetY - posY;
@@ -102,7 +155,17 @@ function updateDirectBehavior(eid: number, posX: number, posY: number, targetX: 
 }
 
 /**
- * Updates velocity for Strafe behavior
+ * STRAFE behavior: Sinusoidal weaving while approaching.
+ * 
+ * Used by Romulans for evasive movement. Entity weaves side-to-side
+ * while still making progress toward target. Makes them harder to hit.
+ * 
+ * @param eid - Entity ID
+ * @param posX - Current X position
+ * @param posY - Current Y position
+ * @param targetX - Target X position
+ * @param targetY - Target Y position
+ * @param gameTime - Game time for oscillation calculation
  */
 function updateStrafeBehavior(eid: number, posX: number, posY: number, targetX: number, targetY: number, gameTime: number) {
     const dx = targetX - posX;
