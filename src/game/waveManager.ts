@@ -2,7 +2,7 @@
  * Wave Manager for Kobayashi Maru
  * Manages wave spawning, progression, and completion detection
  */
-import { FactionId, GAME_CONFIG } from '../types/constants';
+import { FactionId, GAME_CONFIG, EnemyRank, RANK_MULTIPLIERS, ABILITY_CONFIG } from '../types/constants';
 import { GameEventType } from '../types/events';
 import {
   createKlingonShip,
@@ -12,13 +12,16 @@ import {
   createSpecies8472Ship
 } from '../ecs/entityFactory';
 import { AudioManager, SoundType } from '../audio';
-import { Velocity, Health, Shield } from '../ecs/components';
+import { Velocity, Health, Shield, EnemyVariant, SpecialAbility, SpriteRef, EnemyWeapon, Position } from '../ecs/components';
+import { addComponent, hasComponent } from 'bitecs';
 import type { GameWorld } from '../ecs/world';
 import {
   WaveConfig,
   EnemySpawnConfig,
   getWaveConfig,
-  getDifficultyScale
+  getDifficultyScale,
+  getBossWaveConfig,
+  BossWaveConfig
 } from './waveConfig';
 import { SpawnPoints, SpawnPosition } from './spawnPoints';
 import { EventBus } from '../core/EventBus';
@@ -86,9 +89,19 @@ export class WaveManager {
   private nextWaveTimer: number = 0;
   private autoStartNextWave: boolean = true;
   private eventBus: EventBus;
+  private particleSystem: any = null;
+  private spriteManager: any = null;
 
   constructor() {
     this.eventBus = EventBus.getInstance();
+  }
+
+  /**
+   * Sets rendering dependencies for visual effects
+   */
+  setRenderingDependencies(particleSystem: any, spriteManager: any): void {
+    this.particleSystem = particleSystem;
+    this.spriteManager = spriteManager;
   }
 
   /**
@@ -234,6 +247,9 @@ export class WaveManager {
     if (eid !== -1) {
       // Apply difficulty scaling to health and shields
       this.applyDifficultyScaling(eid, difficultyScale);
+      
+      // Determine if this should be an elite or boss enemy
+      this.applyEnemyVariant(eid, group.config.faction);
 
       // Set velocity toward the center (Kobayashi Maru position)
       this.setVelocityTowardCenter(eid, position);
@@ -289,6 +305,146 @@ export class WaveManager {
     // Scale shields
     Shield.current[eid] = Math.floor(Shield.current[eid] * scale);
     Shield.max[eid] = Math.floor(Shield.max[eid] * scale);
+  }
+
+  /**
+   * Applies enemy variant (Elite or Boss) with stat multipliers and special abilities
+   */
+  private applyEnemyVariant(eid: number, faction: number): void {
+    if (!this.world) return;
+
+    // Check if this is a boss wave
+    const bossWave = getBossWaveConfig(this.currentWave);
+    
+    if (bossWave && bossWave.bossType === faction) {
+      // This is a boss enemy
+      this.applyBossVariant(eid, bossWave);
+      return;
+    }
+
+    // Determine elite chance (10% base + 1% per wave)
+    const eliteChance = 0.1 + (this.currentWave * 0.01);
+    const isElite = Math.random() < eliteChance;
+
+    if (isElite) {
+      this.applyEliteVariant(eid);
+    }
+  }
+
+  /**
+   * Applies elite variant to an enemy
+   */
+  private applyEliteVariant(eid: number): void {
+    if (!this.world) return;
+
+    // Add variant component
+    addComponent(this.world, EnemyVariant, eid);
+    EnemyVariant.rank[eid] = EnemyRank.ELITE;
+    EnemyVariant.sizeScale[eid] = RANK_MULTIPLIERS[EnemyRank.ELITE].size;
+    EnemyVariant.statMultiplier[eid] = RANK_MULTIPLIERS[EnemyRank.ELITE].health;
+
+    // Apply multipliers to stats
+    Health.max[eid] = Math.floor(Health.max[eid] * RANK_MULTIPLIERS[EnemyRank.ELITE].health);
+    Health.current[eid] = Math.floor(Health.current[eid] * RANK_MULTIPLIERS[EnemyRank.ELITE].health);
+    Shield.max[eid] = Math.floor(Shield.max[eid] * RANK_MULTIPLIERS[EnemyRank.ELITE].health);
+    Shield.current[eid] = Math.floor(Shield.current[eid] * RANK_MULTIPLIERS[EnemyRank.ELITE].health);
+
+    if (hasComponent(this.world, EnemyWeapon, eid)) {
+      EnemyWeapon.damage[eid] *= RANK_MULTIPLIERS[EnemyRank.ELITE].damage;
+    }
+
+    // Scale sprite
+    const spriteIndex = SpriteRef.index[eid];
+    if (this.spriteManager) {
+      this.spriteManager.setScale(spriteIndex, RANK_MULTIPLIERS[EnemyRank.ELITE].size);
+    }
+
+    // Add elite glow effect
+    this.addEliteGlow(eid);
+  }
+
+  /**
+   * Applies boss variant to an enemy with special abilities
+   */
+  private applyBossVariant(eid: number, bossWave: BossWaveConfig): void {
+    if (!this.world) return;
+
+    // Add variant component
+    addComponent(this.world, EnemyVariant, eid);
+    EnemyVariant.rank[eid] = EnemyRank.BOSS;
+    EnemyVariant.sizeScale[eid] = RANK_MULTIPLIERS[EnemyRank.BOSS].size;
+    EnemyVariant.statMultiplier[eid] = RANK_MULTIPLIERS[EnemyRank.BOSS].health;
+
+    // Apply multipliers to stats
+    Health.max[eid] = Math.floor(Health.max[eid] * RANK_MULTIPLIERS[EnemyRank.BOSS].health);
+    Health.current[eid] = Math.floor(Health.current[eid] * RANK_MULTIPLIERS[EnemyRank.BOSS].health);
+    Shield.max[eid] = Math.floor(Shield.max[eid] * RANK_MULTIPLIERS[EnemyRank.BOSS].health);
+    Shield.current[eid] = Math.floor(Shield.current[eid] * RANK_MULTIPLIERS[EnemyRank.BOSS].health);
+
+    if (hasComponent(this.world, EnemyWeapon, eid)) {
+      EnemyWeapon.damage[eid] *= RANK_MULTIPLIERS[EnemyRank.BOSS].damage;
+    }
+
+    // Scale sprite
+    const spriteIndex = SpriteRef.index[eid];
+    if (this.spriteManager) {
+      this.spriteManager.setScale(spriteIndex, RANK_MULTIPLIERS[EnemyRank.BOSS].size);
+    }
+
+    // Add special abilities
+    if (bossWave.bossAbilities.length > 0) {
+      // Add the first ability (can be extended to support multiple)
+      const abilityType = bossWave.bossAbilities[0];
+      addComponent(this.world, SpecialAbility, eid);
+      SpecialAbility.abilityType[eid] = abilityType;
+      SpecialAbility.cooldown[eid] = ABILITY_CONFIG[abilityType].cooldown;
+      SpecialAbility.duration[eid] = ABILITY_CONFIG[abilityType].duration;
+      SpecialAbility.lastUsed[eid] = 0;
+      SpecialAbility.active[eid] = 0;
+    }
+
+    // Add boss glow effect
+    this.addBossGlow(eid);
+  }
+
+  /**
+   * Adds visual glow effect to elite enemies
+   */
+  private addEliteGlow(eid: number): void {
+    if (!this.particleSystem) return;
+
+    // Create continuous glow particle effect
+    // This is a simplified version - in a real implementation, 
+    // you'd want a persistent particle emitter that follows the enemy
+    this.particleSystem.spawn({
+      x: Position.x[eid],
+      y: Position.y[eid],
+      count: 15,
+      speed: { min: 10, max: 30 },
+      life: { min: 0.5, max: 1.0 },
+      size: { min: 3, max: 6 },
+      color: 0xFFDD00, // Golden glow for elite
+      spread: Math.PI * 2
+    });
+  }
+
+  /**
+   * Adds visual glow effect to boss enemies
+   */
+  private addBossGlow(eid: number): void {
+    if (!this.particleSystem) return;
+
+    // Create intense glow particle effect for boss
+    this.particleSystem.spawn({
+      x: Position.x[eid],
+      y: Position.y[eid],
+      count: 30,
+      speed: { min: 20, max: 50 },
+      life: { min: 0.5, max: 1.2 },
+      size: { min: 5, max: 10 },
+      color: 0xFF0000, // Red glow for boss
+      spread: Math.PI * 2
+    });
   }
 
   /**

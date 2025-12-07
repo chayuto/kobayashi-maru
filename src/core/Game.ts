@@ -13,7 +13,7 @@ import {
 } from '../ecs';
 import { Health, Shield, Turret, Position, Faction, SpriteRef } from '../ecs/components';
 import { SpriteManager, BeamRenderer, ParticleSystem, HealthBarRenderer, ScreenShake, PlacementRenderer, GlowManager, GlowLayer, ShieldRenderer, ShockwaveRenderer, ExplosionManager, TurretUpgradeVisuals } from '../rendering';
-import { createRenderSystem, createMovementSystem, createCollisionSystem, CollisionSystem, createTargetingSystem, createCombatSystem, createDamageSystem, createAISystem, createProjectileSystem, statusEffectSystem, TargetingSystem, CombatSystem, DamageSystem, SystemManager, createEnemyCollisionSystem, EnemyCollisionSystem, createEnemyCombatSystem, EnemyCombatSystem, createEnemyProjectileSystem, EnemyProjectileSystem } from '../systems';
+import { createRenderSystem, createMovementSystem, createCollisionSystem, CollisionSystem, createTargetingSystem, createCombatSystem, createDamageSystem, createAISystem, createProjectileSystem, statusEffectSystem, TargetingSystem, CombatSystem, DamageSystem, SystemManager, createEnemyCollisionSystem, EnemyCollisionSystem, createEnemyCombatSystem, EnemyCombatSystem, createEnemyProjectileSystem, EnemyProjectileSystem, createAbilitySystem } from '../systems';
 
 import { GAME_CONFIG, LCARS_COLORS, GameEventType, EnemyKilledPayload, WaveStartedPayload, WaveCompletedPayload } from '../types';
 import { SpatialHash } from '../collision';
@@ -53,6 +53,7 @@ export class Game {
   private damageSystem: DamageSystem | null = null;
   private projectileSystem: ReturnType<typeof createProjectileSystem> | null = null;
   private aiSystem: ReturnType<typeof createAISystem> | null = null;
+  private abilitySystem: ReturnType<typeof createAbilitySystem> | null = null;
   private enemyCollisionSystem: EnemyCollisionSystem | null = null;
   private enemyCombatSystem: EnemyCombatSystem | null = null;
   private enemyProjectileSystem: EnemyProjectileSystem | null = null;
@@ -297,6 +298,14 @@ export class Game {
     // Initialize AI system
     this.aiSystem = createAISystem();
 
+    // Initialize ability system
+    this.abilitySystem = createAbilitySystem(
+      this.particleSystem,
+      this.spriteManager,
+      this.audioManager,
+      this.spatialHash
+    );
+
     // Initialize projectile system
     this.projectileSystem = createProjectileSystem(this.spatialHash);
 
@@ -321,6 +330,7 @@ export class Game {
     // Lower priority numbers run first
     this.systemManager.register('collision', this.collisionSystem, 10, { requiresDelta: false });
     this.systemManager.register('ai', this.aiSystem, 20, { requiresGameTime: true });
+    this.systemManager.register('ability', this.abilitySystem, 25); // Process abilities after AI
     this.systemManager.register('movement', this.movementSystem, 30);
     this.systemManager.register('status-effects', statusEffectSystem, 35); // Process status effects after movement
     this.systemManager.register('enemy-collision', this.enemyCollisionSystem, 38, { requiresDelta: false }); // Check enemy collisions after movement
@@ -422,6 +432,7 @@ export class Game {
 
     // Initialize wave manager
     this.waveManager.init(this.world);
+    this.waveManager.setRenderingDependencies(this.particleSystem, this.spriteManager);
 
     // Subscribe to EventBus for enemy kills
     // This handles: wave manager tracking, score manager kills, and resource rewards
