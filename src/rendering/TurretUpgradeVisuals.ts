@@ -96,10 +96,6 @@ export class TurretUpgradeVisuals {
 
     for (let i = 0; i < turrets.length; i++) {
       const eid = turrets[i];
-      
-      if (!hasComponent(this.world, TurretUpgrade, eid)) {
-        continue;
-      }
 
       // Calculate total upgrade level
       const totalLevel = 
