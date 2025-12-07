@@ -37,6 +37,9 @@ const turretQuery = defineQuery([Turret]);
 // Query for all entities (for cleanup during restart)
 const allEntitiesQuery = defineQuery([Position, Faction, SpriteRef]);
 
+// Click detection radius for selecting turrets (in pixels)
+const TURRET_CLICK_RADIUS = 32;
+
 export class Game {
   public app: Application;
   public world: GameWorld;
@@ -871,7 +874,6 @@ export class Game {
    */
   private findTurretAtPosition(x: number, y: number): number {
     const turretEntities = turretQuery(this.world);
-    const clickRadius = 32; // Detection radius for clicking turrets
 
     for (const eid of turretEntities) {
       const turretX = Position.x[eid];
@@ -880,7 +882,7 @@ export class Game {
       const dy = turretY - y;
       const distSq = dx * dx + dy * dy;
 
-      if (distSq <= clickRadius * clickRadius) {
+      if (distSq <= TURRET_CLICK_RADIUS * TURRET_CLICK_RADIUS) {
         return eid;
       }
     }
