@@ -1,96 +1,298 @@
 /**
  * ECS Components for Kobayashi Maru
- * Using bitecs for high-performance entity management
+ * 
+ * Components are data containers used by the Entity-Component-System architecture.
+ * Each component is defined using bitecs which stores data in typed arrays for
+ * high performance. Components do not contain logic - that belongs in systems.
+ * 
+ * ## Usage Pattern
+ * ```typescript
+ * import { Position, Health } from '../ecs/components';
+ * 
+ * // Access component data for an entity
+ * const x = Position.x[entityId];
+ * const currentHealth = Health.current[entityId];
+ * 
+ * // Modify component data
+ * Position.x[entityId] = 100;
+ * Health.current[entityId] -= damage;
+ * ```
+ * 
+ * @module components
+ * @see {@link https://github.com/NateTheGreatt/bitecs} bitECS documentation
  */
 import { defineComponent, Types } from 'bitecs';
 
-// Position component - stores x, y coordinates
+/**
+ * Position component for entity world coordinates.
+ * 
+ * All entities with visual representation must have Position.
+ * Coordinates are in pixels, with (0,0) at top-left of the world.
+ * 
+ * @property x - Horizontal position (0 to GAME_CONFIG.WORLD_WIDTH, typically 1920)
+ * @property y - Vertical position (0 to GAME_CONFIG.WORLD_HEIGHT, typically 1080)
+ * 
+ * @example
+ * ```typescript
+ * // Move an entity to the center of the screen
+ * Position.x[entityId] = 960;
+ * Position.y[entityId] = 540;
+ * ```
+ */
 export const Position = defineComponent({
   x: Types.f32,
   y: Types.f32
 });
 
-// Velocity component - stores movement direction and speed
+/**
+ * Velocity component for movement direction and speed.
+ * 
+ * The movement system multiplies velocity by delta time each frame
+ * to update Position. Units are pixels per second.
+ * 
+ * @property x - Horizontal velocity (positive = right, negative = left)
+ * @property y - Vertical velocity (positive = down, negative = up)
+ * 
+ * @example
+ * ```typescript
+ * // Move right at 100 pixels per second
+ * Velocity.x[entityId] = 100;
+ * Velocity.y[entityId] = 0;
+ * 
+ * // Move toward a target
+ * const dx = targetX - Position.x[entityId];
+ * const dy = targetY - Position.y[entityId];
+ * const distance = Math.sqrt(dx * dx + dy * dy);
+ * Velocity.x[entityId] = (dx / distance) * speed;
+ * Velocity.y[entityId] = (dy / distance) * speed;
+ * ```
+ */
 export const Velocity = defineComponent({
   x: Types.f32,
   y: Types.f32
 });
 
-// Faction component - identifies which faction an entity belongs to
+/**
+ * Faction component identifying which team an entity belongs to.
+ * 
+ * Used by targeting, combat, and collision systems to determine
+ * friend/foe relationships. See FactionId enum in constants.ts.
+ * 
+ * @property id - Faction identifier (use FactionId enum values)
+ * 
+ * @example
+ * ```typescript
+ * import { FactionId } from '../types/constants';
+ * 
+ * Faction.id[entityId] = FactionId.KLINGON;  // Enemy faction
+ * Faction.id[turretId] = FactionId.FEDERATION;  // Friendly faction
+ * 
+ * // Check if entity is hostile
+ * const isEnemy = Faction.id[entityId] !== FactionId.FEDERATION;
+ * ```
+ */
 export const Faction = defineComponent({
   id: Types.ui8
 });
 
-// SpriteRef component - reference to the sprite index in the particle container
+/**
+ * SpriteRef component linking entity to visual representation.
+ * 
+ * The render system uses this to manage sprite creation and updates.
+ * The index is managed by SpriteManager and should not be set directly.
+ * 
+ * @property index - Sprite index in the particle container (managed by SpriteManager)
+ */
 export const SpriteRef = defineComponent({
   index: Types.ui32
 });
 
-// Health component - stores current and max health
+/**
+ * Health component for entity hit points.
+ * 
+ * When current reaches 0, the entity is considered destroyed.
+ * The damage system subtracts from Health after shields are depleted.
+ * 
+ * @property current - Current health points (0 to max)
+ * @property max - Maximum health points
+ * 
+ * @example
+ * ```typescript
+ * // Apply damage (should use damage system instead of direct modification)
+ * const damage = 25;
+ * Health.current[entityId] = Math.max(0, Health.current[entityId] - damage);
+ * 
+ * // Check if entity is dead
+ * const isDead = Health.current[entityId] <= 0;
+ * 
+ * // Get health percentage
+ * const healthPercent = Health.current[entityId] / Health.max[entityId];
+ * ```
+ */
 export const Health = defineComponent({
   current: Types.f32,
   max: Types.f32
 });
 
-// Shield component - stores shield values
+/**
+ * Shield component for damage absorption.
+ * 
+ * Shields absorb damage before health. When shields reach 0,
+ * remaining damage is applied to health. Shields do not regenerate
+ * automatically in the current implementation.
+ * 
+ * @property current - Current shield points (0 to max)
+ * @property max - Maximum shield points
+ * 
+ * @example
+ * ```typescript
+ * // Check if shields are up
+ * const hasShields = Shield.current[entityId] > 0;
+ * 
+ * // Apply damage to shields first
+ * const shieldDamage = Math.min(damage, Shield.current[entityId]);
+ * Shield.current[entityId] -= shieldDamage;
+ * const remainingDamage = damage - shieldDamage;
+ * ```
+ */
 export const Shield = defineComponent({
   current: Types.f32,
   max: Types.f32
 });
 
-// Collider component - stores collision data for spatial hashing
+/**
+ * Collider component for collision detection.
+ * 
+ * Used by the spatial hash for efficient broad-phase collision detection.
+ * The layer/mask system allows selective collision between entity types.
+ * 
+ * @property radius - Collision circle radius in pixels
+ * @property layer - Collision layer this entity occupies (0-7)
+ * @property mask - Bitmask of layers this entity collides with
+ * 
+ * @example
+ * ```typescript
+ * // Configure an enemy collider
+ * Collider.radius[entityId] = 20;
+ * Collider.layer[entityId] = 1;  // Enemy layer
+ * Collider.mask[entityId] = 0b00000101;  // Collides with layers 0 and 2
+ * ```
+ */
 export const Collider = defineComponent({
-  radius: Types.f32,     // Collision radius for the entity
-  layer: Types.ui8,      // Collision layer (enemies, projectiles, etc.)
-  mask: Types.ui8        // Which layers this entity collides with
+  radius: Types.f32,
+  layer: Types.ui8,
+  mask: Types.ui8
 });
 
-// Turret component - stores turret combat data
+/**
+ * Turret component for defensive weapons.
+ * 
+ * Turrets automatically target and fire at enemies within range.
+ * The combat system handles firing logic and damage application.
+ * 
+ * @property range - Maximum targeting distance in pixels (150-400 typical)
+ * @property fireRate - Shots per second (0.5 to 4 typical)
+ * @property damage - Damage dealt per shot (10-50 typical)
+ * @property lastFired - Game time of last shot (updated by combat system)
+ * @property turretType - Type identifier (use TurretType enum)
+ * 
+ * @see TurretType in constants.ts for available turret types
+ */
 export const Turret = defineComponent({
-  range: Types.f32,      // Targeting range in pixels
-  fireRate: Types.f32,   // Shots per second
-  damage: Types.f32,     // Damage per shot
-  lastFired: Types.f32,  // Timestamp of last shot (in seconds)
-  turretType: Types.ui8  // Type of turret (phaser, torpedo, disruptor)
+  range: Types.f32,
+  fireRate: Types.f32,
+  damage: Types.f32,
+  lastFired: Types.f32,
+  turretType: Types.ui8
 });
 
-// Target component - stores current target(s) for turrets
-// Supports up to 3 targets for multi-target upgrades
+/**
+ * Target component for tracking attack targets.
+ * 
+ * Supports up to 3 simultaneous targets for multi-target upgrades.
+ * The targeting system populates these, combat system uses them.
+ * 
+ * @property entityId - Primary target entity ID (0 if no target)
+ * @property hasTarget - 0/1 flag: 1 if primary target is valid
+ * @property entityId2 - Secondary target (multi-target upgrade level 1)
+ * @property hasTarget2 - 0/1 flag for secondary target
+ * @property entityId3 - Tertiary target (multi-target upgrade level 2)
+ * @property hasTarget3 - 0/1 flag for tertiary target
+ */
 export const Target = defineComponent({
-  entityId: Types.ui32,    // Primary target entity ID
-  hasTarget: Types.ui8,    // 0/1 flag indicating if primary target is valid
-  entityId2: Types.ui32,   // Secondary target entity ID (multi-target upgrade)
-  hasTarget2: Types.ui8,   // 0/1 flag for secondary target
-  entityId3: Types.ui32,   // Tertiary target entity ID (multi-target upgrade level 2)
-  hasTarget3: Types.ui8    // 0/1 flag for tertiary target
+  entityId: Types.ui32,
+  hasTarget: Types.ui8,
+  entityId2: Types.ui32,
+  hasTarget2: Types.ui8,
+  entityId3: Types.ui32,
+  hasTarget3: Types.ui8
 });
 
-// AI Behavior component - stores AI state and configuration
+/**
+ * AI Behavior component for enemy movement patterns.
+ * 
+ * The AI system updates entity velocity based on behavior type.
+ * Each behavior type has unique movement logic (see aiSystem.ts).
+ * 
+ * @property behaviorType - Movement pattern (use AIBehaviorType enum)
+ * @property stateTimer - Time in current state (for state machine transitions)
+ * @property targetX - Intermediate navigation target X
+ * @property targetY - Intermediate navigation target Y
+ * @property aggression - Movement speed/chase factor (0.0 to 1.0)
+ * 
+ * @see AIBehaviorType in constants.ts: DIRECT, STRAFE, ORBIT, SWARM, HUNTER
+ */
 export const AIBehavior = defineComponent({
-  behaviorType: Types.ui8,    // Behavior pattern (0=direct, 1=strafe, 2=flank, etc.)
-  stateTimer: Types.f32,      // Timer for state changes
-  targetX: Types.f32,         // Intermediate target X
-  targetY: Types.f32,         // Intermediate target Y
-  aggression: Types.f32       // How aggressively to pursue (0-1)
+  behaviorType: Types.ui8,
+  stateTimer: Types.f32,
+  targetX: Types.f32,
+  targetY: Types.f32,
+  aggression: Types.f32
 });
 
-// Projectile component - for torpedoes and other moving weapons
+/**
+ * Projectile component for moving weapons (torpedoes, bolts, etc).
+ * 
+ * Projectiles move toward their target and deal damage on collision.
+ * The projectile system handles movement and lifetime management.
+ * 
+ * @property damage - Damage dealt on impact
+ * @property speed - Movement speed in pixels per second
+ * @property lifetime - Seconds remaining before auto-despawn
+ * @property targetEntityId - Target entity for homing (0 = no homing)
+ * @property projectileType - Visual/behavior type (use ProjectileType enum)
+ * 
+ * @see ProjectileType in constants.ts for available projectile types
+ */
 export const Projectile = defineComponent({
-  damage: Types.f32,        // Damage on impact
-  speed: Types.f32,         // Pixels per second
-  lifetime: Types.f32,      // Max seconds before despawn
-  targetEntityId: Types.ui32, // Target entity (for homing, optional)
-  projectileType: Types.ui8 // Type (torpedo, etc.)
+  damage: Types.f32,
+  speed: Types.f32,
+  lifetime: Types.f32,
+  targetEntityId: Types.ui32,
+  projectileType: Types.ui8
 });
 
-// EnemyWeapon component - for enemies that can shoot projectiles
+/**
+ * EnemyWeapon component for enemies that fire projectiles.
+ * 
+ * Attached to enemy ships that can shoot at the Kobayashi Maru.
+ * The enemy combat system handles firing logic.
+ * 
+ * @property range - Maximum firing range in pixels
+ * @property fireRate - Shots per second
+ * @property damage - Damage per projectile
+ * @property lastFired - Game time of last shot
+ * @property projectileType - Type of projectile fired (use ProjectileType enum)
+ */
 export const EnemyWeapon = defineComponent({
-  range: Types.f32,        // Range at which enemy can shoot
-  fireRate: Types.f32,     // Shots per second
-  damage: Types.f32,       // Damage per shot
-  lastFired: Types.f32,    // Timestamp of last shot (in seconds)
-  projectileType: Types.ui8 // Type of projectile (uses ProjectileType)
+  range: Types.f32,
+  fireRate: Types.f32,
+  damage: Types.f32,
+  lastFired: Types.f32,
+  projectileType: Types.ui8
 });
+
+
 
 // ============================================================================
 // STATUS EFFECT COMPONENTS

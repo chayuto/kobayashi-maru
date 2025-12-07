@@ -1,42 +1,110 @@
 /**
- * Game constants and type definitions for Kobayashi Maru
+ * Game Constants and Type Definitions for Kobayashi Maru
+ * 
+ * This module contains all configuration values, enums, and type definitions
+ * used throughout the game. Values here are compile-time constants.
+ * 
+ * ## Key Constants
+ * - `GAME_CONFIG` - World dimensions, collision settings, resource values
+ * - `FactionId` - Entity team identifiers
+ * - `TurretType` - Weapon type identifiers
+ * - `TURRET_CONFIG` - Complete turret stats and costs
+ * 
+ * @module constants
  */
 
-// Faction color palette
+// =============================================================================
+// COLOR PALETTES
+// =============================================================================
+
+/**
+ * Faction-specific colors for sprites and UI.
+ * Each faction has a unique color for easy identification.
+ * Colors are 24-bit RGB values in hexadecimal format.
+ * 
+ * @example
+ * ```typescript
+ * sprite.tint = FACTION_COLORS.KLINGON; // Red tint
+ * ```
+ */
 export const FACTION_COLORS = {
-  FEDERATION: 0x33CC99,  // Teal
-  KLINGON: 0xDD4444,     // Red
-  ROMULAN: 0x99CC33,     // Lime
-  BORG: 0x22EE22,        // Neon Green
-  THOLIAN: 0xFF7700,     // Orange
-  SPECIES_8472: 0xCC99FF, // Lavender
-  PROJECTILE: 0xFF6600   // Orange-red (Photon Torpedo)
+  /** Federation blue-green (friendly) */
+  FEDERATION: 0x33CC99,
+  /** Klingon red (aggressive) */
+  KLINGON: 0xDD4444,
+  /** Romulan lime green (tactical) */
+  ROMULAN: 0x99CC33,
+  /** Borg neon green (relentless) */
+  BORG: 0x22EE22,
+  /** Tholian orange (mysterious) */
+  THOLIAN: 0xFF7700,
+  /** Species 8472 lavender (deadly) */
+  SPECIES_8472: 0xCC99FF,
+  /** Projectile orange-red (weapon fire) */
+  PROJECTILE: 0xFF6600
 } as const;
 
-// LCARS UI colors
+/**
+ * LCARS-style UI colors (Star Trek aesthetic).
+ * Used for HUD elements, panels, and text.
+ */
 export const LCARS_COLORS = {
+  /** Primary accent color */
   GOLDEN_ORANGE: 0xFF9900,
+  /** Secondary accent color */
   GALAXY_BLUE: 0x99CCFF,
+  /** Space background */
   BACKGROUND: 0x000000
 } as const;
 
-// Faction IDs for ECS
+// =============================================================================
+// FACTION IDENTIFIERS
+// =============================================================================
+
+/**
+ * Faction IDs for identifying entity teams in the ECS.
+ * 
+ * Used by targeting and combat systems to determine friend/foe relationships.
+ * Federation and PROJECTILE are friendly; all others are hostile.
+ * 
+ * @example
+ * ```typescript
+ * // Check if entity is enemy
+ * const factionId = Faction.id[entityId];
+ * const isHostile = factionId !== FactionId.FEDERATION && 
+ *                   factionId !== FactionId.PROJECTILE;
+ * 
+ * // Create enemy with specific faction
+ * createEnemy(world, FactionId.KLINGON, x, y);
+ * ```
+ */
 export const FactionId = {
+  /** Player's team (Kobayashi Maru, turrets) */
   FEDERATION: 0,
+  /** Aggressive direct attackers */
   KLINGON: 1,
+  /** Tactical strafing attackers */
   ROMULAN: 2,
+  /** Swarm behavior attackers */
   BORG: 3,
+  /** Orbiting ranged attackers */
   THOLIAN: 4,
+  /** Elite hunter attackers */
   SPECIES_8472: 5,
-  PROJECTILE: 99,          // Special faction for friendly projectiles
-  ENEMY_PROJECTILE: 98     // Special faction for enemy projectiles
+  /** Friendly projectiles (torpedoes, beams) */
+  PROJECTILE: 99,
+  /** Hostile projectiles (enemy fire) */
+  ENEMY_PROJECTILE: 98
 } as const;
 
 export type FactionIdType = typeof FactionId[keyof typeof FactionId];
 
-// Sprite Types for rendering (decoupled from FactionId)
+/**
+ * Sprite type identifiers for the render system.
+ * Maps to specific sprite textures in the asset system.
+ */
 export const SpriteType = {
-  // Factions (map 1:1 to FactionId for convenience)
+  // Faction sprites (match FactionId for convenience)
   FEDERATION: 0,
   KLINGON: 1,
   ROMULAN: 2,
@@ -44,69 +112,147 @@ export const SpriteType = {
   THOLIAN: 4,
   SPECIES_8472: 5,
 
-  // Turrets
+  // Turret sprites
   TURRET_PHASER: 10,
   TURRET_TORPEDO: 11,
   TURRET_DISRUPTOR: 12,
 
-  // Projectiles
+  // Projectile sprites
   PROJECTILE: 99,
   ENEMY_PROJECTILE: 98
 } as const;
 
 export type SpriteTypeId = typeof SpriteType[keyof typeof SpriteType];
 
-// Game configuration
+// =============================================================================
+// GAME CONFIGURATION
+// =============================================================================
+
+/**
+ * Core game configuration values.
+ * 
+ * These are compile-time constants that define world parameters,
+ * collision settings, and gameplay balance values.
+ * 
+ * @example
+ * ```typescript
+ * // World dimensions
+ * const centerX = GAME_CONFIG.WORLD_WIDTH / 2;  // 960
+ * const centerY = GAME_CONFIG.WORLD_HEIGHT / 2; // 540
+ * 
+ * // Check placement distance
+ * if (distance < GAME_CONFIG.MIN_TURRET_DISTANCE) {
+ *   // Too close to another turret
+ * }
+ * ```
+ */
 export const GAME_CONFIG = {
+  /** Target frames per second */
   TARGET_FPS: 60,
+  /** Initial ECS entity pool size */
   INITIAL_ENTITY_COUNT: 5000,
+  /** World width in pixels (canvas scales to fit) */
   WORLD_WIDTH: 1920,
+  /** World height in pixels (canvas scales to fit) */
   WORLD_HEIGHT: 1080,
-  COLLISION_CELL_SIZE: 64,  // Cell size for spatial hash (2x typical entity radius)
-  MIN_TURRET_DISTANCE: 64,  // Minimum distance between turrets in pixels
-  INITIAL_RESOURCES: 500,   // Starting resource amount
-  RESOURCE_REWARD: 10,      // Resources gained per enemy kill
-  // Enemy collision settings
-  ENEMY_COLLISION_RADIUS: 40,   // Collision radius for enemy-ship collision
-  ENEMY_COLLISION_DAMAGE: 25,   // Damage dealt by enemy on collision
-  // Slow mode settings
-  SLOW_MODE_MULTIPLIER: 0.5,    // Speed multiplier when slow mode is enabled
-  // Orbit behavior settings
-  ORBIT_RADIUS: 300,            // Distance to orbit around target (pixels)
-  ORBIT_SPEED: 50,              // Slow orbit speed (pixels per second)
-  ORBIT_APPROACH_SPEED: 40,     // Slow approach speed until orbit distance
-  // Collision radii for entities
-  KOBAYASHI_MARU_RADIUS: 40,    // Collision radius for Kobayashi Maru
-  TURRET_RADIUS: 20,            // Collision radius for turrets
-  // Kobayashi Maru default defense weapon stats
-  KOBAYASHI_MARU_DEFENSE_RANGE: 250,     // Defense weapon range in pixels
-  KOBAYASHI_MARU_DEFENSE_FIRE_RATE: 2,   // Defense weapon fire rate (shots per second)
-  KOBAYASHI_MARU_DEFENSE_DAMAGE: 15      // Defense weapon damage per shot
+  /** Spatial hash cell size for collision detection */
+  COLLISION_CELL_SIZE: 64,
+  /** Minimum distance between turret placements (pixels) */
+  MIN_TURRET_DISTANCE: 64,
+  /** Starting resource amount */
+  INITIAL_RESOURCES: 500,
+  /** Resources awarded per enemy kill */
+  RESOURCE_REWARD: 10,
+  /** Collision radius for enemy ships hitting Kobayashi Maru */
+  ENEMY_COLLISION_RADIUS: 40,
+  /** Damage dealt by enemy collision with Kobayashi Maru */
+  ENEMY_COLLISION_DAMAGE: 25,
+  /** Speed multiplier when slow mode is active (0.5 = half speed) */
+  SLOW_MODE_MULTIPLIER: 0.5,
+  /** Orbit behavior: distance from target (pixels) */
+  ORBIT_RADIUS: 300,
+  /** Orbit behavior: circling speed (pixels/second) */
+  ORBIT_SPEED: 50,
+  /** Orbit behavior: approach speed before reaching orbit (pixels/second) */
+  ORBIT_APPROACH_SPEED: 40,
+  /** Kobayashi Maru collision radius (pixels) */
+  KOBAYASHI_MARU_RADIUS: 40,
+  /** Turret collision radius (pixels) */
+  TURRET_RADIUS: 20,
+  /** Kobayashi Maru defense weapon range (pixels) */
+  KOBAYASHI_MARU_DEFENSE_RANGE: 250,
+  /** Kobayashi Maru defense weapon fire rate (shots/second) */
+  KOBAYASHI_MARU_DEFENSE_FIRE_RATE: 2,
+  /** Kobayashi Maru defense weapon damage per shot */
+  KOBAYASHI_MARU_DEFENSE_DAMAGE: 15
 } as const;
 
-// Turret type IDs
+// =============================================================================
+// TURRET TYPES
+// =============================================================================
+
+/**
+ * Turret type identifiers.
+ * 
+ * Each type has unique stats and mechanics defined in TURRET_CONFIG.
+ * 
+ * @example
+ * ```typescript
+ * // Create a torpedo launcher turret
+ * createTurret(world, x, y, TurretType.TORPEDO_LAUNCHER);
+ * 
+ * // Get turret cost
+ * const cost = TURRET_CONFIG[TurretType.PHASER_ARRAY].cost;
+ * ```
+ */
 export const TurretType = {
-  PHASER_ARRAY: 0,      // Fast fire rate, low damage, medium range
-  TORPEDO_LAUNCHER: 1,  // Slow fire rate, high damage, long range
-  DISRUPTOR_BANK: 2,    // Medium fire rate, stacking debuff
-  TETRYON_BEAM: 3,      // Shield-stripping beam
-  PLASMA_CANNON: 4,     // Burning projectile
-  POLARON_BEAM: 5       // Power-draining beam
+  /** Fast fire rate, low damage, medium range */
+  PHASER_ARRAY: 0,
+  /** Slow fire rate, high damage, long range */
+  TORPEDO_LAUNCHER: 1,
+  /** Medium stats, balanced weapon */
+  DISRUPTOR_BANK: 2,
+  /** Shield-stripping beam (3x shield, 0.5x hull) */
+  TETRYON_BEAM: 3,
+  /** Burning projectile (DOT effect) */
+  PLASMA_CANNON: 4,
+  /** Power-draining beam (slow stacks) */
+  POLARON_BEAM: 5
 } as const;
 
 export type TurretTypeId = typeof TurretType[keyof typeof TurretType];
 
-// AI Behavior Types
+// =============================================================================
+// AI BEHAVIOR TYPES
+// =============================================================================
+
+/**
+ * AI behavior patterns for enemy movement.
+ * 
+ * Each faction has a default behavior type. The AI system uses
+ * these to determine how enemies move toward and attack targets.
+ * 
+ * @see AIBehavior component in components.ts
+ * @see aiSystem.ts for behavior implementations
+ */
 export const AIBehaviorType = {
-  DIRECT: 0,      // Bee-line to target (Klingon default)
-  STRAFE: 1,      // Side-to-side movement while approaching (Romulan)
-  FLANK: 2,       // Circle around to attack from side (Tholian)
-  SWARM: 3,       // Move as group toward nearest threat (Borg)
-  HUNTER: 4,      // Aggressive pursuit, targets turrets (Species 8472)
-  ORBIT: 5        // Slow approach, then orbit at fixed distance and shoot (Tholian alternate)
+  /** Bee-line straight to target (Klingon default) */
+  DIRECT: 0,
+  /** Side-to-side weaving while approaching (Romulan) */
+  STRAFE: 1,
+  /** Circle around to flank (unused) */
+  FLANK: 2,
+  /** Move as coordinated group (Borg) */
+  SWARM: 3,
+  /** Aggressive pursuit, prioritizes turrets (Species 8472) */
+  HUNTER: 4,
+  /** Slow approach, then orbit and shoot (Tholian) */
+  ORBIT: 5
 } as const;
 
 export type AIBehaviorTypeId = typeof AIBehaviorType[keyof typeof AIBehaviorType];
+
+
 
 // Turret configuration for each type
 export const TURRET_CONFIG: Record<number, {
