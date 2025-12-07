@@ -1,4 +1,5 @@
 import { EmitterPattern } from './ParticleSystem';
+import { GAME_CONFIG } from '../types/constants';
 
 export const EFFECTS = {
     // Legacy effects (backward compatible)
@@ -259,7 +260,7 @@ export const EFFECTS = {
         drag: 0.97,
         bounceCount: 2,
         bounceDamping: 0.6,
-        groundY: 1080  // Match GAME_CONFIG.WORLD_HEIGHT
+        groundY: GAME_CONFIG.WORLD_HEIGHT
     },
 
     HULL_FRAGMENTS: {
@@ -282,7 +283,7 @@ export const EFFECTS = {
         drag: 0.96,
         bounceCount: 3,
         bounceDamping: 0.7,
-        groundY: 1080
+        groundY: GAME_CONFIG.WORLD_HEIGHT
     },
 
     SPARK_DEBRIS: {
@@ -305,7 +306,7 @@ export const EFFECTS = {
         drag: 0.98,
         bounceCount: 1,
         bounceDamping: 0.5,
-        groundY: 1080,
+        groundY: GAME_CONFIG.WORLD_HEIGHT,
         trail: { enabled: true, length: 3, fadeRate: 0.4, width: 1 }
     }
 };

@@ -256,7 +256,7 @@ export class Game {
 
     // Initialize shockwave renderer with explosions glow layer
     this.shockwaveRenderer = new ShockwaveRenderer();
-    if (this.shockwaveRenderer && explosionsLayer) {
+    if (explosionsLayer) {
       this.shockwaveRenderer.init(explosionsLayer);
     }
 
