@@ -16,4 +16,5 @@ export * from './PlacementRenderer';
 export * from './ShieldRenderer';
 export * from './ShockwaveRenderer';
 export * from './ExplosionManager';
+export * from './TurretUpgradeVisuals';
 export * from './filters';

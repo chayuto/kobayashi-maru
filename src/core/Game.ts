@@ -12,7 +12,7 @@ import {
   decrementEntityCount
 } from '../ecs';
 import { Health, Shield, Turret, Position, Faction, SpriteRef } from '../ecs/components';
-import { SpriteManager, BeamRenderer, ParticleSystem, HealthBarRenderer, ScreenShake, PlacementRenderer, GlowManager, GlowLayer, ShieldRenderer, ShockwaveRenderer, ExplosionManager } from '../rendering';
+import { SpriteManager, BeamRenderer, ParticleSystem, HealthBarRenderer, ScreenShake, PlacementRenderer, GlowManager, GlowLayer, ShieldRenderer, ShockwaveRenderer, ExplosionManager, TurretUpgradeVisuals } from '../rendering';
 import { createRenderSystem, createMovementSystem, createCollisionSystem, CollisionSystem, createTargetingSystem, createCombatSystem, createDamageSystem, createAISystem, createProjectileSystem, statusEffectSystem, TargetingSystem, CombatSystem, DamageSystem, SystemManager, createEnemyCollisionSystem, EnemyCollisionSystem, createEnemyCombatSystem, EnemyCombatSystem, createEnemyProjectileSystem, EnemyProjectileSystem } from '../systems';
 
 import { GAME_CONFIG, LCARS_COLORS, GameEventType, EnemyKilledPayload, WaveStartedPayload, WaveCompletedPayload } from '../types';
@@ -71,6 +71,7 @@ export class Game {
   private shieldRenderer: ShieldRenderer | null = null;
   private shockwaveRenderer: ShockwaveRenderer | null = null;
   private explosionManager: ExplosionManager | null = null;
+  private turretUpgradeVisuals: TurretUpgradeVisuals | null = null;
   private performanceMonitor: PerformanceMonitor;
   private qualityManager: QualityManager;
   private hapticManager: HapticManager;
@@ -236,6 +237,11 @@ export class Game {
     this.glowManager.applyPreset(GlowLayer.PROJECTILES, 'medium');
     this.glowManager.applyPreset(GlowLayer.EXPLOSIONS, 'explosions');
     this.glowManager.applyPreset(GlowLayer.SHIELDS, 'shields');
+
+    // Initialize turret upgrade visuals on the weapons glow layer
+    if (weaponsLayer) {
+      this.turretUpgradeVisuals = new TurretUpgradeVisuals(this.world, weaponsLayer);
+    }
 
     // Initialize beam renderer with weapons glow layer
     if (this.beamRenderer && weaponsLayer) {
@@ -620,6 +626,11 @@ export class Game {
     // Update shield renderer
     if (this.shieldRenderer) {
       this.shieldRenderer.update(this.world, deltaTime);
+    }
+
+    // Update turret upgrade visuals
+    if (this.turretUpgradeVisuals) {
+      this.turretUpgradeVisuals.update();
     }
     this.performanceMonitor.endRender();
 
@@ -1041,6 +1052,9 @@ export class Game {
     }
     if (this.glowManager) {
       this.glowManager.destroy();
+    }
+    if (this.turretUpgradeVisuals) {
+      this.turretUpgradeVisuals.destroy();
     }
     this.spriteManager.destroy();
     if (this.touchInputManager) {
