@@ -13,6 +13,7 @@ import { MobileControlsOverlay } from './MobileControlsOverlay';
 import { MessageLog } from './MessageLog';
 import { AudioManager } from '../audio';
 import { ResponsiveUIManager } from './ResponsiveUIManager';
+import { UI_CONFIG } from '../config';
 
 // Forward declaration for Game type to avoid circular imports
 interface GameInterface {
@@ -30,9 +31,9 @@ const WAVE_STATE_COLORS: Record<string, number> = {
   'complete': UI_STYLES.COLORS.HEALTH
 };
 
-// Toggle button dimensions
-const TOGGLE_BUTTON_WIDTH = 100;
-const TOGGLE_BUTTON_HEIGHT = 32;
+// Toggle button dimensions (from centralized config)
+const TOGGLE_BUTTON_WIDTH = UI_CONFIG.BUTTONS.TOGGLE_WIDTH;
+const TOGGLE_BUTTON_HEIGHT = UI_CONFIG.BUTTONS.TOGGLE_HEIGHT;
 
 /**
  * HUDManager class - manages all HUD display elements

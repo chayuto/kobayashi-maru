@@ -5,6 +5,7 @@
 import { defineQuery, hasComponent, IWorld } from 'bitecs';
 import { Position, Turret, Target, Faction, Health, Shield, WeaponProperties } from '../ecs/components';
 import { TurretType, ProjectileType } from '../types/constants';
+import { COMBAT_CONFIG } from '../config';
 import { createProjectile } from '../ecs/entityFactory';
 import { AudioManager, SoundType } from '../audio';
 import { ParticleSystem, EFFECTS } from '../rendering';
@@ -49,9 +50,9 @@ export interface CombatStats {
   accuracy: number;
 }
 
-// Beam generation constants
-const MIN_BEAM_LENGTH = 0.001;
-const BEAM_SEGMENT_COUNT = 5;
+// Beam generation constants (from centralized config)
+const MIN_BEAM_LENGTH = COMBAT_CONFIG.BEAM.MIN_LENGTH;
+const BEAM_SEGMENT_COUNT = COMBAT_CONFIG.BEAM.SEGMENT_COUNT;
 
 /**
  * Generate beam segments with electricity jitter effect (private helper function)
@@ -64,7 +65,7 @@ const BEAM_SEGMENT_COUNT = 5;
  */
 function generateBeamSegments(startX: number, startY: number, endX: number, endY: number, turretType: number): BeamSegment[] {
   const segments: BeamSegment[] = [];
-  
+
   // Jitter amount varies by weapon type
   let jitter = 8; // Default jitter
   if (turretType === TurretType.PHASER_ARRAY) {
@@ -76,36 +77,36 @@ function generateBeamSegments(startX: number, startY: number, endX: number, endY
   } else if (turretType === TurretType.POLARON_BEAM) {
     jitter = 9; // Moderate jitter for polarons
   }
-  
+
   // Calculate perpendicular vector for offset
   const dx = endX - startX;
   const dy = endY - startY;
   const length = Math.sqrt(dx * dx + dy * dy);
-  
+
   // Handle zero-length beams
   if (length < MIN_BEAM_LENGTH) {
     return segments;
   }
-  
+
   const perpX = -dy / length;
   const perpY = dx / length;
-  
+
   for (let i = 0; i < BEAM_SEGMENT_COUNT; i++) {
     const t1 = i / BEAM_SEGMENT_COUNT;
     const t2 = (i + 1) / BEAM_SEGMENT_COUNT;
-    
+
     // Interpolate along beam path
     const x1 = startX + dx * t1;
     const y1 = startY + dy * t1;
     const x2 = startX + dx * t2;
     const y2 = startY + dy * t2;
-    
+
     // Add random offset (less at endpoints for smooth connection)
     // midFactor ranges from 0 at endpoints to 1 at beam center
     // This creates stronger jitter in the middle and smoother connections at the ends
     const midFactor = 1 - Math.abs(t1 - 0.5) * 2;
     const offset = (Math.random() - 0.5) * jitter * midFactor;
-    
+
     segments.push({
       startX: x1 + perpX * offset,
       startY: y1 + perpY * offset,
@@ -114,7 +115,7 @@ function generateBeamSegments(startX: number, startY: number, endX: number, endY
       offset
     });
   }
-  
+
   return segments;
 }
 
@@ -132,7 +133,7 @@ export function createCombatSystem(particleSystem?: ParticleSystem) {
   let totalShotsFired = 0;
   let shotsHit = 0;
   let damageHistory: { time: number; damage: number }[] = [];
-  const DPS_WINDOW = 5; // Calculate DPS over 5 seconds
+  const DPS_WINDOW = COMBAT_CONFIG.STATS.DPS_WINDOW_SECONDS;
 
   /**
    * Applies damage to an entity, prioritizing shields over health
@@ -229,7 +230,7 @@ export function createCombatSystem(particleSystem?: ParticleSystem) {
     for (const turretEid of turrets) {
       // Collect all valid targets for this turret
       const activeTargets: number[] = [];
-      
+
       if (Target.hasTarget[turretEid] === 1) {
         const targetEid = Target.entityId[turretEid];
         if (hasComponent(world, Health, targetEid) && Health.current[targetEid] > 0) {
@@ -238,7 +239,7 @@ export function createCombatSystem(particleSystem?: ParticleSystem) {
           Target.hasTarget[turretEid] = 0;
         }
       }
-      
+
       if (Target.hasTarget2[turretEid] === 1) {
         const targetEid2 = Target.entityId2[turretEid];
         if (hasComponent(world, Health, targetEid2) && Health.current[targetEid2] > 0) {
@@ -247,7 +248,7 @@ export function createCombatSystem(particleSystem?: ParticleSystem) {
           Target.hasTarget2[turretEid] = 0;
         }
       }
-      
+
       if (Target.hasTarget3[turretEid] === 1) {
         const targetEid3 = Target.entityId3[turretEid];
         if (hasComponent(world, Health, targetEid3) && Health.current[targetEid3] > 0) {
@@ -256,7 +257,7 @@ export function createCombatSystem(particleSystem?: ParticleSystem) {
           Target.hasTarget3[turretEid] = 0;
         }
       }
-      
+
       // Skip if no valid targets
       if (activeTargets.length === 0) continue;
 

@@ -5,9 +5,11 @@
 import { Application, Texture, ParticleContainer, Particle } from 'pixi.js';
 import { SpriteType } from '../types/constants';
 import { createFactionTextures, FactionTextures } from './textures';
+import { RENDERING_CONFIG } from '../config';
 
-// Maximum number of particles supported
-const MAX_PARTICLES = 15000;
+// Maximum number of particles supported (from centralized config)
+const MAX_PARTICLES = RENDERING_CONFIG.PARTICLES.MAX_COUNT;
+
 
 /**
  * SpriteManager handles particle creation, updates, and removal using a ParticleContainer
