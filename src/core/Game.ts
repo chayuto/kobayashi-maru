@@ -12,7 +12,7 @@ import {
   decrementEntityCount
 } from '../ecs';
 import { Health, Shield, Turret, Position, Faction, SpriteRef } from '../ecs/components';
-import { SpriteManager, BeamRenderer, ParticleSystem, HealthBarRenderer, ScreenShake, PlacementRenderer } from '../rendering';
+import { SpriteManager, BeamRenderer, ParticleSystem, HealthBarRenderer, ScreenShake, PlacementRenderer, GlowManager, GlowLayer } from '../rendering';
 import { createRenderSystem, createMovementSystem, createCollisionSystem, CollisionSystem, createTargetingSystem, createCombatSystem, createDamageSystem, createAISystem, createProjectileSystem, statusEffectSystem, TargetingSystem, CombatSystem, DamageSystem, SystemManager, createEnemyCollisionSystem, EnemyCollisionSystem, createEnemyCombatSystem, EnemyCombatSystem, createEnemyProjectileSystem, EnemyProjectileSystem } from '../systems';
 
 import { GAME_CONFIG, LCARS_COLORS, GameEventType, EnemyKilledPayload, WaveStartedPayload, WaveCompletedPayload } from '../types';
@@ -67,6 +67,7 @@ export class Game {
   private particleSystem: ParticleSystem | null = null;
   private healthBarRenderer: HealthBarRenderer | null = null;
   private screenShake: ScreenShake | null = null;
+  private glowManager: GlowManager | null = null;
   private performanceMonitor: PerformanceMonitor;
   private qualityManager: QualityManager;
   private hapticManager: HapticManager;
@@ -198,14 +199,11 @@ export class Game {
     // Initialize sprite manager after app is ready
     this.spriteManager.init();
 
-    // Initialize beam renderer
+    // Initialize beam renderer (will be initialized after glow manager)
     this.beamRenderer = new BeamRenderer(this.app);
-    this.beamRenderer.init();
 
-    // Initialize particle system
+    // Initialize particle system (will be initialized after glow manager)
     this.particleSystem = new ParticleSystem();
-    const particleSettings = this.qualityManager.getSettings();
-    this.particleSystem.init(this.app, particleSettings.maxParticles, particleSettings.particleSpawnRate);
 
     // Initialize health bar renderer
     this.healthBarRenderer = new HealthBarRenderer();
@@ -213,6 +211,39 @@ export class Game {
 
     // Initialize screen shake
     this.screenShake = new ScreenShake();
+
+    // Initialize glow manager
+    this.glowManager = new GlowManager();
+    this.glowManager.init();
+
+    // Add glow layers to stage in correct render order
+    // Order: starfield -> glow layers -> entities -> particles -> UI
+    const weaponsLayer = this.glowManager.getLayer(GlowLayer.WEAPONS);
+    const projectilesLayer = this.glowManager.getLayer(GlowLayer.PROJECTILES);
+    const explosionsLayer = this.glowManager.getLayer(GlowLayer.EXPLOSIONS);
+    const shieldsLayer = this.glowManager.getLayer(GlowLayer.SHIELDS);
+
+    if (weaponsLayer) this.app.stage.addChild(weaponsLayer);
+    if (projectilesLayer) this.app.stage.addChild(projectilesLayer);
+    if (shieldsLayer) this.app.stage.addChild(shieldsLayer);
+    if (explosionsLayer) this.app.stage.addChild(explosionsLayer);
+
+    // Apply glow presets to each layer
+    this.glowManager.applyPreset(GlowLayer.WEAPONS, 'weapons');
+    this.glowManager.applyPreset(GlowLayer.PROJECTILES, 'medium');
+    this.glowManager.applyPreset(GlowLayer.EXPLOSIONS, 'explosions');
+    this.glowManager.applyPreset(GlowLayer.SHIELDS, 'shields');
+
+    // Initialize beam renderer with weapons glow layer
+    if (this.beamRenderer && weaponsLayer) {
+      this.beamRenderer.init(weaponsLayer);
+    }
+
+    // Initialize particle system with explosions glow layer
+    if (this.particleSystem && explosionsLayer) {
+      const particleSettings = this.qualityManager.getSettings();
+      this.particleSystem.init(this.app, particleSettings.maxParticles, particleSettings.particleSpawnRate, explosionsLayer);
+    }
 
     // Create the render system with the sprite manager
     this.renderSystem = createRenderSystem(this.spriteManager);
@@ -965,6 +996,9 @@ export class Game {
     }
     if (this.healthBarRenderer) {
       this.healthBarRenderer.destroy();
+    }
+    if (this.glowManager) {
+      this.glowManager.destroy();
     }
     this.spriteManager.destroy();
     if (this.touchInputManager) {
