@@ -2,6 +2,7 @@
  * Performance Monitor for Kobayashi Maru
  * Tracks frame time, system timings, and performance metrics
  */
+import { PERFORMANCE_CONFIG } from '../config';
 
 /**
  * Performance metrics collected by the monitor
@@ -32,11 +33,11 @@ export const FRAME_BUDGET = {
   OTHER: 3.67
 } as const;
 
-// Rolling average window size
-const AVERAGE_WINDOW_SIZE = 60;
+// Rolling average window size (from centralized config)
+const AVERAGE_WINDOW_SIZE = PERFORMANCE_CONFIG.MONITORING.AVERAGE_WINDOW_SIZE;
 
-// Memory update interval (ms)
-const MEMORY_UPDATE_INTERVAL = 1000;
+// Memory update interval (from centralized config)
+const MEMORY_UPDATE_INTERVAL = PERFORMANCE_CONFIG.MONITORING.MEMORY_UPDATE_INTERVAL_MS;
 
 /**
  * Performance Tiers for device capability

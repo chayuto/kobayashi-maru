@@ -3,6 +3,7 @@
  * Manages wave spawning, progression, and completion detection
  */
 import { FactionId, GAME_CONFIG, EnemyRank, RANK_MULTIPLIERS, ABILITY_CONFIG } from '../types/constants';
+import { WAVE_CONFIG } from '../config';
 import { GameEventType } from '../types/events';
 import {
   createKlingonShip,
@@ -68,11 +69,11 @@ interface SpawnGroupState {
  */
 export type WaveState = 'idle' | 'spawning' | 'active' | 'complete';
 
-// Maximum spawns per frame to prevent frame spikes
-const MAX_SPAWNS_PER_FRAME = 10;
+// Maximum spawns per frame to prevent frame spikes (from centralized config)
+const MAX_SPAWNS_PER_FRAME = WAVE_CONFIG.SPAWN.MAX_SPAWNS_PER_FRAME;
 
-// Default delay before next wave starts (ms)
-const WAVE_COMPLETE_DELAY = 3000;
+// Default delay before next wave starts (from centralized config)
+const WAVE_COMPLETE_DELAY = WAVE_CONFIG.TIMING.COMPLETE_DELAY_MS;
 
 /**
  * WaveManager class
@@ -250,7 +251,7 @@ export class WaveManager {
     if (eid !== -1) {
       // Apply difficulty scaling to health and shields
       this.applyDifficultyScaling(eid, difficultyScale);
-      
+
       // Determine if this should be an elite or boss enemy
       this.applyEnemyVariant(eid, group.config.faction);
 
@@ -318,7 +319,7 @@ export class WaveManager {
 
     // Check if this is a boss wave
     const bossWave = getBossWaveConfig(this.currentWave);
-    
+
     if (bossWave && bossWave.bossType === faction) {
       // This is a boss enemy
       this.applyBossVariant(eid, bossWave);

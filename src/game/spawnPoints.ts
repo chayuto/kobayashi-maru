@@ -3,6 +3,7 @@
  * Handles spawn positions along screen edges and formation patterns
  */
 import { GAME_CONFIG } from '../types/constants';
+import { WAVE_CONFIG } from '../config';
 import { FormationType } from './waveConfig';
 
 /**
@@ -18,8 +19,9 @@ export interface SpawnPosition {
  */
 export type EdgeType = 'top' | 'right' | 'bottom' | 'left';
 
-// Margin from screen edge for spawn positions
-const EDGE_MARGIN = 50;
+// Margin from screen edge for spawn positions (from centralized config)
+const EDGE_MARGIN = WAVE_CONFIG.SPAWN.EDGE_MARGIN;
+
 
 /**
  * Gets a random edge of the screen
@@ -40,7 +42,7 @@ export function getEdgePosition(edge: EdgeType, positionAlongEdge?: number): Spa
   const pos = positionAlongEdge ?? Math.random();
   const width = GAME_CONFIG.WORLD_WIDTH;
   const height = GAME_CONFIG.WORLD_HEIGHT;
-  
+
   switch (edge) {
     case 'top':
       return { x: pos * width, y: -EDGE_MARGIN };
@@ -69,21 +71,21 @@ export function getRandomEdgePosition(): SpawnPosition {
  */
 export function getClusterPositions(count: number, clusterRadius: number = 100): SpawnPosition[] {
   const positions: SpawnPosition[] = [];
-  
+
   // Get a center point along a random edge
   const centerPos = getRandomEdgePosition();
-  
+
   for (let i = 0; i < count; i++) {
     // Random offset within cluster radius
     const angle = Math.random() * Math.PI * 2;
     const distance = Math.random() * clusterRadius;
-    
+
     positions.push({
       x: centerPos.x + Math.cos(angle) * distance,
       y: centerPos.y + Math.sin(angle) * distance
     });
   }
-  
+
   return positions;
 }
 
@@ -95,39 +97,39 @@ export function getClusterPositions(count: number, clusterRadius: number = 100):
  */
 export function getVFormationPositions(count: number, spacing: number = 40): SpawnPosition[] {
   const positions: SpawnPosition[] = [];
-  
+
   // Get a base position along a random edge
   const edge = getRandomEdge();
   const basePos = getEdgePosition(edge, 0.5); // Center of the edge
-  
+
   // Calculate formation direction (pointing inward toward screen center)
   const centerX = GAME_CONFIG.WORLD_WIDTH / 2;
   const centerY = GAME_CONFIG.WORLD_HEIGHT / 2;
   const toCenter = Math.atan2(centerY - basePos.y, centerX - basePos.x);
-  
+
   // V-formation angle (spread of the V)
   const vAngle = Math.PI / 6; // 30 degrees on each side
-  
+
   // Leader is at the front
   positions.push({ ...basePos });
-  
+
   // Wings of the V
   let leftCount = 0;
   let rightCount = 0;
-  
+
   for (let i = 1; i < count; i++) {
     const wingIndex = i % 2 === 0 ? leftCount++ : rightCount++;
     const isLeft = i % 2 === 0;
-    
+
     const wingAngle = isLeft ? toCenter + Math.PI + vAngle : toCenter + Math.PI - vAngle;
     const distance = (wingIndex + 1) * spacing;
-    
+
     positions.push({
       x: basePos.x + Math.cos(wingAngle) * distance,
       y: basePos.y + Math.sin(wingAngle) * distance
     });
   }
-  
+
   return positions;
 }
 
@@ -156,7 +158,7 @@ export function getFormationPositions(count: number, formation: FormationType): 
 export class SpawnPoints {
   private currentPositions: SpawnPosition[] = [];
   private currentIndex: number = 0;
-  
+
   /**
    * Sets up spawn positions for a formation
    * @param count - Number of spawn positions needed
@@ -166,7 +168,7 @@ export class SpawnPoints {
     this.currentPositions = getFormationPositions(count, formation);
     this.currentIndex = 0;
   }
-  
+
   /**
    * Gets the next spawn position
    * @returns The next spawn position, or a random position if none available
@@ -178,7 +180,7 @@ export class SpawnPoints {
     // Fallback to random position if we've used all preset positions
     return getRandomEdgePosition();
   }
-  
+
   /**
    * Resets the spawn points for a new wave
    */
@@ -186,7 +188,7 @@ export class SpawnPoints {
     this.currentPositions = [];
     this.currentIndex = 0;
   }
-  
+
   /**
    * Gets remaining positions count
    * @returns Number of remaining preset positions

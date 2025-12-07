@@ -4,6 +4,7 @@
  */
 
 import type { ScoreData } from './scoreManager';
+import { WAVE_CONFIG } from '../config';
 
 /**
  * High score entry with timestamp
@@ -18,9 +19,10 @@ export interface HighScoreEntry extends ScoreData {
 const STORAGE_KEY = 'kobayashi-maru-highscores';
 
 /**
- * Maximum number of high scores to store
+ * Maximum number of high scores to store (from centralized config)
  */
-const MAX_HIGH_SCORES = 10;
+const MAX_HIGH_SCORES = WAVE_CONFIG.SCORING.MAX_HIGH_SCORES;
+
 
 /**
  * HighScoreManager class - manages high score persistence
@@ -130,7 +132,7 @@ export class HighScoreManager {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed)) {
           // Validate and filter entries with expected structure
-          this.highScores = parsed.filter((entry): entry is HighScoreEntry => 
+          this.highScores = parsed.filter((entry): entry is HighScoreEntry =>
             typeof entry === 'object' &&
             entry !== null &&
             typeof entry.timeSurvived === 'number' &&
