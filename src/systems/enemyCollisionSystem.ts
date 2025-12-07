@@ -69,25 +69,33 @@ export function createEnemyCollisionSystem(
 
       if (distanceSquared <= collisionRadiusSquared) {
         // Collision detected!
-        
+
+        // Mark enemy for destruction (set health to 0) - DO THIS FIRST
+        Health.current[eid] = 0;
+        entitiesToDestroy.push(eid);
+
         // Deal damage to Kobayashi Maru (shields first, then hull)
         dealDamageToTarget(kmId, GAME_CONFIG.ENEMY_COLLISION_DAMAGE);
 
         // Spawn explosion effect at enemy position
         if (particleSystem) {
-          particleSystem.spawn({
-            ...EFFECTS.EXPLOSION_LARGE,
-            x: enemyX,
-            y: enemyY
-          });
+          try {
+            particleSystem.spawn({
+              ...EFFECTS.EXPLOSION_LARGE,
+              x: enemyX,
+              y: enemyY
+            });
+          } catch (e) {
+            console.error('Failed to spawn explosion particle:', e);
+          }
         }
 
         // Play explosion sound
-        AudioManager.getInstance().play(SoundType.EXPLOSION_SMALL, { volume: 0.6 });
-
-        // Mark enemy for destruction (set health to 0)
-        Health.current[eid] = 0;
-        entitiesToDestroy.push(eid);
+        try {
+          AudioManager.getInstance().play(SoundType.EXPLOSION_SMALL, { volume: 0.6 });
+        } catch (e) {
+          console.error('Failed to play explosion sound:', e);
+        }
       }
     }
 
