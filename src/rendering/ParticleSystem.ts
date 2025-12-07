@@ -38,6 +38,7 @@ export interface Particle {
     color: number;
     alpha: number;
     sprite: Graphics;
+    spriteType: ParticleSpriteType;  // Track the sprite type
     rotation: number;
     rotationSpeed: number;
     scale: number;
@@ -89,7 +90,6 @@ export class ParticleSystem {
 
     constructor() {
         this.container = new Container();
-        this.generateParticleTextures();
     }
 
     init(app: Application, maxParticles: number = 2000, spawnRateMultiplier: number = 1.0): void {
@@ -175,8 +175,9 @@ export class ParticleSystem {
                 particle.trail = undefined;
             }
 
-            // Initialize visual based on sprite type
-            this.drawParticle(particle, config.sprite || 'circle');
+            // Store sprite type and initialize visual
+            particle.spriteType = config.sprite || 'circle';
+            this.drawParticle(particle);
             particle.sprite.x = particle.x;
             particle.sprite.y = particle.y;
             particle.sprite.alpha = particle.alpha;
@@ -188,13 +189,13 @@ export class ParticleSystem {
         }
     }
 
-    private drawParticle(particle: Particle, spriteType: ParticleSpriteType): void {
+    private drawParticle(particle: Particle): void {
         particle.sprite.clear();
         particle.sprite.beginFill(particle.color);
 
         const size = particle.size;
 
-        switch (spriteType) {
+        switch (particle.spriteType) {
             case 'circle':
                 particle.sprite.drawCircle(0, 0, size);
                 break;
@@ -236,11 +237,15 @@ export class ParticleSystem {
 
             case 'fire':
                 {
+                    // Use deterministic fire shape based on particle position
                     const firePoints = 8;
+                    const seed = (particle.x * 12.9898 + particle.y * 78.233) % 1;
                     particle.sprite.moveTo(0, -size);
                     for (let i = 0; i <= firePoints; i++) {
                         const angle = (Math.PI * 2 * i) / firePoints - Math.PI / 2;
-                        const radius = size * (0.7 + Math.random() * 0.3);
+                        // Use seeded pseudo-random for consistent shape
+                        const localSeed = (seed + i * 0.123) % 1;
+                        const radius = size * (0.7 + localSeed * 0.3);
                         particle.sprite.lineTo(
                             Math.cos(angle) * radius,
                             Math.sin(angle) * radius
@@ -330,11 +335,10 @@ export class ParticleSystem {
             p.sprite.rotation = p.rotation;
             p.sprite.scale.set(p.scale);
             
-            // Update sprite color
-            p.sprite.clear();
-            p.sprite.beginFill(p.color);
-            p.sprite.drawCircle(0, 0, p.size);
-            p.sprite.endFill();
+            // Redraw sprite if color changed (for gradient support)
+            if (p.colorGradient) {
+                this.drawParticle(p);
+            }
 
             // Remove dead particles
             if (p.life <= 0) {
@@ -373,95 +377,6 @@ export class ParticleSystem {
         this.container.destroy({ children: true });
         this.particles = [];
         this.pool = [];
-    }
-
-    private generateParticleTextures(): void {
-        // Generate procedural textures for different particle types
-        const size = 32; // Base texture size
-
-        // Circle (default)
-        const circleGraphics = new Graphics();
-        circleGraphics.beginFill(0xFFFFFF);
-        circleGraphics.drawCircle(size / 2, size / 2, size / 2);
-        circleGraphics.endFill();
-
-        // Square
-        const squareGraphics = new Graphics();
-        squareGraphics.beginFill(0xFFFFFF);
-        squareGraphics.drawRect(0, 0, size, size);
-        squareGraphics.endFill();
-
-        // Star
-        const starGraphics = new Graphics();
-        starGraphics.beginFill(0xFFFFFF);
-        const centerX = size / 2;
-        const centerY = size / 2;
-        const outerRadius = size / 2;
-        const innerRadius = size / 4;
-        const points = 5;
-        
-        starGraphics.moveTo(centerX, centerY - outerRadius);
-        for (let i = 0; i < points * 2; i++) {
-            const radius = i % 2 === 0 ? outerRadius : innerRadius;
-            const angle = (Math.PI * i) / points - Math.PI / 2;
-            starGraphics.lineTo(
-                centerX + Math.cos(angle) * radius,
-                centerY + Math.sin(angle) * radius
-            );
-        }
-        starGraphics.closePath();
-        starGraphics.endFill();
-
-        // Spark (elongated diamond)
-        const sparkGraphics = new Graphics();
-        sparkGraphics.beginFill(0xFFFFFF);
-        sparkGraphics.moveTo(size / 2, 0);
-        sparkGraphics.lineTo(size * 0.6, size / 2);
-        sparkGraphics.lineTo(size / 2, size);
-        sparkGraphics.lineTo(size * 0.4, size / 2);
-        sparkGraphics.closePath();
-        sparkGraphics.endFill();
-
-        // Smoke (soft circle with gradient)
-        const smokeGraphics = new Graphics();
-        smokeGraphics.beginFill(0xFFFFFF, 0.6);
-        smokeGraphics.drawCircle(size / 2, size / 2, size / 2);
-        smokeGraphics.endFill();
-
-        // Fire (irregular shape)
-        const fireGraphics = new Graphics();
-        fireGraphics.beginFill(0xFFFFFF);
-        const firePoints = 8;
-        fireGraphics.moveTo(size / 2, 0);
-        for (let i = 0; i <= firePoints; i++) {
-            const angle = (Math.PI * 2 * i) / firePoints - Math.PI / 2;
-            const radius = (size / 2) * (0.7 + Math.random() * 0.3);
-            fireGraphics.lineTo(
-                size / 2 + Math.cos(angle) * radius,
-                size / 2 + Math.sin(angle) * radius
-            );
-        }
-        fireGraphics.closePath();
-        fireGraphics.endFill();
-
-        // Energy (hexagon)
-        const energyGraphics = new Graphics();
-        energyGraphics.beginFill(0xFFFFFF);
-        const hexPoints = 6;
-        energyGraphics.moveTo(size / 2 + (size / 2) * Math.cos(-Math.PI / 2), size / 2 + (size / 2) * Math.sin(-Math.PI / 2));
-        for (let i = 1; i <= hexPoints; i++) {
-            const angle = (Math.PI * 2 * i) / hexPoints - Math.PI / 2;
-            energyGraphics.lineTo(
-                size / 2 + (size / 2) * Math.cos(angle),
-                size / 2 + (size / 2) * Math.sin(angle)
-            );
-        }
-        energyGraphics.closePath();
-        energyGraphics.endFill();
-
-        // Note: In a real implementation, we would generate textures from these graphics
-        // For now, we'll use the Graphics directly since PixiJS 8 doesn't have generateTexture
-        // This is a limitation we'll work around by drawing shapes directly
     }
 
     private interpolateColorGradient(gradient: ColorGradient, normalizedLife: number): { color: number; alpha: number } {
@@ -578,6 +493,7 @@ export class ParticleSystem {
             color: 0,
             alpha: 0,
             sprite: new Graphics(),
+            spriteType: 'circle',
             rotation: 0,
             rotationSpeed: 0,
             scale: 1,
