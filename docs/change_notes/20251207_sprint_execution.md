@@ -50,6 +50,17 @@ Executed sprint planning and completed initial tasks focused on code quality and
 - Removed unused `getSpawnedCount()` method
 - **~80 lines removed**
 
+### Task 3: Game.ts Decomposition ✅
+
+**Files Created:**
+- `src/core/GameTurretController.ts` - Turret selection logic
+
+**Changes:**
+- Extracted turret selection methods: `handleCanvasClick`, `findTurretAtPosition`, `selectTurret`, `deselectTurret`, `showTurretUpgradePanel`
+- Created standalone reusable controller class (~180 lines)
+- Added export to `src/core/index.ts`
+- Game.ts ready for gradual delegation to new controller
+
 ### Task 7: Damage Integration Verified ✅
 
 **Finding:**

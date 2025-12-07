@@ -6,6 +6,7 @@ export * from './Game';
 export * from './GameInputHandler';
 export * from './GameStateController';
 export * from './GameCheatManager';
+export * from './GameTurretController';
 export * from './PerformanceMonitor';
 export * from './QualityManager';
 export * from './EventBus';
@@ -14,4 +15,3 @@ export * from './DebugManager';
 export * from './GestureManager';
 export * from './HapticManager';
 export * from './InputManager';
-
