@@ -51,6 +51,10 @@ export interface Particle {
         config: TrailConfig;
         graphics: Graphics;
     };
+    // Debris physics
+    bounces?: number;
+    bounceDamping?: number;
+    groundY?: number;
 }
 
 export interface ParticleConfig {
@@ -76,6 +80,10 @@ export interface ParticleConfig {
     trail?: TrailConfig;
     gravity?: number;
     drag?: number;
+    // Debris physics
+    bounceCount?: number;
+    bounceDamping?: number;
+    groundY?: number;
 }
 
 export class ParticleSystem {
@@ -181,6 +189,17 @@ export class ParticleSystem {
                 this.container.addChild(particle.trail.graphics);
             } else {
                 particle.trail = undefined;
+            }
+
+            // Initialize debris physics
+            if (config.bounceCount !== undefined) {
+                particle.bounces = config.bounceCount;
+                particle.bounceDamping = config.bounceDamping || 0.7;
+                particle.groundY = config.groundY;
+            } else {
+                particle.bounces = undefined;
+                particle.bounceDamping = undefined;
+                particle.groundY = undefined;
             }
 
             // Store sprite type and initialize visual
@@ -299,6 +318,25 @@ export class ParticleSystem {
             // Update position
             p.x += p.vx * deltaTime;
             p.y += p.vy * deltaTime;
+
+            // Handle bounce physics if enabled
+            if (p.bounces !== undefined && p.groundY !== undefined && p.bounceDamping !== undefined) {
+                if (p.y >= p.groundY && p.vy > 0) {
+                    if (p.bounces > 0) {
+                        // Bounce off ground
+                        p.vy *= -p.bounceDamping;
+                        p.y = p.groundY; // Reset to ground level
+                        p.bounces--;
+                        // Also dampen rotation on bounce
+                        p.rotationSpeed *= p.bounceDamping;
+                    } else {
+                        // No more bounces, stop at ground
+                        p.vy = 0;
+                        p.y = p.groundY;
+                        p.rotationSpeed = 0;
+                    }
+                }
+            }
 
             // Update life
             p.life -= deltaTime;

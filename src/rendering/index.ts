@@ -14,4 +14,6 @@ export * from './ScreenShake';
 export * from './TextureCache';
 export * from './PlacementRenderer';
 export * from './ShieldRenderer';
+export * from './ShockwaveRenderer';
+export * from './ExplosionManager';
 export * from './filters';
