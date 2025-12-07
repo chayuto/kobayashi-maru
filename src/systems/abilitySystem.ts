@@ -27,7 +27,7 @@ let gameTime = 0;
  */
 export function createAbilitySystem(
   particleSystem?: ParticleSystem,
-  spriteManager?: SpriteManager,
+  _spriteManager?: SpriteManager,
   audioManager?: AudioManager,
   spatialHash?: SpatialHash
 ) {
@@ -46,13 +46,13 @@ export function createAbilitySystem(
           processTeleportAbility(world, eid, particleSystem, audioManager, spatialHash);
           break;
         case AbilityType.CLOAK:
-          processCloakAbility(world, eid, particleSystem, audioManager, spriteManager);
+          processCloakAbility(world, eid, particleSystem);
           break;
         case AbilityType.SHIELD_REGEN:
           processShieldRegenAbility(world, eid, deltaTime, particleSystem);
           break;
         case AbilityType.SPLIT:
-          processSplitAbility(world, eid, particleSystem, spriteManager);
+          processSplitAbility(world, eid, particleSystem);
           break;
         case AbilityType.SUMMON:
           processSummonAbility(world, eid, particleSystem);
@@ -153,9 +153,7 @@ function processTeleportAbility(
 function processCloakAbility(
   _world: IWorld,
   entity: number,
-  particleSystem?: ParticleSystem,
-  _audioManager?: AudioManager,
-  _spriteManager?: SpriteManager
+  particleSystem?: ParticleSystem
 ): void {
   const healthPercent = Health.current[entity] / Health.max[entity];
 
@@ -281,8 +279,7 @@ function processShieldRegenAbility(
 function processSplitAbility(
   world: IWorld,
   entity: number,
-  particleSystem?: ParticleSystem,
-  _spriteManager?: SpriteManager
+  particleSystem?: ParticleSystem
 ): void {
   // Only trigger on death
   if (Health.current[entity] > 0) {

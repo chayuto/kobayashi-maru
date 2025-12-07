@@ -89,7 +89,9 @@ export class WaveManager {
   private nextWaveTimer: number = 0;
   private autoStartNextWave: boolean = true;
   private eventBus: EventBus;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private particleSystem: any = null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private spriteManager: any = null;
 
   constructor() {
@@ -99,6 +101,7 @@ export class WaveManager {
   /**
    * Sets rendering dependencies for visual effects
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setRenderingDependencies(particleSystem: any, spriteManager: any): void {
     this.particleSystem = particleSystem;
     this.spriteManager = spriteManager;
