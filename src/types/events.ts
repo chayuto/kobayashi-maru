@@ -13,6 +13,8 @@ export enum GameEventType {
   PLAYER_DAMAGED = 'PLAYER_DAMAGED',
   RESOURCE_UPDATED = 'RESOURCE_UPDATED',
   GAME_OVER = 'GAME_OVER',
+  COMBO_UPDATED = 'COMBO_UPDATED',
+  ACHIEVEMENT_UNLOCKED = 'ACHIEVEMENT_UNLOCKED',
   TOUCH_START = 'TOUCH_START',
   TOUCH_MOVE = 'TOUCH_MOVE',
   TOUCH_END = 'TOUCH_END',
@@ -67,6 +69,24 @@ export interface GameOverPayload {
 }
 
 /**
+ * Payload for COMBO_UPDATED event
+ */
+export interface ComboUpdatedPayload {
+  comboCount: number;
+  multiplier: number;
+  isActive: boolean;
+}
+
+/**
+ * Payload for ACHIEVEMENT_UNLOCKED event
+ */
+export interface AchievementUnlockedPayload {
+  achievementId: string;
+  name: string;
+  description: string;
+}
+
+/**
  * Payload for TOUCH events
  */
 export interface TouchEventPayload {
@@ -102,6 +122,8 @@ export interface GameEventMap {
   [GameEventType.PLAYER_DAMAGED]: PlayerDamagedPayload;
   [GameEventType.RESOURCE_UPDATED]: ResourceUpdatedPayload;
   [GameEventType.GAME_OVER]: GameOverPayload;
+  [GameEventType.COMBO_UPDATED]: ComboUpdatedPayload;
+  [GameEventType.ACHIEVEMENT_UNLOCKED]: AchievementUnlockedPayload;
   [GameEventType.TOUCH_START]: TouchEventPayload;
   [GameEventType.TOUCH_MOVE]: TouchEventPayload;
   [GameEventType.TOUCH_END]: TouchEventPayload;

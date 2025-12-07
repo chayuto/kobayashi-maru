@@ -24,3 +24,7 @@ export type { ScorePanelData } from './ScorePanel';
 
 export { TurretCountPanel } from './TurretCountPanel';
 export type { TurretCountPanelData } from './TurretCountPanel';
+
+export { ComboPanel } from './ComboPanel';
+
+export { AchievementToast } from './AchievementToast';
