@@ -15,3 +15,7 @@ export * from './DebugManager';
 export * from './GestureManager';
 export * from './HapticManager';
 export * from './InputManager';
+export * from './services';
+export * from './bootstrap';
+export * from './loop';
+export * from './managers';
