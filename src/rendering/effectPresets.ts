@@ -236,5 +236,76 @@ export const EFFECTS = {
         emitterPattern: EmitterPattern.RING,
         scaleStart: 0.5,
         scaleEnd: 2.0
+    },
+
+    // Debris effects with physics
+    METAL_DEBRIS: {
+        count: 25,
+        speed: { min: 100, max: 220 },
+        life: { min: 1.0, max: 2.0 },
+        size: { min: 3, max: 7 },
+        sprite: 'square' as const,
+        colorGradient: {
+            stops: [
+                { time: 0, color: 0xAAAAAA, alpha: 1.0 },
+                { time: 0.6, color: 0x888888, alpha: 0.8 },
+                { time: 1.0, color: 0x444444, alpha: 0.0 }
+            ]
+        },
+        rotation: { min: 0, max: Math.PI * 2 },
+        rotationSpeed: { min: -8, max: 8 },
+        spread: Math.PI * 2,
+        gravity: 300,  // Fall downward
+        drag: 0.97,
+        bounceCount: 2,
+        bounceDamping: 0.6,
+        groundY: 1080  // Match GAME_CONFIG.WORLD_HEIGHT
+    },
+
+    HULL_FRAGMENTS: {
+        count: 20,
+        speed: { min: 120, max: 250 },
+        life: { min: 0.8, max: 1.6 },
+        size: { min: 4, max: 9 },
+        sprite: 'square' as const,
+        colorGradient: {
+            stops: [
+                { time: 0, color: 0x666666, alpha: 1.0 },
+                { time: 0.5, color: 0x555555, alpha: 0.7 },
+                { time: 1.0, color: 0x222222, alpha: 0.0 }
+            ]
+        },
+        rotation: { min: 0, max: Math.PI * 2 },
+        rotationSpeed: { min: -12, max: 12 },
+        spread: Math.PI * 2,
+        gravity: 250,
+        drag: 0.96,
+        bounceCount: 3,
+        bounceDamping: 0.7,
+        groundY: 1080
+    },
+
+    SPARK_DEBRIS: {
+        count: 30,
+        speed: { min: 150, max: 350 },
+        life: { min: 0.3, max: 0.8 },
+        size: { min: 2, max: 5 },
+        sprite: 'spark' as const,
+        colorGradient: {
+            stops: [
+                { time: 0, color: 0xFFFF88, alpha: 1.0 },
+                { time: 0.4, color: 0xFFAA00, alpha: 0.8 },
+                { time: 1.0, color: 0xFF6600, alpha: 0.0 }
+            ]
+        },
+        rotation: { min: 0, max: Math.PI * 2 },
+        rotationSpeed: { min: -15, max: 15 },
+        spread: Math.PI * 2,
+        gravity: 350,
+        drag: 0.98,
+        bounceCount: 1,
+        bounceDamping: 0.5,
+        groundY: 1080,
+        trail: { enabled: true, length: 3, fadeRate: 0.4, width: 1 }
     }
 };

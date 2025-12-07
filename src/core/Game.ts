@@ -12,7 +12,7 @@ import {
   decrementEntityCount
 } from '../ecs';
 import { Health, Shield, Turret, Position, Faction, SpriteRef } from '../ecs/components';
-import { SpriteManager, BeamRenderer, ParticleSystem, HealthBarRenderer, ScreenShake, PlacementRenderer, GlowManager, GlowLayer, ShieldRenderer } from '../rendering';
+import { SpriteManager, BeamRenderer, ParticleSystem, HealthBarRenderer, ScreenShake, PlacementRenderer, GlowManager, GlowLayer, ShieldRenderer, ShockwaveRenderer, ExplosionManager } from '../rendering';
 import { createRenderSystem, createMovementSystem, createCollisionSystem, CollisionSystem, createTargetingSystem, createCombatSystem, createDamageSystem, createAISystem, createProjectileSystem, statusEffectSystem, TargetingSystem, CombatSystem, DamageSystem, SystemManager, createEnemyCollisionSystem, EnemyCollisionSystem, createEnemyCombatSystem, EnemyCombatSystem, createEnemyProjectileSystem, EnemyProjectileSystem } from '../systems';
 
 import { GAME_CONFIG, LCARS_COLORS, GameEventType, EnemyKilledPayload, WaveStartedPayload, WaveCompletedPayload } from '../types';
@@ -69,6 +69,8 @@ export class Game {
   private screenShake: ScreenShake | null = null;
   private glowManager: GlowManager | null = null;
   private shieldRenderer: ShieldRenderer | null = null;
+  private shockwaveRenderer: ShockwaveRenderer | null = null;
+  private explosionManager: ExplosionManager | null = null;
   private performanceMonitor: PerformanceMonitor;
   private qualityManager: QualityManager;
   private hapticManager: HapticManager;
@@ -250,6 +252,17 @@ export class Game {
     this.shieldRenderer = new ShieldRenderer(this.app);
     if (this.shieldRenderer && shieldsLayer) {
       this.shieldRenderer.init(shieldsLayer);
+    }
+
+    // Initialize shockwave renderer with explosions glow layer
+    this.shockwaveRenderer = new ShockwaveRenderer();
+    if (this.shockwaveRenderer && explosionsLayer) {
+      this.shockwaveRenderer.init(explosionsLayer);
+    }
+
+    // Initialize explosion manager (requires particle system and shockwave renderer)
+    if (this.particleSystem && this.shockwaveRenderer) {
+      this.explosionManager = new ExplosionManager(this.particleSystem, this.shockwaveRenderer);
     }
 
     // Create the render system with the sprite manager
@@ -587,6 +600,16 @@ export class Game {
     // Update particle system
     if (this.particleSystem) {
       this.particleSystem.update(deltaTime);
+    }
+
+    // Update shockwave renderer
+    if (this.shockwaveRenderer) {
+      this.shockwaveRenderer.render(deltaTime);
+    }
+
+    // Update explosion manager
+    if (this.explosionManager) {
+      this.explosionManager.update(deltaTime);
     }
 
     // Update health bar renderer
@@ -1012,6 +1035,9 @@ export class Game {
     }
     if (this.shieldRenderer) {
       this.shieldRenderer.destroy();
+    }
+    if (this.shockwaveRenderer) {
+      this.shockwaveRenderer.destroy();
     }
     if (this.glowManager) {
       this.glowManager.destroy();
