@@ -29,6 +29,7 @@ import { HapticManager } from './HapticManager';
 import { EventBus } from './EventBus';
 import { GameInputHandler } from './GameInputHandler';
 import { GameStateController } from './GameStateController';
+import { GameTurretController } from './GameTurretController';
 
 import { WaveManager, GameState, GameStateType, ScoreManager, HighScoreManager, ResourceManager, PlacementManager, UpgradeManager } from '../game';
 import { HUDManager, GameOverScreen, calculateScore, PauseOverlay } from '../ui';
@@ -39,9 +40,6 @@ const turretQuery = defineQuery([Turret]);
 
 // Query for all entities (for cleanup during restart)
 const allEntitiesQuery = defineQuery([Position, Faction, SpriteRef]);
-
-// Click detection radius for selecting turrets (in pixels)
-const TURRET_CLICK_RADIUS = 32;
 
 
 export class Game {
@@ -93,7 +91,6 @@ export class Game {
   private gameOverScreen: GameOverScreen | null = null;
   private pauseOverlay: PauseOverlay | null = null;
   private kobayashiMaruId: number = -1;
-  private selectedTurretId: number = -1; // Currently selected turret for upgrades
   private initialized: boolean = false;
   private gameTime: number = 0; // Total game time in seconds
   private previousKMHealth: number = 0;
@@ -102,7 +99,6 @@ export class Game {
   private boundHandleWaveStarted: (payload: WaveStartedPayload) => void;
   private boundHandleWaveCompleted: (payload: WaveCompletedPayload) => void;
   private boundHandleKeyDown: (e: KeyboardEvent) => void;
-  private boundHandleCanvasClick: (e: PointerEvent) => void;
   private killCount: number = 0;
   // God mode and slow mode settings
   private godModeEnabled: boolean = false;
@@ -115,6 +111,7 @@ export class Game {
   // These can be used for future gradual migration of logic
   private gameInputHandler: GameInputHandler | null = null;
   private gameStateController: GameStateController | null = null;
+  private gameTurretController: GameTurretController | null = null;
 
 
   constructor(containerId: string = 'app') {
@@ -148,7 +145,6 @@ export class Game {
     this.boundHandleWaveStarted = this.handleWaveStarted.bind(this);
     this.boundHandleWaveCompleted = this.handleWaveCompleted.bind(this);
     this.boundHandleKeyDown = this.handleKeyDown.bind(this);
-    this.boundHandleCanvasClick = this.handleCanvasClick.bind(this);
   }
 
   /**
@@ -370,29 +366,44 @@ export class Game {
           }
         });
       }
+    }
+
+    // Initialize GameTurretController for turret selection and upgrade UI
+    if (this.hudManager) {
+      this.gameTurretController = new GameTurretController({
+        world: this.world,
+        app: this.app,
+        hudManager: this.hudManager,
+        upgradeManager: this.upgradeManager,
+        resourceManager: this.resourceManager,
+        placementManager: this.placementManager
+      });
+      this.gameTurretController.init();
 
       // Connect Turret Upgrade Panel to Upgrade Manager
+      // Note: Upgrade panel callbacks use GameTurretController for selected turret
       const upgradePanel = this.hudManager.getTurretUpgradePanel();
       if (upgradePanel) {
         upgradePanel.onUpgrade((upgradePath) => {
-          if (this.selectedTurretId !== -1) {
-            const result = this.upgradeManager.applyUpgrade(this.selectedTurretId, upgradePath);
+          const turretId = this.gameTurretController?.getSelectedTurretId() ?? -1;
+          if (turretId !== -1) {
+            const result = this.upgradeManager.applyUpgrade(turretId, upgradePath);
             if (result.success) {
               // Refresh the panel with updated info
-              this.showTurretUpgradePanel(this.selectedTurretId);
+              this.gameTurretController?.showTurretUpgradePanel(turretId);
             }
           }
         });
 
         upgradePanel.onSell(() => {
-          if (this.selectedTurretId !== -1) {
-            const refund = this.upgradeManager.sellTurret(this.selectedTurretId);
+          const turretId = this.gameTurretController?.getSelectedTurretId() ?? -1;
+          if (turretId !== -1) {
+            const refund = this.upgradeManager.sellTurret(turretId);
             if (refund > 0) {
               // Remove the turret entity
-              removeEntity(this.world, this.selectedTurretId);
-              // Hide the panel
-              upgradePanel.hide();
-              this.selectedTurretId = -1;
+              removeEntity(this.world, turretId);
+              // Deselect and hide panel
+              this.gameTurretController?.deselectTurret();
             }
           }
         });
@@ -421,8 +432,7 @@ export class Game {
     // Add keyboard listener for pause
     window.addEventListener('keydown', this.boundHandleKeyDown);
 
-    // Add canvas click listener for turret selection
-    this.app.canvas.addEventListener('pointerdown', this.boundHandleCanvasClick);
+    // Turret click handling is now done by GameTurretController (initialized above)
 
     // Initialize wave manager and spawn Kobayashi Maru
     this.initializeGameplay();
@@ -942,89 +952,6 @@ export class Game {
   }
 
   /**
-   * Handle canvas click to select turrets for upgrade
-   */
-  private handleCanvasClick(event: PointerEvent): void {
-    // Don't handle clicks if in placement mode
-    if (this.placementManager?.isPlacing()) {
-      return;
-    }
-
-    // Get click position in world coordinates
-    const rect = this.app.canvas.getBoundingClientRect();
-    const scaleX = GAME_CONFIG.WORLD_WIDTH / rect.width;
-    const scaleY = GAME_CONFIG.WORLD_HEIGHT / rect.height;
-    const worldX = (event.clientX - rect.left) * scaleX;
-    const worldY = (event.clientY - rect.top) * scaleY;
-
-    // Find turret at click position
-    const clickedTurretId = this.findTurretAtPosition(worldX, worldY);
-
-    if (clickedTurretId !== -1) {
-      this.selectTurret(clickedTurretId);
-    } else {
-      // Clicked on empty space - deselect turret
-      this.deselectTurret();
-    }
-  }
-
-  /**
-   * Find a turret at the given position
-   */
-  private findTurretAtPosition(x: number, y: number): number {
-    const turretEntities = turretQuery(this.world);
-
-    for (const eid of turretEntities) {
-      const turretX = Position.x[eid];
-      const turretY = Position.y[eid];
-      const dx = turretX - x;
-      const dy = turretY - y;
-      const distSq = dx * dx + dy * dy;
-
-      if (distSq <= TURRET_CLICK_RADIUS * TURRET_CLICK_RADIUS) {
-        return eid;
-      }
-    }
-
-    return -1;
-  }
-
-  /**
-   * Select a turret and show the upgrade panel
-   */
-  private selectTurret(turretId: number): void {
-    this.selectedTurretId = turretId;
-    this.showTurretUpgradePanel(turretId);
-  }
-
-  /**
-   * Deselect the current turret and hide the upgrade panel
-   */
-  private deselectTurret(): void {
-    this.selectedTurretId = -1;
-    const upgradePanel = this.hudManager?.getTurretUpgradePanel();
-    if (upgradePanel) {
-      upgradePanel.hide();
-    }
-  }
-
-  /**
-   * Show the turret upgrade panel for a specific turret
-   */
-  private showTurretUpgradePanel(turretId: number): void {
-    const upgradePanel = this.hudManager?.getTurretUpgradePanel();
-    if (!upgradePanel) return;
-
-    const turretInfo = this.upgradeManager.getTurretInfo(turretId);
-    if (!turretInfo) return;
-
-    const currentResources = this.resourceManager.getResources();
-    const refundAmount = this.upgradeManager.getSellRefund(turretId);
-
-    upgradePanel.show(turretInfo, currentResources, refundAmount);
-  }
-
-  /**
    * Clean up resources
    */
   destroy(): void {
@@ -1034,7 +961,11 @@ export class Game {
       this.boundResizeHandler = null;
     }
     window.removeEventListener('keydown', this.boundHandleKeyDown);
-    this.app.canvas.removeEventListener('pointerdown', this.boundHandleCanvasClick);
+
+    // Clean up turret controller
+    if (this.gameTurretController) {
+      this.gameTurretController.destroy();
+    }
 
     // Unsubscribe from EventBus
     this.eventBus.off(GameEventType.ENEMY_KILLED, this.boundHandleEnemyKilled);
