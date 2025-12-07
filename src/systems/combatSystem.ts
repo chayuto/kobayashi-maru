@@ -14,6 +14,17 @@ import { applyBurning, applyDrained } from './statusEffectSystem';
 const combatQuery = defineQuery([Position, Turret, Target, Faction]);
 
 /**
+ * Beam segment for multi-segment beams with jitter
+ */
+export interface BeamSegment {
+  startX: number;
+  startY: number;
+  endX: number;
+  endY: number;
+  offset: number;  // Random perpendicular offset
+}
+
+/**
  * Beam visual data for rendering
  */
 export interface BeamVisual {
@@ -22,6 +33,9 @@ export interface BeamVisual {
   endX: number;
   endY: number;
   turretType: number;
+  intensity: number;    // 0-1, for pulsing effect
+  segments: BeamSegment[];
+  age: number;          // Time since created (for animation)
 }
 
 /**
@@ -33,6 +47,70 @@ export interface CombatStats {
   shotsHit: number;
   dps: number;
   accuracy: number;
+}
+
+/**
+ * Generate beam segments with electricity jitter effect
+ * @param startX - Beam start X coordinate
+ * @param startY - Beam start Y coordinate
+ * @param endX - Beam end X coordinate
+ * @param endY - Beam end Y coordinate
+ * @param turretType - Type of turret (affects jitter amount)
+ * @returns Array of beam segments with perpendicular offsets
+ */
+function generateBeamSegments(startX: number, startY: number, endX: number, endY: number, turretType: number): BeamSegment[] {
+  const segments: BeamSegment[] = [];
+  const segmentCount = 5;
+  
+  // Jitter amount varies by weapon type
+  let jitter = 8; // Default jitter
+  if (turretType === TurretType.PHASER_ARRAY) {
+    jitter = 6; // Less jitter for phasers
+  } else if (turretType === TurretType.DISRUPTOR_BANK) {
+    jitter = 10; // More jitter for disruptors
+  } else if (turretType === TurretType.TETRYON_BEAM) {
+    jitter = 12; // Even more jitter for tetryons
+  } else if (turretType === TurretType.POLARON_BEAM) {
+    jitter = 9; // Moderate jitter for polarons
+  }
+  
+  // Calculate perpendicular vector for offset
+  const dx = endX - startX;
+  const dy = endY - startY;
+  const length = Math.sqrt(dx * dx + dy * dy);
+  
+  // Handle zero-length beams
+  if (length < 0.001) {
+    return segments;
+  }
+  
+  const perpX = -dy / length;
+  const perpY = dx / length;
+  
+  for (let i = 0; i < segmentCount; i++) {
+    const t1 = i / segmentCount;
+    const t2 = (i + 1) / segmentCount;
+    
+    // Interpolate along beam path
+    const x1 = startX + dx * t1;
+    const y1 = startY + dy * t1;
+    const x2 = startX + dx * t2;
+    const y2 = startY + dy * t2;
+    
+    // Add random offset (less at endpoints for smooth connection)
+    const midFactor = 1 - Math.abs(t1 - 0.5) * 2;
+    const offset = (Math.random() - 0.5) * jitter * midFactor;
+    
+    segments.push({
+      startX: x1 + perpX * offset,
+      startY: y1 + perpY * offset,
+      endX: x2 + perpX * offset,
+      endY: y2 + perpY * offset,
+      offset
+    });
+  }
+  
+  return segments;
 }
 
 /**
@@ -222,13 +300,19 @@ export function createCombatSystem(particleSystem?: ParticleSystem) {
           totalShotsFired++;
           applyDamage(world, targetEid, damage, targetX, targetY, currentTime, turretEid);
 
-          // Store beam visual for rendering
+          // Generate beam segments for electricity effect
+          const segments = generateBeamSegments(turretX, turretY, targetX, targetY, turretType);
+
+          // Store beam visual for rendering with animation properties
           activeBeams.push({
             startX: turretX,
             startY: turretY,
             endX: targetX,
             endY: targetY,
-            turretType
+            turretType,
+            intensity: 1.0,  // Full intensity when just fired
+            segments,
+            age: 0  // Just created
           });
         }
       }
