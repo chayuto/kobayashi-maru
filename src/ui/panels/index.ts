@@ -1,0 +1,17 @@
+/**
+ * HUD Panel Components
+ * 
+ * Modular panel components extracted from HUDManager.
+ * Each panel is self-contained and can be used independently.
+ * 
+ * @module ui/panels
+ */
+
+export { WavePanel } from './WavePanel';
+export type { WavePanelData } from './WavePanel';
+
+export { ResourcePanel } from './ResourcePanel';
+export type { ResourcePanelData } from './ResourcePanel';
+
+export { StatusPanel } from './StatusPanel';
+export type { StatusPanelData } from './StatusPanel';
