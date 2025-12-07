@@ -2,7 +2,7 @@
  * Wave Manager for Kobayashi Maru
  * Manages wave spawning, progression, and completion detection
  */
-import { FactionId, GAME_CONFIG, EnemyRank, RANK_MULTIPLIERS, ABILITY_CONFIG } from '../types/constants';
+import { GAME_CONFIG, EnemyRank, RANK_MULTIPLIERS, ABILITY_CONFIG } from '../types/constants';
 import { WAVE_CONFIG } from '../config';
 import { GameEventType } from '../types/events';
 import { createEnemy } from '../ecs/entityFactory';

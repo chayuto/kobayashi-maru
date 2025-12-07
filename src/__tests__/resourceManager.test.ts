@@ -2,7 +2,7 @@
  * Tests for Resource Manager
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { ResourceManager, ResourceEvent } from '../game/resourceManager';
+import { ResourceManager } from '../game/resourceManager';
 import { GAME_CONFIG } from '../types/constants';
 import { EventBus } from '../core/EventBus';
 import { GameEventType } from '../types/events';
@@ -89,58 +89,6 @@ describe('ResourceManager', () => {
     });
   });
 
-  describe('events', () => {
-    it('should emit change event when adding resources', () => {
-      let eventReceived = false;
-      let eventData: ResourceEvent | undefined;
-
-      resourceManager.setResources(500);
-      resourceManager.on('change', (event) => {
-        eventReceived = true;
-        eventData = event;
-      });
-
-      resourceManager.addResources(100);
-      expect(eventReceived).toBe(true);
-      expect(eventData!.current).toBe(600);
-      expect(eventData!.previous).toBe(500);
-    });
-
-    it('should emit change event when spending resources', () => {
-      let eventReceived = false;
-      resourceManager.setResources(500);
-      resourceManager.on('change', () => {
-        eventReceived = true;
-      });
-
-      resourceManager.spendResources(100);
-      expect(eventReceived).toBe(true);
-    });
-
-    it('should emit insufficient event when trying to spend too much', () => {
-      let eventReceived = false;
-      resourceManager.setResources(100);
-      resourceManager.on('insufficient', () => {
-        eventReceived = true;
-      });
-
-      resourceManager.spendResources(500);
-      expect(eventReceived).toBe(true);
-    });
-
-    it('should remove event listeners', () => {
-      let count = 0;
-      const listener = () => { count++; };
-
-      resourceManager.on('change', listener);
-      resourceManager.setResources(100);
-      expect(count).toBe(1);
-
-      resourceManager.off('change', listener);
-      resourceManager.setResources(200);
-      expect(count).toBe(1);
-    });
-  });
 
   describe('reset', () => {
     it('should reset to initial resources', () => {
@@ -198,7 +146,7 @@ describe('ResourceManager', () => {
       const eventHandler = vi.fn();
 
       resourceManager.setResources(1000);
-      
+
       eventBus.on(GameEventType.RESOURCE_UPDATED, eventHandler);
       resourceManager.reset();
 

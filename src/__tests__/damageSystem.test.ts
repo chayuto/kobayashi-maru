@@ -86,84 +86,12 @@ describe('Damage System', () => {
     });
   });
 
-  describe('Death callbacks', () => {
-    it('should call death callback for enemy death', () => {
-      const callback = vi.fn();
-      damageSystem.onEnemyDeath(callback);
-
-      // Create enemy
-      const enemyId = createEnemy(world, FactionId.KLINGON, 500, 500);
-
-      // Set health to 0
-      Health.current[enemyId] = 0;
-
-      // Run damage system
-      damageSystem.update(world);
-
-      // Callback should be called with entity ID and faction
-      expect(callback).toHaveBeenCalledWith(enemyId, FactionId.KLINGON);
-    });
-
-    it('should not call death callback for Federation death', () => {
-      const callback = vi.fn();
-      damageSystem.onEnemyDeath(callback);
-
-      // Create federation ship
-      const shipId = createEnemy(world, FactionId.FEDERATION, 500, 500);
-
-      // Set health to 0
-      Health.current[shipId] = 0;
-
-      // Run damage system
-      damageSystem.update(world);
-
-      // Callback should not be called for Federation
-      expect(callback).not.toHaveBeenCalled();
-    });
-
-    it('should support removing death callback', () => {
-      const callback = vi.fn();
-      damageSystem.onEnemyDeath(callback);
-      damageSystem.offEnemyDeath(callback);
-
-      // Create enemy
-      const enemyId = createEnemy(world, FactionId.KLINGON, 500, 500);
-
-      // Set health to 0
-      Health.current[enemyId] = 0;
-
-      // Run damage system
-      damageSystem.update(world);
-
-      // Callback should not be called after removal
-      expect(callback).not.toHaveBeenCalled();
-    });
-
-    it('should call multiple callbacks', () => {
-      const callback1 = vi.fn();
-      const callback2 = vi.fn();
-      damageSystem.onEnemyDeath(callback1);
-      damageSystem.onEnemyDeath(callback2);
-
-      // Create enemy
-      const enemyId = createEnemy(world, FactionId.KLINGON, 500, 500);
-
-      // Set health to 0
-      Health.current[enemyId] = 0;
-
-      // Run damage system
-      damageSystem.update(world);
-
-      // Both callbacks should be called
-      expect(callback1).toHaveBeenCalledWith(enemyId, FactionId.KLINGON);
-      expect(callback2).toHaveBeenCalledWith(enemyId, FactionId.KLINGON);
-    });
-  });
-
   describe('Multiple entities', () => {
-    it('should handle multiple deaths in one frame', () => {
-      const callback = vi.fn();
-      damageSystem.onEnemyDeath(callback);
+    it('should handle multiple deaths in one frame', async () => {
+      const { GameEventType } = await import('../types/events');
+      const eventBus = EventBus.getInstance();
+      const eventHandler = vi.fn();
+      eventBus.on(GameEventType.ENEMY_KILLED, eventHandler);
 
       // Create multiple enemies
       const enemy1 = createEnemy(world, FactionId.KLINGON, 500, 500);
@@ -179,7 +107,7 @@ describe('Damage System', () => {
 
       // Both should be removed
       expect(getEntityCount()).toBe(initialCount - 2);
-      expect(callback).toHaveBeenCalledTimes(2);
+      expect(eventHandler).toHaveBeenCalledTimes(2);
     });
   });
 

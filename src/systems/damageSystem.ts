@@ -16,19 +16,11 @@ import { PoolManager } from '../ecs/PoolManager';
 const healthQuery = defineQuery([Health, Faction, Position]);
 
 /**
- * Callback type for enemy death events
- * @deprecated Use EventBus.on(GameEventType.ENEMY_KILLED) instead
- */
-export type EnemyDeathCallback = (entityId: number, factionId: number) => void;
-
-/**
  * Creates the damage system that handles entity destruction
  * @param particleSystem - Optional particle system for explosion effects
  * @returns A system function that processes entity deaths
  */
 export function createDamageSystem(particleSystem?: ParticleSystem) {
-  // Store callbacks for enemy death (kept for backward compatibility)
-  const deathCallbacks: EnemyDeathCallback[] = [];
   // Track entities destroyed this frame
   const destroyedThisFrame: number[] = [];
   // Get the EventBus instance
@@ -88,11 +80,6 @@ export function createDamageSystem(particleSystem?: ParticleSystem) {
           x,
           y
         });
-
-        // Notify callbacks about enemy death (backward compatibility)
-        for (const callback of deathCallbacks) {
-          callback(eid, factionId);
-        }
       }
 
       // Track as destroyed
@@ -118,23 +105,6 @@ export function createDamageSystem(particleSystem?: ParticleSystem) {
   return {
     update: damageSystem,
     /**
-     * Register a callback for enemy death events
-     * @deprecated Use EventBus.on(GameEventType.ENEMY_KILLED) instead
-     */
-    onEnemyDeath: (callback: EnemyDeathCallback) => {
-      deathCallbacks.push(callback);
-    },
-    /**
-     * Remove a death callback
-     * @deprecated Use EventBus.off(GameEventType.ENEMY_KILLED) instead
-     */
-    offEnemyDeath: (callback: EnemyDeathCallback) => {
-      const index = deathCallbacks.indexOf(callback);
-      if (index !== -1) {
-        deathCallbacks.splice(index, 1);
-      }
-    },
-    /**
      * Get entities destroyed in the current frame
      */
     getDestroyedThisFrame: () => [...destroyedThisFrame]
@@ -142,3 +112,4 @@ export function createDamageSystem(particleSystem?: ParticleSystem) {
 }
 
 export type DamageSystem = ReturnType<typeof createDamageSystem>;
+
