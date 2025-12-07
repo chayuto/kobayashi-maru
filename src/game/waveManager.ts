@@ -27,32 +27,7 @@ import {
 import { SpawnPoints, SpawnPosition } from './spawnPoints';
 import { EventBus } from '../core/EventBus';
 
-/**
- * Event types emitted by the WaveManager
- * @deprecated Use GameEventType from '../types/events' instead
- */
-export type WaveEventType = 'waveStart' | 'waveComplete' | 'enemySpawned';
 
-/**
- * Wave event callback type
- * @deprecated Use EventBus for event handling
- */
-export type WaveEventCallback = (event: WaveEvent) => void;
-
-/**
- * Wave event data
- * @deprecated Use EventBus for event handling
- */
-export interface WaveEvent {
-  type: WaveEventType;
-  waveNumber: number;
-  data?: {
-    enemyId?: number;
-    faction?: number;
-    totalEnemies?: number;
-    remainingEnemies?: number;
-  };
-}
 
 /**
  * Internal state for tracking spawning of a single enemy group
@@ -86,7 +61,6 @@ export class WaveManager {
   private waveConfig: WaveConfig | null = null;
   private spawnGroups: SpawnGroupState[] = [];
   private activeEnemies: Set<number> = new Set();
-  private eventListeners: Map<WaveEventType, WaveEventCallback[]> = new Map();
   private nextWaveTimer: number = 0;
   private autoStartNextWave: boolean = true;
   private eventBus: EventBus;
@@ -152,14 +126,7 @@ export class WaveManager {
       totalEnemies: this.getTotalEnemyCount()
     });
 
-    // Emit wave start event via local event system (backward compatibility)
-    this.emitEvent({
-      type: 'waveStart',
-      waveNumber: this.currentWave,
-      data: {
-        totalEnemies: this.getTotalEnemyCount()
-      }
-    });
+
 
     // Play wave start sound
     AudioManager.getInstance().play(SoundType.WAVE_START, { volume: 0.7 });
@@ -262,16 +229,7 @@ export class WaveManager {
       this.activeEnemies.add(eid);
       group.spawnedCount++;
 
-      // Emit enemy spawned event
-      this.emitEvent({
-        type: 'enemySpawned',
-        waveNumber: this.currentWave,
-        data: {
-          enemyId: eid,
-          faction: group.config.faction,
-          remainingEnemies: this.getTotalEnemyCount() - this.getSpawnedCount()
-        }
-      });
+
     }
   }
 
@@ -524,11 +482,7 @@ export class WaveManager {
       waveNumber: this.currentWave
     });
 
-    // Emit wave complete event via local event system (backward compatibility)
-    this.emitEvent({
-      type: 'waveComplete',
-      waveNumber: this.currentWave
-    });
+
 
     // Play wave complete sound
     AudioManager.getInstance().play(SoundType.WAVE_COMPLETE, { volume: 0.7 });
@@ -569,13 +523,6 @@ export class WaveManager {
   }
 
   /**
-   * Gets the number of enemies spawned so far
-   */
-  private getSpawnedCount(): number {
-    return this.spawnGroups.reduce((sum, g) => sum + g.spawnedCount, 0);
-  }
-
-  /**
    * Gets the number of active enemies
    * @returns Number of active enemies
    */
@@ -591,44 +538,7 @@ export class WaveManager {
     this.autoStartNextWave = enabled;
   }
 
-  /**
-   * Registers an event listener
-   * @param eventType - The event type to listen for
-   * @param callback - The callback function
-   */
-  on(eventType: WaveEventType, callback: WaveEventCallback): void {
-    if (!this.eventListeners.has(eventType)) {
-      this.eventListeners.set(eventType, []);
-    }
-    this.eventListeners.get(eventType)!.push(callback);
-  }
 
-  /**
-   * Removes an event listener
-   * @param eventType - The event type
-   * @param callback - The callback to remove
-   */
-  off(eventType: WaveEventType, callback: WaveEventCallback): void {
-    const listeners = this.eventListeners.get(eventType);
-    if (listeners) {
-      const index = listeners.indexOf(callback);
-      if (index !== -1) {
-        listeners.splice(index, 1);
-      }
-    }
-  }
-
-  /**
-   * Emits an event to all registered listeners
-   */
-  private emitEvent(event: WaveEvent): void {
-    const listeners = this.eventListeners.get(event.type);
-    if (listeners) {
-      for (const callback of listeners) {
-        callback(event);
-      }
-    }
-  }
 
   /**
    * Resets the wave manager

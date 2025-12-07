@@ -14,6 +14,7 @@ import { MessageLog } from './MessageLog';
 import { AudioManager } from '../audio';
 import { ResponsiveUIManager } from './ResponsiveUIManager';
 import { UI_CONFIG } from '../config';
+import { WavePanel } from './panels';
 
 // Forward declaration for Game type to avoid circular imports
 interface GameInterface {
@@ -23,13 +24,7 @@ interface GameInterface {
   isSlowModeEnabled(): boolean;
 }
 
-// Wave state color mapping - defined outside class to avoid object creation on each update
-const WAVE_STATE_COLORS: Record<string, number> = {
-  'idle': UI_STYLES.COLORS.SECONDARY,
-  'spawning': UI_STYLES.COLORS.DANGER,
-  'active': UI_STYLES.COLORS.PRIMARY,
-  'complete': UI_STYLES.COLORS.HEALTH
-};
+
 
 // Toggle button dimensions (from centralized config)
 const TOGGLE_BUTTON_WIDTH = UI_CONFIG.BUTTONS.TOGGLE_WIDTH;
@@ -46,9 +41,7 @@ export class HUDManager {
   private responsiveUIManager: ResponsiveUIManager | null = null;
 
   // UI Elements
-  private waveText: Text | null = null;
-  private waveStateText: Text | null = null;
-  private enemyCountText: Text | null = null;
+  private wavePanel: WavePanel | null = null;
   private resourcesText: Text | null = null;
   private timeText: Text | null = null;
   private killsText: Text | null = null;
@@ -80,8 +73,7 @@ export class HUDManager {
   private accuracyText: Text | null = null;
   private damageText: Text | null = null;
 
-  // Background panels
-  private topLeftPanel: Graphics | null = null;
+  // Background panels (wavePanel handled by WavePanel component)
   private topRightPanel: Graphics | null = null;
   private bottomLeftPanel: Graphics | null = null;
   private bottomCenterPanel: Graphics | null = null;
@@ -166,10 +158,10 @@ export class HUDManager {
     // Scale container based on device type if needed, or just scale elements
     // For now, let's just reposition panels based on new width/height
 
-    // Update Top Left Panel
-    if (this.topLeftPanel) {
-      this.topLeftPanel.position.set(padding, padding);
-      this.topLeftPanel.scale.set(scale);
+    // Update Wave Panel
+    if (this.wavePanel) {
+      // WavePanel position is set via setPosition, scaling handled by game's resolution
+      this.wavePanel.setPosition(padding, padding);
     }
 
     // Update Top Right Panel
@@ -259,49 +251,15 @@ export class HUDManager {
   }
 
   /**
-   * Create top-left panel: Wave info
+   * Create top-left panel: Wave info using WavePanel component
    */
   private createTopLeftPanel(): void {
     const padding = UI_STYLES.PADDING;
 
-    // Panel background
-    this.topLeftPanel = new Graphics();
-    this.topLeftPanel.roundRect(0, 0, 200, 100, 8);
-    this.topLeftPanel.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.7 });
-    this.topLeftPanel.stroke({ color: UI_STYLES.COLORS.PRIMARY, width: 2 });
-    this.topLeftPanel.position.set(padding, padding);
-    this.container.addChild(this.topLeftPanel);
-
-    // Wave number text
-    const waveStyle = new TextStyle({
-      fontFamily: UI_STYLES.FONT_FAMILY,
-      fontSize: UI_STYLES.FONT_SIZE_LARGE,
-      fill: UI_STYLES.COLORS.PRIMARY,
-      fontWeight: 'bold'
-    });
-    this.waveText = new Text({ text: 'WAVE 1', style: waveStyle });
-    this.waveText.position.set(10, 10);
-    this.topLeftPanel.addChild(this.waveText);
-
-    // Wave state text
-    const stateStyle = new TextStyle({
-      fontFamily: UI_STYLES.FONT_FAMILY,
-      fontSize: UI_STYLES.FONT_SIZE_MEDIUM,
-      fill: UI_STYLES.COLORS.SECONDARY
-    });
-    this.waveStateText = new Text({ text: 'IDLE', style: stateStyle });
-    this.waveStateText.position.set(10, 40);
-    this.topLeftPanel.addChild(this.waveStateText);
-
-    // Enemy count text
-    const enemyStyle = new TextStyle({
-      fontFamily: UI_STYLES.FONT_FAMILY,
-      fontSize: UI_STYLES.FONT_SIZE_SMALL,
-      fill: UI_STYLES.COLORS.TEXT
-    });
-    this.enemyCountText = new Text({ text: 'Enemies: 0', style: enemyStyle });
-    this.enemyCountText.position.set(10, 70);
-    this.topLeftPanel.addChild(this.enemyCountText);
+    // Use modular WavePanel component
+    this.wavePanel = new WavePanel();
+    this.wavePanel.init(this.container);
+    this.wavePanel.setPosition(padding, padding);
   }
 
   /**
@@ -779,17 +737,13 @@ export class HUDManager {
   update(data: HUDData): void {
     if (!this.visible) return;
 
-    // Update wave info
-    if (this.waveText) {
-      this.waveText.text = `WAVE ${data.waveNumber}`;
-    }
-    if (this.waveStateText) {
-      this.waveStateText.text = data.waveState.toUpperCase();
-      // Color-code wave state
-      this.waveStateText.style.fill = WAVE_STATE_COLORS[data.waveState] || UI_STYLES.COLORS.SECONDARY;
-    }
-    if (this.enemyCountText) {
-      this.enemyCountText.text = `Enemies: ${data.activeEnemies}`;
+    // Update wave panel
+    if (this.wavePanel) {
+      this.wavePanel.update({
+        waveNumber: data.waveNumber,
+        waveState: data.waveState,
+        enemyCount: data.activeEnemies
+      });
     }
 
     // Update resources
@@ -897,6 +851,10 @@ export class HUDManager {
    * Clean up all resources
    */
   destroy(): void {
+    // Clean up panel components
+    if (this.wavePanel) {
+      this.wavePanel.destroy();
+    }
     if (this.healthBar) {
       this.healthBar.destroy();
     }
