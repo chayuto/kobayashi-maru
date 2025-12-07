@@ -12,7 +12,7 @@ import {
   decrementEntityCount
 } from '../ecs';
 import { Health, Shield, Turret, Position, Faction, SpriteRef } from '../ecs/components';
-import { SpriteManager, BeamRenderer, ParticleSystem, HealthBarRenderer, ScreenShake, PlacementRenderer, GlowManager, GlowLayer } from '../rendering';
+import { SpriteManager, BeamRenderer, ParticleSystem, HealthBarRenderer, ScreenShake, PlacementRenderer, GlowManager, GlowLayer, ShieldRenderer } from '../rendering';
 import { createRenderSystem, createMovementSystem, createCollisionSystem, CollisionSystem, createTargetingSystem, createCombatSystem, createDamageSystem, createAISystem, createProjectileSystem, statusEffectSystem, TargetingSystem, CombatSystem, DamageSystem, SystemManager, createEnemyCollisionSystem, EnemyCollisionSystem, createEnemyCombatSystem, EnemyCombatSystem, createEnemyProjectileSystem, EnemyProjectileSystem } from '../systems';
 
 import { GAME_CONFIG, LCARS_COLORS, GameEventType, EnemyKilledPayload, WaveStartedPayload, WaveCompletedPayload } from '../types';
@@ -68,6 +68,7 @@ export class Game {
   private healthBarRenderer: HealthBarRenderer | null = null;
   private screenShake: ScreenShake | null = null;
   private glowManager: GlowManager | null = null;
+  private shieldRenderer: ShieldRenderer | null = null;
   private performanceMonitor: PerformanceMonitor;
   private qualityManager: QualityManager;
   private hapticManager: HapticManager;
@@ -243,6 +244,12 @@ export class Game {
     if (this.particleSystem && explosionsLayer) {
       const particleSettings = this.qualityManager.getSettings();
       this.particleSystem.init(this.app, particleSettings.maxParticles, particleSettings.particleSpawnRate, explosionsLayer);
+    }
+
+    // Initialize shield renderer with shields glow layer
+    this.shieldRenderer = new ShieldRenderer(this.app);
+    if (this.shieldRenderer && shieldsLayer) {
+      this.shieldRenderer.init(shieldsLayer);
     }
 
     // Create the render system with the sprite manager
@@ -584,6 +591,11 @@ export class Game {
     // Update health bar renderer
     if (this.healthBarRenderer) {
       this.healthBarRenderer.update(this.world);
+    }
+
+    // Update shield renderer
+    if (this.shieldRenderer) {
+      this.shieldRenderer.update(this.world, deltaTime);
     }
     this.performanceMonitor.endRender();
 
@@ -996,6 +1008,9 @@ export class Game {
     }
     if (this.healthBarRenderer) {
       this.healthBarRenderer.destroy();
+    }
+    if (this.shieldRenderer) {
+      this.shieldRenderer.destroy();
     }
     if (this.glowManager) {
       this.glowManager.destroy();
