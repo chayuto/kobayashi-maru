@@ -69,6 +69,7 @@ export class RenderManager {
         services.get('glowManager');
         services.get('starfield');
         services.get('placementRenderer'); // Must be initialized to subscribe to placement events
+        services.get('hapticManager'); // Must be initialized to subscribe to game events for vibration feedback
 
         this.initialized = true;
     }

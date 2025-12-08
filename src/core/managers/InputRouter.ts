@@ -155,6 +155,9 @@ export class InputRouter {
         window.addEventListener('keydown', this.boundHandleKeyDown);
         this.app.canvas.addEventListener('pointerdown', this.boundHandleCanvasClick);
         this.app.canvas.addEventListener('pointermove', this.boundHandleCanvasMove);
+
+        // Initialize touch input for mobile support
+        getServices().get('touchInputManager');
     }
 
     /**
