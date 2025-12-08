@@ -7,6 +7,8 @@ import { TextureCache } from './TextureCache';
 
 // Size of each shape texture
 const SHAPE_SIZE = 32;
+// Kobayashi Maru is a larger, more detailed ship
+const KOBAYASHI_MARU_SIZE = 80;
 
 /**
  * Helper to render graphics to texture
@@ -37,6 +39,125 @@ function createFederationTexture(app: Application, color: number): RenderTexture
   graphics.rect(size / 2 - size / 3, size - 6, size / 6, 4);
   graphics.rect(size / 2 + size / 6, size - 6, size / 6, 4);
   graphics.fill({ color: 0x99CCFF });
+
+  return renderToTexture(app, graphics, size, size);
+}
+
+/**
+ * Generate Kobayashi Maru (Constitution-class refit style) texture
+ * A detailed, impressive looking Federation flagship
+ */
+function createKobayashiMaruTexture(app: Application, color: number): RenderTexture {
+  const graphics = new Graphics();
+  const size = KOBAYASHI_MARU_SIZE;
+  const centerX = size / 2;
+  const centerY = size / 2;
+
+  // === SAUCER SECTION (top) ===
+  const saucerY = centerY - 12;
+  const saucerRadiusX = 28;
+  const saucerRadiusY = 22;
+
+  // Main saucer hull - elliptical for perspective
+  graphics.ellipse(centerX, saucerY, saucerRadiusX, saucerRadiusY);
+  graphics.fill({ color });
+
+  // Saucer rim glow
+  graphics.ellipse(centerX, saucerY, saucerRadiusX - 2, saucerRadiusY - 2);
+  graphics.stroke({ color: 0x66DDBB, width: 2, alpha: 0.6 });
+
+  // Bridge dome (center top)
+  graphics.circle(centerX, saucerY - 4, 6);
+  graphics.fill({ color: 0xFFFFFF, alpha: 0.9 });
+  graphics.circle(centerX, saucerY - 4, 4);
+  graphics.fill({ color: 0x99EEFF, alpha: 0.8 });
+
+  // Bridge windows ring
+  for (let i = 0; i < 8; i++) {
+    const angle = (i * Math.PI * 2) / 8;
+    const wx = centerX + Math.cos(angle) * 10;
+    const wy = saucerY - 4 + Math.sin(angle) * 8;
+    graphics.circle(wx, wy, 1.5);
+  }
+  graphics.fill({ color: 0xFFDD88, alpha: 0.9 });
+
+  // === ENGINEERING HULL (neck and body) ===
+  const neckWidth = 6;
+  const hullY = centerY + 8;
+
+  // Neck connecting saucer to engineering
+  graphics.rect(centerX - neckWidth / 2, saucerY + saucerRadiusY - 4, neckWidth, 14);
+  graphics.fill({ color: 0x228866 });
+
+  // Engineering hull (main body)
+  graphics.ellipse(centerX, hullY + 8, 10, 14);
+  graphics.fill({ color });
+
+  // Deflector dish (glowing blue)
+  graphics.ellipse(centerX, hullY + 20, 6, 4);
+  graphics.fill({ color: 0x0088FF, alpha: 0.9 });
+  graphics.ellipse(centerX, hullY + 20, 4, 2.5);
+  graphics.fill({ color: 0x66CCFF, alpha: 1.0 });
+
+  // Engineering hull detail lines
+  graphics.moveTo(centerX - 8, hullY + 2);
+  graphics.lineTo(centerX + 8, hullY + 2);
+  graphics.moveTo(centerX - 6, hullY + 10);
+  graphics.lineTo(centerX + 6, hullY + 10);
+  graphics.stroke({ color: 0x44AA88, width: 1, alpha: 0.5 });
+
+  // === WARP NACELLES (pylons and pods) ===
+  const pylonStartY = hullY;
+  const pylonEndY = saucerY - 8;
+  const nacelleX = 32;
+
+  // Left pylon
+  graphics.moveTo(centerX - 4, pylonStartY);
+  graphics.lineTo(centerX - nacelleX + 4, pylonEndY);
+  graphics.stroke({ color: 0x44AA77, width: 3 });
+
+  // Right pylon  
+  graphics.moveTo(centerX + 4, pylonStartY);
+  graphics.lineTo(centerX + nacelleX - 4, pylonEndY);
+  graphics.stroke({ color: 0x44AA77, width: 3 });
+
+  // Left nacelle
+  const leftNacelleX = centerX - nacelleX;
+  graphics.roundRect(leftNacelleX - 4, pylonEndY - 18, 8, 26, 3);
+  graphics.fill({ color: 0x336655 });
+
+  // Left nacelle bussard collector (front glow)
+  graphics.circle(leftNacelleX, pylonEndY - 16, 5);
+  graphics.fill({ color: 0xFF4422, alpha: 0.9 });
+  graphics.circle(leftNacelleX, pylonEndY - 16, 3);
+  graphics.fill({ color: 0xFF8866, alpha: 1.0 });
+
+  // Left nacelle warp glow (blue plasma)
+  graphics.rect(leftNacelleX - 2, pylonEndY - 10, 4, 16);
+  graphics.fill({ color: 0x0099FF, alpha: 0.8 });
+  graphics.rect(leftNacelleX - 1, pylonEndY - 8, 2, 12);
+  graphics.fill({ color: 0x66DDFF, alpha: 1.0 });
+
+  // Right nacelle
+  const rightNacelleX = centerX + nacelleX;
+  graphics.roundRect(rightNacelleX - 4, pylonEndY - 18, 8, 26, 3);
+  graphics.fill({ color: 0x336655 });
+
+  // Right nacelle bussard collector (front glow)
+  graphics.circle(rightNacelleX, pylonEndY - 16, 5);
+  graphics.fill({ color: 0xFF4422, alpha: 0.9 });
+  graphics.circle(rightNacelleX, pylonEndY - 16, 3);
+  graphics.fill({ color: 0xFF8866, alpha: 1.0 });
+
+  // Right nacelle warp glow (blue plasma)
+  graphics.rect(rightNacelleX - 2, pylonEndY - 10, 4, 16);
+  graphics.fill({ color: 0x0099FF, alpha: 0.8 });
+  graphics.rect(rightNacelleX - 1, pylonEndY - 8, 2, 12);
+  graphics.fill({ color: 0x66DDFF, alpha: 1.0 });
+
+  // === SHIELD EFFECT (subtle outer glow) ===
+  graphics.ellipse(centerX, centerY, 38, 32);
+  graphics.stroke({ color: 0x44FFFF, width: 2, alpha: 0.3 });
 
   return renderToTexture(app, graphics, size, size);
 }
@@ -384,6 +505,7 @@ function createTurretBarrelDisruptorTexture(app: Application, _color: number): R
  */
 export interface FactionTextures {
   federation: Texture;
+  kobayashiMaru: Texture;
   klingon: Texture;
   romulan: Texture;
   borg: Texture;
@@ -405,6 +527,7 @@ export interface FactionTextures {
 // Texture cache keys for each faction
 const TEXTURE_KEYS = {
   federation: 'faction_federation',
+  kobayashiMaru: 'faction_kobayashi_maru',
   klingon: 'faction_klingon',
   romulan: 'faction_romulan',
   borg: 'faction_borg',
@@ -433,6 +556,7 @@ export function createFactionTextures(app: Application): FactionTextures {
   if (cache.has(TEXTURE_KEYS.federation) && cache.has(TEXTURE_KEYS.turretBasePhaser)) {
     return {
       federation: cache.get(TEXTURE_KEYS.federation)!,
+      kobayashiMaru: cache.get(TEXTURE_KEYS.kobayashiMaru)!,
       klingon: cache.get(TEXTURE_KEYS.klingon)!,
       romulan: cache.get(TEXTURE_KEYS.romulan)!,
       borg: cache.get(TEXTURE_KEYS.borg)!,
@@ -453,6 +577,7 @@ export function createFactionTextures(app: Application): FactionTextures {
 
   // Create and cache textures
   const federation = createFederationTexture(app, FACTION_COLORS.FEDERATION);
+  const kobayashiMaru = createKobayashiMaruTexture(app, FACTION_COLORS.FEDERATION);
   const klingon = createKlingonTexture(app, FACTION_COLORS.KLINGON);
   const romulan = createRomulanTexture(app, FACTION_COLORS.ROMULAN);
   const borg = createBorgTexture(app, FACTION_COLORS.BORG);
@@ -474,6 +599,7 @@ export function createFactionTextures(app: Application): FactionTextures {
   const turretBarrelDisruptor = createTurretBarrelDisruptorTexture(app, FACTION_COLORS.FEDERATION);
 
   cache.set(TEXTURE_KEYS.federation, federation);
+  cache.set(TEXTURE_KEYS.kobayashiMaru, kobayashiMaru);
   cache.set(TEXTURE_KEYS.klingon, klingon);
   cache.set(TEXTURE_KEYS.romulan, romulan);
   cache.set(TEXTURE_KEYS.borg, borg);
@@ -493,6 +619,7 @@ export function createFactionTextures(app: Application): FactionTextures {
 
   return {
     federation,
+    kobayashiMaru,
     klingon,
     romulan,
     borg,

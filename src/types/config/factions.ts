@@ -54,6 +54,7 @@ export const SpriteType = {
     BORG: 3,
     THOLIAN: 4,
     SPECIES_8472: 5,
+    KOBAYASHI_MARU: 6,
     TURRET_PHASER: 10,
     TURRET_TORPEDO: 11,
     TURRET_DISRUPTOR: 12,

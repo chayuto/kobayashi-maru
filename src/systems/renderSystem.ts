@@ -3,7 +3,7 @@
  * A bitECS system that syncs entity positions to sprites using SpriteManager
  */
 import { defineQuery, defineSystem, IWorld, enterQuery, exitQuery, hasComponent } from 'bitecs';
-import { Position, Faction, SpriteRef, Turret, Projectile, Rotation, CompositeSpriteRef } from '../ecs/components';
+import { Position, Faction, SpriteRef, Turret, Projectile, Rotation, CompositeSpriteRef, Health } from '../ecs/components';
 import { TurretType, SpriteType } from '../types/constants';
 import type { SpriteManager } from '../rendering/spriteManager';
 
@@ -34,8 +34,19 @@ export function createRenderSystem(spriteManager: SpriteManager) {
       if (SpriteRef.index[eid] === SPRITE_INDEX_UNSET) {
         let spriteType = Faction.id[eid]; // Default to faction ID
 
-        // Override for Turrets
-        if (hasComponent(world, Turret, eid)) {
+        // Check if this is the Kobayashi Maru (Federation entity with Health and Turret, not a placed turret)
+        // Placed turrets use CompositeSpriteRef, so we check for that to avoid false matches
+        const isFederation = Faction.id[eid] === 0; // FactionId.FEDERATION = 0
+        const hasTurret = hasComponent(world, Turret, eid);
+        const hasHealth = hasComponent(world, Health, eid);
+        const hasComposite = hasComponent(world, CompositeSpriteRef, eid);
+
+        if (isFederation && hasHealth && hasTurret && !hasComposite) {
+          // This is the Kobayashi Maru - use the special flagship texture
+          spriteType = SpriteType.KOBAYASHI_MARU;
+        }
+        // Override for Turrets (placed turrets without Health)
+        else if (hasComponent(world, Turret, eid)) {
           const turretType = Turret.turretType[eid];
           switch (turretType) {
             case TurretType.PHASER_ARRAY:

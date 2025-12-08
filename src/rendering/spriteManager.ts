@@ -54,6 +54,7 @@ export class SpriteManager {
 
     const factionTextures: Array<[number, Texture]> = [
       [SpriteType.FEDERATION, this.textures.federation],
+      [SpriteType.KOBAYASHI_MARU, this.textures.kobayashiMaru],
       [SpriteType.KLINGON, this.textures.klingon],
       [SpriteType.ROMULAN, this.textures.romulan],
       [SpriteType.BORG, this.textures.borg],
@@ -92,6 +93,8 @@ export class SpriteManager {
     switch (spriteType) {
       case SpriteType.FEDERATION:
         return this.textures.federation;
+      case SpriteType.KOBAYASHI_MARU:
+        return this.textures.kobayashiMaru;
       case SpriteType.KLINGON:
         return this.textures.klingon;
       case SpriteType.ROMULAN:
