@@ -226,15 +226,18 @@ export class GameLoopManager {
         // Phase 1: Pre-update (always runs)
         this.runCallbacks(this.preUpdateCallbacks);
 
-        // Phase 2: Gameplay (only when not paused)
-        if (!this.paused) {
+        // Phase 2: Gameplay (only when not paused and not game over)
+        const gameState = services.tryGet('gameState');
+        const isGameOver = gameState?.isGameOver() ?? false;
+
+        if (!this.paused && !isGameOver) {
             this.gameTime += this.deltaTime;
 
             perfMon?.startMeasure('gameplay');
             this.runCallbacks(this.gameplayCallbacks);
             perfMon?.endMeasure('gameplay');
 
-            // Phase 3: Physics/Systems (only when not paused)
+            // Phase 3: Physics/Systems (only when not paused and not game over)
             perfMon?.startMeasure('systems');
             this.runCallbacks(this.physicsCallbacks);
             perfMon?.endMeasure('systems');
