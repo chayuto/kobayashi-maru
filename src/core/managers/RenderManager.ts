@@ -68,6 +68,7 @@ export class RenderManager {
         services.get('spriteManager');
         services.get('glowManager');
         services.get('starfield');
+        services.get('placementRenderer'); // Must be initialized to subscribe to placement events
 
         this.initialized = true;
     }
