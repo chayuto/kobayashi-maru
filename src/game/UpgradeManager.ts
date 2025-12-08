@@ -2,12 +2,13 @@
  * Upgrade Manager for Kobayashi Maru
  * Handles turret upgrades, sell functionality, and upgrade calculations
  */
-import { hasComponent } from 'bitecs';
-import { Turret, TurretUpgrade } from '../ecs/components';
+import { hasComponent, removeEntity } from 'bitecs';
+import { Turret, TurretUpgrade, CompositeSpriteRef } from '../ecs/components';
 import { TURRET_CONFIG, UPGRADE_CONFIG, UpgradePath, TURRET_SELL_REFUND_PERCENT } from '../types/constants';
 import { ResourceManager } from './resourceManager';
-import type { GameWorld } from '../ecs/world';
+import { GameWorld, decrementEntityCount } from '../ecs/world';
 import { AudioManager, SoundType } from '../audio';
+import type { SpriteManager } from '../rendering/spriteManager';
 
 /**
  * Result of an upgrade attempt
@@ -43,13 +44,27 @@ export interface TurretUpgradeInfo {
 /**
  * Manages turret upgrades and sell functionality
  */
+// Special value for unset sprite index (matches renderSystem)
+const SPRITE_INDEX_UNSET = 0;
+
+/**
+ * Manages turret upgrades and sell functionality
+ */
 export class UpgradeManager {
   private world: GameWorld;
   private resourceManager: ResourceManager;
+  private spriteManager: SpriteManager | null = null;
 
   constructor(world: GameWorld, resourceManager: ResourceManager) {
     this.world = world;
     this.resourceManager = resourceManager;
+  }
+
+  /**
+   * Set the sprite manager for sprite cleanup during sell
+   */
+  setSpriteManager(spriteManager: SpriteManager): void {
+    this.spriteManager = spriteManager;
   }
 
   /**
@@ -58,14 +73,14 @@ export class UpgradeManager {
    * @returns Upgrade info or null if not a turret
    */
   getTurretInfo(entityId: number): TurretUpgradeInfo | null {
-    if (!hasComponent(this.world, Turret, entityId) || 
-        !hasComponent(this.world, TurretUpgrade, entityId)) {
+    if (!hasComponent(this.world, Turret, entityId) ||
+      !hasComponent(this.world, TurretUpgrade, entityId)) {
       return null;
     }
 
     const turretType = Turret.turretType[entityId];
     const config = TURRET_CONFIG[turretType];
-    
+
     const damageLevel = TurretUpgrade.damageLevel[entityId];
     const rangeLevel = TurretUpgrade.rangeLevel[entityId];
     const fireRateLevel = TurretUpgrade.fireRateLevel[entityId];
@@ -74,7 +89,7 @@ export class UpgradeManager {
 
     // Calculate total investment
     let totalInvestment = config.cost;
-    
+
     // Add upgrade costs
     for (let i = 0; i < damageLevel; i++) {
       totalInvestment += UPGRADE_CONFIG[UpgradePath.DAMAGE].costs[i];
@@ -96,11 +111,11 @@ export class UpgradeManager {
     const baseDamage = config.damage;
     const baseRange = config.range;
     const baseFireRate = config.fireRate;
-    
+
     const damageBonus = damageLevel > 0 ? UPGRADE_CONFIG[UpgradePath.DAMAGE].bonusPercent[damageLevel - 1] : 0;
     const rangeBonus = rangeLevel > 0 ? UPGRADE_CONFIG[UpgradePath.RANGE].bonusPercent[rangeLevel - 1] : 0;
     const fireRateBonus = fireRateLevel > 0 ? UPGRADE_CONFIG[UpgradePath.FIRE_RATE].bonusPercent[fireRateLevel - 1] : 0;
-    
+
     const currentDamage = baseDamage * (1 + damageBonus / 100);
     const currentRange = baseRange * (1 + rangeBonus / 100);
     const currentFireRate = baseFireRate * (1 + fireRateBonus / 100);
@@ -197,8 +212,8 @@ export class UpgradeManager {
    * @returns Result of upgrade attempt
    */
   applyUpgrade(entityId: number, upgradePath: number): UpgradeResult {
-    if (!hasComponent(this.world, Turret, entityId) || 
-        !hasComponent(this.world, TurretUpgrade, entityId)) {
+    if (!hasComponent(this.world, Turret, entityId) ||
+      !hasComponent(this.world, TurretUpgrade, entityId)) {
       return { success: false, reason: 'Invalid turret' };
     }
 
@@ -228,7 +243,7 @@ export class UpgradeManager {
     }
 
     const cost = this.getUpgradeCost(upgradePath, currentLevel);
-    
+
     // Deduct resources
     if (!this.resourceManager.spendResources(cost)) {
       return { success: false, reason: 'Insufficient resources' };
@@ -308,6 +323,21 @@ export class UpgradeManager {
 
     const refund = Math.floor(info.totalInvestment * TURRET_SELL_REFUND_PERCENT);
     this.resourceManager.addResources(refund);
+
+    // Clean up composite sprites (turrets use base + barrel)
+    if (this.spriteManager) {
+      const baseIndex = CompositeSpriteRef.baseIndex[entityId];
+      if (baseIndex !== SPRITE_INDEX_UNSET) {
+        this.spriteManager.removeSprite(baseIndex);
+        this.spriteManager.removeSprite(CompositeSpriteRef.barrelIndex[entityId]);
+        CompositeSpriteRef.baseIndex[entityId] = SPRITE_INDEX_UNSET;
+        CompositeSpriteRef.barrelIndex[entityId] = SPRITE_INDEX_UNSET;
+      }
+    }
+
+    // Remove entity from world
+    removeEntity(this.world, entityId);
+    decrementEntityCount();
 
     // Play sell sound
     AudioManager.getInstance().play(SoundType.ERROR_BEEP, { volume: 0.5 });

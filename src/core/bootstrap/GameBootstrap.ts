@@ -328,10 +328,12 @@ export class GameBootstrap {
         services.register('waveManager', () => new WaveManager());
 
         services.register('upgradeManager', () => {
-            return new UpgradeManager(
+            const um = new UpgradeManager(
                 services.get('world'),
                 services.get('resourceManager')
             );
+            um.setSpriteManager(services.get('spriteManager'));
+            return um;
         });
 
         services.register('placementManager', () => {
