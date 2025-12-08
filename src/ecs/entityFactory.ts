@@ -8,7 +8,7 @@
  * thin wrappers maintained for backwards compatibility.
  */
 import { addEntity, addComponent } from 'bitecs';
-import { Position, Velocity, Faction, SpriteRef, Health, Shield, Turret, Target, Projectile, Collider, WeaponProperties, TurretUpgrade } from './components';
+import { Position, Velocity, Faction, SpriteRef, Health, Shield, Turret, Target, Projectile, Collider, WeaponProperties, TurretUpgrade, Rotation } from './components';
 import { FactionId, TurretType, TURRET_CONFIG, ProjectileType, PROJECTILE_CONFIG, GAME_CONFIG } from '../types/constants';
 import type { GameWorld } from './world';
 import { incrementEntityCount } from './world';
@@ -48,6 +48,9 @@ export function createKobayashiMaru(world: GameWorld, x: number, y: number): num
 
   addComponent(world, SpriteRef, eid);
   SpriteRef.index[eid] = PLACEHOLDER_SPRITE_INDEX;
+
+  addComponent(world, Rotation, eid);
+  Rotation.angle[eid] = 0;
 
   addComponent(world, Health, eid);
   Health.current[eid] = 500;
@@ -101,6 +104,9 @@ export function createTurret(world: GameWorld, x: number, y: number, turretType:
 
   addComponent(world, SpriteRef, eid);
   SpriteRef.index[eid] = PLACEHOLDER_SPRITE_INDEX;
+
+  addComponent(world, Rotation, eid);
+  Rotation.angle[eid] = 0;
 
   // Get turret stats based on type
   const config = TURRET_CONFIG[turretType] || TURRET_CONFIG[TurretType.PHASER_ARRAY];
@@ -227,10 +233,17 @@ export function createProjectile(
   const dy = targetY - y;
   const dist = Math.sqrt(dx * dx + dy * dy);
 
+  // Default rotation and velocity
+  let angle = 0;
   if (dist > 0) {
     Velocity.x[eid] = (dx / dist) * config.speed;
     Velocity.y[eid] = (dy / dist) * config.speed;
+    angle = Math.atan2(dy, dx);
   }
+
+  addComponent(world, Rotation, eid);
+  // Add 90 degrees (HALF_PI) because textures point up by default
+  Rotation.angle[eid] = angle + Math.PI / 2;
 
   addComponent(world, Faction, eid);
   Faction.id[eid] = FactionId.PROJECTILE; // Projectiles belong to Federation for now
@@ -265,7 +278,7 @@ function resetProjectileComponents(eid: number): void {
   Collider.radius[eid] = 0;
   Collider.layer[eid] = 0;
   Collider.mask[eid] = 0;
-
+  Rotation.angle[eid] = 0;
 }
 
 /**
@@ -317,10 +330,16 @@ export function createEnemyProjectile(
   const dy = targetY - y;
   const dist = Math.sqrt(dx * dx + dy * dy);
 
+  let angle = 0;
   if (dist > 0) {
     Velocity.x[eid] = (dx / dist) * config.speed;
     Velocity.y[eid] = (dy / dist) * config.speed;
+    angle = Math.atan2(dy, dx);
   }
+
+  addComponent(world, Rotation, eid);
+  // Add 90 degrees because textures point up
+  Rotation.angle[eid] = angle + Math.PI / 2;
 
   addComponent(world, Faction, eid);
   Faction.id[eid] = FactionId.ENEMY_PROJECTILE; // Enemy projectile faction

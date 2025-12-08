@@ -16,3 +16,5 @@ export * from './SystemManager';
 export * from './enemyCollisionSystem';
 export * from './enemyCombatSystem';
 export * from './enemyProjectileSystem';
+export * from './turretRotationSystem';
+export * from './enemyRotationSystem';

@@ -6,210 +6,345 @@ import { FACTION_COLORS } from '../types';
 import { TextureCache } from './TextureCache';
 
 // Size of each shape texture
-const SHAPE_SIZE = 16;
+const SHAPE_SIZE = 32;
+
+/**
+ * Helper to render graphics to texture
+ */
+function renderToTexture(app: Application, graphics: Graphics, width: number, height: number): RenderTexture {
+  const texture = RenderTexture.create({ width, height });
+  app.renderer.render({ container: graphics, target: texture });
+  graphics.destroy();
+  return texture;
+}
 
 /**
  * Generate a circle texture (Federation)
  */
-function createCircleTexture(app: Application, color: number): RenderTexture {
+function createFederationTexture(app: Application, color: number): RenderTexture {
   const graphics = new Graphics();
-  graphics.circle(SHAPE_SIZE / 2, SHAPE_SIZE / 2, SHAPE_SIZE / 2 - 1);
+  const size = SHAPE_SIZE;
+
+  // Saucer section
+  graphics.circle(size / 2, size / 2, size / 2 - 2);
   graphics.fill({ color });
 
-  const texture = RenderTexture.create({ width: SHAPE_SIZE, height: SHAPE_SIZE });
-  app.renderer.render({ container: graphics, target: texture });
-  graphics.destroy();
+  // Bridge
+  graphics.circle(size / 2, size / 2, size / 6);
+  graphics.fill({ color: 0xFFFFFF, alpha: 0.8 });
 
-  return texture;
+  // Nacelles hint (simple lines for now as it's top down)
+  graphics.rect(size / 2 - size / 3, size - 6, size / 6, 4);
+  graphics.rect(size / 2 + size / 6, size - 6, size / 6, 4);
+  graphics.fill({ color: 0x99CCFF });
+
+  return renderToTexture(app, graphics, size, size);
 }
 
 /**
- * Generate a triangle texture (Klingon)
+ * Generate Klingon Bird of Prey texture
  */
-function createTriangleTexture(app: Application, color: number): RenderTexture {
+function createKlingonTexture(app: Application, color: number): RenderTexture {
   const graphics = new Graphics();
+  const size = SHAPE_SIZE;
+
+  // Main hull - swept-wing bird shape
   graphics.poly([
-    SHAPE_SIZE / 2, 1,
-    SHAPE_SIZE - 1, SHAPE_SIZE - 1,
-    1, SHAPE_SIZE - 1
+    size / 2, 2,           // Nose (forward point)
+    size - 4, size / 2,    // Right wingtip
+    size / 2 + 4, size / 2 + 6, // Right wing joint
+    size / 2, size - 4,    // Tail
+    size / 2 - 4, size / 2 + 6, // Left wing joint
+    4, size / 2            // Left wingtip
   ]);
   graphics.fill({ color });
 
-  const texture = RenderTexture.create({ width: SHAPE_SIZE, height: SHAPE_SIZE });
-  app.renderer.render({ container: graphics, target: texture });
-  graphics.destroy();
+  // Wing struts
+  graphics.moveTo(size / 2, size / 3);
+  graphics.lineTo(size - 6, size / 2 - 2);
+  graphics.moveTo(size / 2, size / 3);
+  graphics.lineTo(6, size / 2 - 2);
+  graphics.stroke({ color: 0xFFFFFF, alpha: 0.3, width: 1 });
 
-  return texture;
+  // Bridge (center cockpit)
+  graphics.circle(size / 2, size / 3, 3);
+  graphics.fill({ color: 0x882222 });
+
+  // Dual engine glow
+  graphics.circle(size / 2 - 4, size - 6, 2);
+  graphics.circle(size / 2 + 4, size - 6, 2);
+  graphics.fill({ color: 0xFF4444, alpha: 0.8 });
+
+  return renderToTexture(app, graphics, size, size);
 }
 
 /**
- * Generate a square texture (Borg)
+ * Generate Romulan Warbird texture
  */
-function createSquareTexture(app: Application, color: number): RenderTexture {
+function createRomulanTexture(app: Application, color: number): RenderTexture {
   const graphics = new Graphics();
-  graphics.rect(1, 1, SHAPE_SIZE - 2, SHAPE_SIZE - 2);
-  graphics.fill({ color });
+  const size = SHAPE_SIZE;
 
-  const texture = RenderTexture.create({ width: SHAPE_SIZE, height: SHAPE_SIZE });
-  app.renderer.render({ container: graphics, target: texture });
-  graphics.destroy();
-
-  return texture;
-}
-
-/**
- * Generate a diamond/rhombus texture (Tholian)
- */
-function createDiamondTexture(app: Application, color: number): RenderTexture {
-  const graphics = new Graphics();
+  // Main hull - crescent/bird shape with swept wings
   graphics.poly([
-    SHAPE_SIZE / 2, 1,
-    SHAPE_SIZE - 1, SHAPE_SIZE / 2,
-    SHAPE_SIZE / 2, SHAPE_SIZE - 1,
-    1, SHAPE_SIZE / 2
+    size / 2, 4,             // Nose
+    size - 3, size / 3,      // Right wing forward
+    size - 5, size / 2 + 4,  // Right wing back
+    size / 2, size / 2,        // Center notch
+    5, size / 2 + 4,         // Left wing back
+    3, size / 3              // Left wing forward
   ]);
   graphics.fill({ color });
 
-  const texture = RenderTexture.create({ width: SHAPE_SIZE, height: SHAPE_SIZE });
-  app.renderer.render({ container: graphics, target: texture });
-  graphics.destroy();
+  // Wing feather details
+  graphics.moveTo(size / 2, size / 4);
+  graphics.lineTo(size - 8, size / 3 + 2);
+  graphics.moveTo(size / 2, size / 4);
+  graphics.lineTo(8, size / 3 + 2);
+  graphics.stroke({ color: 0xFFFFFF, alpha: 0.2, width: 1 });
 
-  return texture;
+  // Cloaking device glow (center)
+  graphics.circle(size / 2, size / 3, 4);
+  graphics.fill({ color: 0x66CC33, alpha: 0.6 });
+
+  // Singularity core (engine)
+  graphics.arc(size / 2, size / 2 + 2, 6, 0, Math.PI);
+  graphics.stroke({ color: 0x99FF66, alpha: 0.8, width: 2 });
+
+  return renderToTexture(app, graphics, size, size);
 }
 
 /**
- * Generate a crescent texture (Romulan)
+ * Generate Borg Cube texture
  */
-function createCrescentTexture(app: Application, color: number): RenderTexture {
+function createBorgTexture(app: Application, color: number): RenderTexture {
   const graphics = new Graphics();
-  // Outer arc
-  graphics.arc(SHAPE_SIZE / 2, SHAPE_SIZE / 2, SHAPE_SIZE / 2 - 1, Math.PI * 0.3, Math.PI * 1.7);
-  graphics.stroke({ color, width: 3 });
+  const size = SHAPE_SIZE;
 
-  const texture = RenderTexture.create({ width: SHAPE_SIZE, height: SHAPE_SIZE });
-  app.renderer.render({ container: graphics, target: texture });
-  graphics.destroy();
+  // Main cube body
+  graphics.rect(4, 4, size - 8, size - 8);
+  graphics.fill({ color });
 
-  return texture;
+  // Grid pattern (Borg aesthetic)
+  for (let i = 0; i < 3; i++) {
+    graphics.moveTo(8 + i * 6, 4);
+    graphics.lineTo(8 + i * 6, size - 4);
+    graphics.moveTo(4, 8 + i * 6);
+    graphics.lineTo(size - 4, 8 + i * 6);
+  }
+  graphics.stroke({ color: 0x000000, alpha: 0.5, width: 1 });
+
+  // Corner energy nodes
+  graphics.circle(6, 6, 2);
+  graphics.circle(size - 6, 6, 2);
+  graphics.circle(6, size - 6, 2);
+  graphics.circle(size - 6, size - 6, 2);
+  graphics.fill({ color: 0x44FF44, alpha: 0.9 });
+
+  // Central core
+  graphics.circle(size / 2, size / 2, 4);
+  graphics.fill({ color: 0x00FF00, alpha: 0.7 });
+
+  return renderToTexture(app, graphics, size, size);
 }
 
 /**
- * Generate a Y-shape texture (Species 8472)
+ * Generate Tholian Vessel texture
  */
-function createYShapeTexture(app: Application, color: number): RenderTexture {
+function createTholianTexture(app: Application, color: number): RenderTexture {
   const graphics = new Graphics();
-  const centerX = SHAPE_SIZE / 2;
-  const centerY = SHAPE_SIZE / 2;
+  const size = SHAPE_SIZE;
 
-  // Draw Y shape with lines
-  graphics.moveTo(centerX, centerY);
-  graphics.lineTo(centerX, SHAPE_SIZE - 1);
-  graphics.moveTo(centerX, centerY);
-  graphics.lineTo(2, 2);
-  graphics.moveTo(centerX, centerY);
-  graphics.lineTo(SHAPE_SIZE - 2, 2);
-  graphics.stroke({ color, width: 2 });
+  // Main body - elongated diamond/crystal shape
+  graphics.poly([
+    size / 2, 2,             // Top point
+    size - 4, size / 2 - 4,  // Right upper
+    size - 2, size / 2,      // Right mid
+    size - 4, size / 2 + 4,  // Right lower
+    size / 2, size - 2,      // Bottom point
+    4, size / 2 + 4,         // Left lower
+    2, size / 2,             // Left mid
+    4, size / 2 - 4          // Left upper
+  ]);
+  graphics.fill({ color });
 
-  const texture = RenderTexture.create({ width: SHAPE_SIZE, height: SHAPE_SIZE });
-  app.renderer.render({ container: graphics, target: texture });
-  graphics.destroy();
+  // Crystal facets
+  graphics.moveTo(size / 2, 2);
+  graphics.lineTo(size / 2, size - 2);
+  graphics.moveTo(4, size / 2 - 4);
+  graphics.lineTo(size - 4, size / 2 + 4);
+  graphics.moveTo(4, size / 2 + 4);
+  graphics.lineTo(size - 4, size / 2 - 4);
+  graphics.stroke({ color: 0xFFAA33, alpha: 0.5, width: 1 });
 
-  return texture;
+  // Core heat glow
+  graphics.circle(size / 2, size / 2, 5);
+  graphics.fill({ color: 0xFFDD00, alpha: 0.6 });
+
+  // Web emitter tips
+  graphics.circle(size / 2, 4, 2);
+  graphics.circle(size / 2, size - 4, 2);
+  graphics.fill({ color: 0xFF8800, alpha: 0.9 });
+
+  return renderToTexture(app, graphics, size, size);
 }
 
 /**
- * Generate a projectile texture (Glowing circle)
+ * Generate Species 8472 Bioship texture
+ */
+function createSpecies8472Texture(app: Application, color: number): RenderTexture {
+  const graphics = new Graphics();
+  const size = SHAPE_SIZE;
+
+  // Organic Y-shaped hull
+  // Main body (curved organic shape)
+  graphics.moveTo(size / 2, 2);
+  graphics.bezierCurveTo(size / 2 + 4, size / 3, size / 2 + 2, size / 2, size / 2, size / 2 + 2);
+  graphics.bezierCurveTo(size / 2 - 2, size / 2, size / 2 - 4, size / 3, size / 2, 2);
+  graphics.fill({ color });
+
+  // Left tendril
+  graphics.moveTo(size / 2, size / 2 + 2);
+  graphics.bezierCurveTo(size / 4, size / 2 + 6, 4, size - 8, 2, size - 2);
+  graphics.lineTo(6, size - 4);
+  graphics.bezierCurveTo(8, size - 10, size / 4, size / 2 + 2, size / 2, size / 2 + 2);
+  graphics.fill({ color });
+
+  // Right tendril
+  graphics.moveTo(size / 2, size / 2 + 2);
+  graphics.bezierCurveTo(size * 3 / 4, size / 2 + 6, size - 4, size - 8, size - 2, size - 2);
+  graphics.lineTo(size - 6, size - 4);
+  graphics.bezierCurveTo(size - 8, size - 10, size * 3 / 4, size / 2 + 2, size / 2, size / 2 + 2);
+  graphics.fill({ color });
+
+  // Bio-luminescent nodes
+  graphics.circle(size / 2, size / 4, 3);
+  graphics.fill({ color: 0xFFAAFF, alpha: 0.9 });
+
+  graphics.circle(6, size - 6, 2);
+  graphics.circle(size - 6, size - 6, 2);
+  graphics.fill({ color: 0xDD88FF, alpha: 0.8 });
+
+  // Organic veins
+  graphics.moveTo(size / 2, size / 4 + 3);
+  graphics.lineTo(size / 2, size / 2);
+  graphics.moveTo(size / 2, size / 2);
+  graphics.lineTo(8, size - 8);
+  graphics.moveTo(size / 2, size / 2);
+  graphics.lineTo(size - 8, size - 8);
+  graphics.stroke({ color: 0xAA66DD, alpha: 0.4, width: 1 });
+
+  return renderToTexture(app, graphics, size, size);
+}
+
+/**
+ * Generate projectile texture
  */
 function createProjectileTexture(app: Application, color: number): RenderTexture {
   const graphics = new Graphics();
+  const size = 16; // Projectiles stay small
+
   // Core
-  graphics.circle(SHAPE_SIZE / 2, SHAPE_SIZE / 2, SHAPE_SIZE / 2 - 2);
+  graphics.circle(size / 2, size / 2, size / 2 - 2);
   graphics.fill({ color });
-  // Glow (simulated with stroke for now, or just a larger circle with lower alpha if possible, but texture is small)
-  // For simple texture, just a solid circle is fine, maybe lighter center
-  graphics.circle(SHAPE_SIZE / 2, SHAPE_SIZE / 2, 2);
+
+  // High contrast center
+  graphics.circle(size / 2, size / 2, 3);
   graphics.fill({ color: 0xFFFFFF });
 
-  const texture = RenderTexture.create({ width: SHAPE_SIZE, height: SHAPE_SIZE });
-  app.renderer.render({ container: graphics, target: texture });
-  graphics.destroy();
-
-  return texture;
+  return renderToTexture(app, graphics, size, size);
 }
 
 /**
- * Generate a hexagon texture (Phaser Turret)
+ * Generate Phaser Turret texture (Hexagon base with barrel)
  */
-function createHexagonTexture(app: Application, color: number): RenderTexture {
+function createTurretPhaserTexture(app: Application, color: number): RenderTexture {
   const graphics = new Graphics();
-  const radius = SHAPE_SIZE / 2;
-  const centerX = SHAPE_SIZE / 2;
-  const centerY = SHAPE_SIZE / 2;
+  const size = 28;
+  const center = size / 2;
 
-  graphics.moveTo(centerX + radius, centerY);
+  // Hexagon Base (stationary look)
+  const radius = size / 2;
+  graphics.moveTo(center + radius, center);
   for (let i = 1; i <= 6; i++) {
     const angle = (i * Math.PI) / 3;
-    graphics.lineTo(centerX + radius * Math.cos(angle), centerY + radius * Math.sin(angle));
+    graphics.lineTo(center + radius * Math.cos(angle), center + radius * Math.sin(angle));
   }
-  graphics.fill({ color });
+  graphics.fill({ color: 0x3366AA }); // Darker Federation blue for base
   graphics.stroke({ color: 0xFFFFFF, width: 1, alpha: 0.5 });
 
-  const texture = RenderTexture.create({ width: SHAPE_SIZE, height: SHAPE_SIZE });
-  app.renderer.render({ container: graphics, target: texture });
-  graphics.destroy();
+  // Rotating part mock-up (since we rotate the whole sprite for now)
+  // Cannon barrel
+  graphics.rect(center - 2, 0, 4, center); // Barrel pointing up
+  graphics.fill({ color });
 
-  return texture;
+  // Turret cap
+  graphics.circle(center, center, 6);
+  graphics.fill({ color: 0xFFFFFF });
+
+  return renderToTexture(app, graphics, size, size);
 }
 
 /**
- * Generate an octagon texture (Torpedo Turret)
+ * Generate Torpedo Turret texture (Octagon base with dual launchers)
  */
-function createOctagonTexture(app: Application, color: number): RenderTexture {
+function createTurretTorpedoTexture(app: Application, _color: number): RenderTexture {
   const graphics = new Graphics();
-  const radius = SHAPE_SIZE / 2;
-  const centerX = SHAPE_SIZE / 2;
-  const centerY = SHAPE_SIZE / 2;
+  const size = 28;
+  const center = size / 2;
 
-  graphics.moveTo(centerX + radius, centerY);
+  // Octagon Base
+  const radius = size / 2;
+  graphics.moveTo(center + radius, center);
   for (let i = 1; i <= 8; i++) {
     const angle = (i * Math.PI) / 4;
-    graphics.lineTo(centerX + radius * Math.cos(angle), centerY + radius * Math.sin(angle));
+    graphics.lineTo(center + radius * Math.cos(angle), center + radius * Math.sin(angle));
   }
-  graphics.fill({ color });
+  graphics.fill({ color: 0x444444 }); // Industrial grey
   graphics.stroke({ color: 0xFFFFFF, width: 1, alpha: 0.5 });
 
-  const texture = RenderTexture.create({ width: SHAPE_SIZE, height: SHAPE_SIZE });
-  app.renderer.render({ container: graphics, target: texture });
-  graphics.destroy();
+  // Dual launchers
+  graphics.rect(center - 6, 0, 4, center); // Left barrel
+  graphics.rect(center + 2, 0, 4, center); // Right barrel
+  graphics.fill({ color: 0xFF0000 }); // Red for torpedoes
 
-  return texture;
+  // Cap
+  graphics.circle(center, center, 5);
+  graphics.fill({ color: 0xAAAAAA });
+
+  return renderToTexture(app, graphics, size, size);
 }
 
 /**
- * Generate a pentagon texture (Disruptor Turret)
+ * Generate Disruptor Turret texture (Pentagon base with focus crystal)
  */
-function createPentagonTexture(app: Application, color: number): RenderTexture {
+function createTurretDisruptorTexture(app: Application, _color: number): RenderTexture {
   const graphics = new Graphics();
-  const radius = SHAPE_SIZE / 2;
-  const centerX = SHAPE_SIZE / 2;
-  const centerY = SHAPE_SIZE / 2;
+  const size = 28;
+  const center = size / 2;
 
+  // Pentagon Base
+  const radius = size / 2;
   // Rotate -90 deg to point up
   const startAngle = -Math.PI / 2;
 
-  graphics.moveTo(centerX + radius * Math.cos(startAngle), centerY + radius * Math.sin(startAngle));
+  graphics.moveTo(center + radius * Math.cos(startAngle), center + radius * Math.sin(startAngle));
   for (let i = 1; i <= 5; i++) {
     const angle = startAngle + (i * 2 * Math.PI) / 5;
-    graphics.lineTo(centerX + radius * Math.cos(angle), centerY + radius * Math.sin(angle));
+    graphics.lineTo(center + radius * Math.cos(angle), center + radius * Math.sin(angle));
   }
-  graphics.fill({ color });
+  graphics.fill({ color: 0x228822 }); // Greenish base
   graphics.stroke({ color: 0xFFFFFF, width: 1, alpha: 0.5 });
 
-  const texture = RenderTexture.create({ width: SHAPE_SIZE, height: SHAPE_SIZE });
-  app.renderer.render({ container: graphics, target: texture });
-  graphics.destroy();
+  // Disruptor coil (triangular)
+  graphics.poly([
+    center, 2,
+    center - 4, center,
+    center + 4, center
+  ]);
+  graphics.fill({ color: 0x66FF66 }); // Bright green coil
 
-  return texture;
+  return renderToTexture(app, graphics, size, size);
 }
 
 /**
@@ -268,16 +403,16 @@ export function createFactionTextures(app: Application): FactionTextures {
   }
 
   // Create and cache textures
-  const federation = createCircleTexture(app, FACTION_COLORS.FEDERATION);
-  const klingon = createTriangleTexture(app, FACTION_COLORS.KLINGON);
-  const romulan = createCrescentTexture(app, FACTION_COLORS.ROMULAN);
-  const borg = createSquareTexture(app, FACTION_COLORS.BORG);
-  const tholian = createDiamondTexture(app, FACTION_COLORS.THOLIAN);
-  const species8472 = createYShapeTexture(app, FACTION_COLORS.SPECIES_8472);
+  const federation = createFederationTexture(app, FACTION_COLORS.FEDERATION);
+  const klingon = createKlingonTexture(app, FACTION_COLORS.KLINGON);
+  const romulan = createRomulanTexture(app, FACTION_COLORS.ROMULAN);
+  const borg = createBorgTexture(app, FACTION_COLORS.BORG);
+  const tholian = createTholianTexture(app, FACTION_COLORS.THOLIAN);
+  const species8472 = createSpecies8472Texture(app, FACTION_COLORS.SPECIES_8472);
   const projectile = createProjectileTexture(app, FACTION_COLORS.PROJECTILE);
-  const turretPhaser = createHexagonTexture(app, FACTION_COLORS.FEDERATION);
-  const turretTorpedo = createOctagonTexture(app, FACTION_COLORS.FEDERATION);
-  const turretDisruptor = createPentagonTexture(app, FACTION_COLORS.FEDERATION);
+  const turretPhaser = createTurretPhaserTexture(app, FACTION_COLORS.FEDERATION);
+  const turretTorpedo = createTurretTorpedoTexture(app, FACTION_COLORS.FEDERATION);
+  const turretDisruptor = createTurretDisruptorTexture(app, FACTION_COLORS.FEDERATION);
 
   cache.set(TEXTURE_KEYS.federation, federation);
   cache.set(TEXTURE_KEYS.klingon, klingon);

@@ -4,7 +4,7 @@
  * This reduces code duplication and makes adding new entity types easier.
  */
 import { addEntity, addComponent } from 'bitecs';
-import { Position, Velocity, Faction, SpriteRef, Health, Shield, AIBehavior, EnemyWeapon } from './components';
+import { Position, Velocity, Faction, SpriteRef, Health, Shield, AIBehavior, EnemyWeapon, Rotation } from './components';
 import { getEnemyTemplate, EnemyShipTemplate } from './entityTemplates';
 import type { GameWorld } from './world';
 import { incrementEntityCount } from './world';
@@ -94,6 +94,10 @@ export function createEnemyFromTemplate(
     addComponent(world, SpriteRef, eid);
     SpriteRef.index[eid] = PLACEHOLDER_SPRITE_INDEX;
 
+    // Rotation component
+    addComponent(world, Rotation, eid);
+    Rotation.angle[eid] = 0;
+
     // Health component
     addComponent(world, Health, eid);
     Health.current[eid] = template.health;
@@ -153,9 +157,10 @@ function resetEntityComponents(eid: number): void {
     EnemyWeapon.lastFired[eid] = 0;
     EnemyWeapon.projectileType[eid] = 0;
 
-    // Reset Faction/Sprite
+    // Reset Faction/Sprite/Rotation
     Faction.id[eid] = 0;
     SpriteRef.index[eid] = 0;
+    Rotation.angle[eid] = 0;
 }
 
 /**

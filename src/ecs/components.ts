@@ -393,3 +393,15 @@ export const SpecialAbility = defineComponent({
   active: Types.ui8            // 0/1 flag if currently active
 });
 
+
+/**
+ * Rotation component for entity orientation.
+ * 
+ * Used by the render system to rotate sprites.
+ * Units are in radians.
+ * 
+ * @property angle - Rotation angle in radians
+ */
+export const Rotation = defineComponent({
+  angle: Types.f32
+});

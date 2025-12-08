@@ -5,7 +5,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { createGameWorld } from '../ecs/world';
 import { PoolManager } from '../ecs/PoolManager';
 import { createEnemy } from '../ecs/entityFactory';
-import { Position, SpriteRef } from '../ecs/components';
+import { Position, SpriteRef, Rotation } from '../ecs/components';
 import { createRenderSystem } from '../systems/renderSystem';
 import type { SpriteManager } from '../rendering/spriteManager';
 import { FactionId } from '../types/constants';
@@ -26,6 +26,7 @@ function createMockSpriteManager(): SpriteManager {
         activeSprites.set(index, { x, y });
       }
     }),
+    updateSpriteRotation: vi.fn(),
     removeSprite: vi.fn((index: number) => {
       activeSprites.delete(index);
     }),
@@ -83,6 +84,30 @@ describe('Render System', () => {
 
     // Sprite position should be updated
     expect(mockSpriteManager.updateSprite).toHaveBeenCalledWith(spriteIndex, 150, 250);
+  });
+
+  it('should update sprite rotation for existing entities', () => {
+    // Create an entity
+    const eid = createEnemy(world, FactionId.FEDERATION, 100, 200);
+
+    // Run render system to create sprite (initial rotation 0)
+    renderSystem(world);
+    const spriteIndex = SpriteRef.index[eid];
+
+    // Update rotation
+    Rotation.angle[eid] = Math.PI;
+
+    // Run render system again
+    renderSystem(world);
+
+    // Sprite rotation should be updated
+    // Use manual check for float precision (f32 vs f64)
+    const updateRotationMock = mockSpriteManager.updateSpriteRotation as any;
+    const calls = updateRotationMock.mock.calls;
+    const lastCall = calls[calls.length - 1];
+
+    expect(lastCall[0]).toBe(spriteIndex);
+    expect(lastCall[1]).toBeCloseTo(Math.PI);
   });
 
   it('should handle multiple entities', () => {

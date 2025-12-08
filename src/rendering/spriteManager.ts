@@ -69,8 +69,8 @@ export class SpriteManager {
       const container = new ParticleContainer({
         dynamicProperties: {
           position: true,
-          scale: false,
-          rotation: false,
+          scale: true,
+          rotation: true,
           color: false
         }
       });
@@ -163,6 +163,9 @@ export class SpriteManager {
     // Set position
     particle.x = x;
     particle.y = y;
+    particle.rotation = 0; // Reset rotation
+    particle.scaleX = 1; // Reset scale
+    particle.scaleY = 1;
 
     // Add to container
     container.addParticle(particle);
@@ -185,6 +188,18 @@ export class SpriteManager {
     if (entry) {
       entry.particle.x = x;
       entry.particle.y = y;
+    }
+  }
+
+  /**
+   * Update particle rotation
+   * @param index - The particle index
+   * @param rotation - New rotation in radians
+   */
+  updateSpriteRotation(index: number, rotation: number): void {
+    const entry = this.particles.get(index);
+    if (entry) {
+      entry.particle.rotation = rotation;
     }
   }
 

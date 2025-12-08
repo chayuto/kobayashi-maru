@@ -16,6 +16,7 @@ import {
   createCombatSystem, createDamageSystem, createAISystem, createProjectileSystem,
   statusEffectSystem, createEnemyCollisionSystem, createEnemyCombatSystem,
   createEnemyProjectileSystem, createAbilitySystem,
+  createTurretRotationSystem, createEnemyRotationSystem,
   CollisionSystem, CombatSystem, BeamVisual
 } from '../systems';
 
@@ -205,6 +206,8 @@ export class Game {
       spatialHash,
       () => this.gameplayManager.getKobayashiMaruId()
     );
+    const turretRotationSystem = createTurretRotationSystem();
+    const enemyRotationSystem = createEnemyRotationSystem();
 
     // Store systems locally
     this.collisionSystem = collisionSystem;
@@ -218,6 +221,8 @@ export class Game {
     systemManager.register('ai', aiSystem, 20, { requiresGameTime: true });
     systemManager.register('ability', abilitySystem, 25);
     systemManager.register('movement', movementSystem, 30);
+    systemManager.register('turret-rotation', turretRotationSystem, 31);
+    systemManager.register('enemy-rotation', enemyRotationSystem, 32);
     systemManager.register('status-effects', statusEffectSystem, 35);
     systemManager.register('enemy-collision', enemyCollisionSystem, 38, { requiresDelta: false });
     systemManager.register('targeting', targetingSystem, 40, { requiresDelta: false });

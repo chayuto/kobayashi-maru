@@ -3,7 +3,7 @@
  * A bitECS system that syncs entity positions to sprites using SpriteManager
  */
 import { defineQuery, defineSystem, IWorld, enterQuery, exitQuery, hasComponent } from 'bitecs';
-import { Position, Faction, SpriteRef, Turret, Projectile } from '../ecs/components';
+import { Position, Faction, SpriteRef, Turret, Projectile, Rotation } from '../ecs/components';
 import { TurretType, SpriteType } from '../types/constants';
 import type { SpriteManager } from '../rendering/spriteManager';
 
@@ -66,7 +66,7 @@ export function createRenderSystem(spriteManager: SpriteManager) {
       }
     }
 
-    // Update positions for all existing entities
+    // Update positions and rotation for all existing entities
     const entities = renderQuery(world);
     for (const eid of entities) {
       const spriteIndex = SpriteRef.index[eid];
@@ -74,6 +74,11 @@ export function createRenderSystem(spriteManager: SpriteManager) {
         const x = Position.x[eid];
         const y = Position.y[eid];
         spriteManager.updateSprite(spriteIndex, x, y);
+
+        // Update rotation if entity has Rotation component
+        if (hasComponent(world, Rotation, eid)) {
+          spriteManager.updateSpriteRotation(spriteIndex, Rotation.angle[eid]);
+        }
       }
     }
 
