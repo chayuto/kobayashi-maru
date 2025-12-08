@@ -2,6 +2,8 @@
 
 A Star Trek-themed endless tower defense game built with TypeScript, PixiJS, and bitECS.
 
+https://chayuto.github.io/kobayashi-maru/
+
 ## Quick Start
 
 ```bash
