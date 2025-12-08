@@ -20,17 +20,26 @@ A significant graphical and behavioral upgrade for all ship and turret entities.
   - **Turrets**: Distinct visual designs for Phaser, Torpedo, and Disruptor turrets, featuring base and barrel distinction.
 
 ### 2. Engine & ECS Updates
-- **New Component**: Added `Rotation` component (`angle: f32`) to `src/ecs/components.ts`.
+- **New Components**: 
+  - `Rotation` component (`angle: f32`) for generic rotation.
+  - `CompositeSpriteRef` component (`baseIndex`, `barrelIndex`) for multi-part entities.
 - **Sprite Manager**: Updated `src/rendering/spriteManager.ts` to enable `rotation: true` in PixiJS `ParticleContainer` configs and added `updateSpriteRotation` method.
-- **Render System**: Modified `src/systems/renderSystem.ts` to sync the ECS `Rotation` component with the visual sprite's rotation every frame.
+- **Render System**: Modified `src/systems/renderSystem.ts` to:
+  - Sync `Rotation` component with sprite rotation.
+  - Support `CompositeSpriteRef` to independently render stationary bases and rotating barrels for turrets.
 
 ### 3. New Gameplay Systems
-- **Turret Rotation**: Implemented `src/systems/turretRotationSystem.ts`. Turrets now actively rotate to track their locked targets, adding visual feedback to the targeting system.
-- **Enemy Facing**: Implemented `src/systems/enemyRotationSystem.ts`. Enemy ships now orient themselves to face their direction of movement (velocity vector).
+- **Turret Rotation**: Implemented `src/systems/turretRotationSystem.ts`. Turrets now actively rotate to track their locked targets.
+- **Enemy Facing**: Implemented `src/systems/enemyRotationSystem.ts`. Enemy ships now orient themselves to face their direction of movement.
+- **Composite Sprites**: Turrets are now composed of two separate sprites:
+  - **Base**: Stationary, indicates placement.
+  - **Barrel**: Rotates towards target, providing visual feedback on aiming.
 
 ### 4. Integration
-- **Entity Factories**: Updated `createTurret`, `createEnemy`, `createProjectile`, and `createKobayashiMaru` to initialize the `Rotation` component.
-- **System Registration**: Registered the new rotation systems in `src/core/Game.ts` to run before the rendering phase.
+- **Entity Factories**: 
+  - Updated `createTurret` to use `CompositeSpriteRef` instead of simple `SpriteRef`.
+  - Updated `createEnemy`, `createProjectile`, and `createKobayashiMaru` to initialize the `Rotation` component.
+- **System Registration**: Registered the new rotation systems in `src/core/Game.ts`.
 
 ## Verification
 - **New Test Suite**: Created `src/__tests__/rotationSystem.test.ts` to verify:

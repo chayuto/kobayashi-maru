@@ -8,7 +8,7 @@
  * thin wrappers maintained for backwards compatibility.
  */
 import { addEntity, addComponent } from 'bitecs';
-import { Position, Velocity, Faction, SpriteRef, Health, Shield, Turret, Target, Projectile, Collider, WeaponProperties, TurretUpgrade, Rotation } from './components';
+import { Position, Velocity, Faction, SpriteRef, CompositeSpriteRef, Health, Shield, Turret, Target, Projectile, Collider, WeaponProperties, TurretUpgrade, Rotation } from './components';
 import { FactionId, TurretType, TURRET_CONFIG, ProjectileType, PROJECTILE_CONFIG, GAME_CONFIG } from '../types/constants';
 import type { GameWorld } from './world';
 import { incrementEntityCount } from './world';
@@ -102,8 +102,9 @@ export function createTurret(world: GameWorld, x: number, y: number, turretType:
   addComponent(world, Faction, eid);
   Faction.id[eid] = FactionId.FEDERATION;
 
-  addComponent(world, SpriteRef, eid);
-  SpriteRef.index[eid] = PLACEHOLDER_SPRITE_INDEX;
+  addComponent(world, CompositeSpriteRef, eid);
+  CompositeSpriteRef.baseIndex[eid] = PLACEHOLDER_SPRITE_INDEX;
+  CompositeSpriteRef.barrelIndex[eid] = PLACEHOLDER_SPRITE_INDEX;
 
   addComponent(world, Rotation, eid);
   Rotation.angle[eid] = 0;

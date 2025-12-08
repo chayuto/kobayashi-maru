@@ -4,11 +4,11 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { createGameWorld } from '../ecs/world';
 import { PoolManager } from '../ecs/PoolManager';
-import { createEnemy } from '../ecs/entityFactory';
-import { Position, SpriteRef, Rotation } from '../ecs/components';
+import { createEnemy, createTurret } from '../ecs/entityFactory';
+import { Position, SpriteRef, Rotation, CompositeSpriteRef } from '../ecs/components';
 import { createRenderSystem } from '../systems/renderSystem';
 import type { SpriteManager } from '../rendering/spriteManager';
-import { FactionId } from '../types/constants';
+import { FactionId, TurretType, SpriteType } from '../types/constants';
 
 // Mock SpriteManager
 function createMockSpriteManager(): SpriteManager {
@@ -132,5 +132,59 @@ describe('Render System', () => {
 
     // Sprite should be created with Klingon faction ID
     expect(mockSpriteManager.createSprite).toHaveBeenCalledWith(1, 100, 200); // 1 = KLINGON
+  });
+
+  it('should create composite sprites for turrets', () => {
+    // Create turret (Phaser)
+    const eid = createTurret(world, 100, 200, TurretType.PHASER_ARRAY);
+
+    // Clear previous calls (createEnemy tests might have called it if run in sequence?)
+    // In beforeEach we create new renderSystem and mockSpriteManager, so it's clean.
+
+    // Run render system
+    renderSystem(world);
+
+    // Should have created 2 sprites (Base and Barrel) - check specific calls
+    // Note: order depends on logic. Base first?
+    // We called Base first in renderSystemLogic
+
+    // Types may be numbers. TurretType.PHASER is mapped to SpriteType.TURRET_BASE_PHASER etc.
+    // Check logic:
+    // baseType = SpriteType.TURRET_BASE_PHASER
+    // barrelType = SpriteType.TURRET_BARREL_PHASER
+
+    // We need to import SpriteType in this file. (Added in imports chunk)
+
+    // Use flexible expect since we don't know exact call index if parallel
+    // But this test creates 1 entity. So it should be calls 0 and 1.
+
+    expect(mockSpriteManager.createSprite).toHaveBeenCalledTimes(2);
+    expect(mockSpriteManager.createSprite).toHaveBeenCalledWith(SpriteType.TURRET_BASE_PHASER, 100, 200);
+    expect(mockSpriteManager.createSprite).toHaveBeenCalledWith(SpriteType.TURRET_BARREL_PHASER, 100, 200);
+
+    const baseIndex = CompositeSpriteRef.baseIndex[eid];
+    const barrelIndex = CompositeSpriteRef.barrelIndex[eid];
+    expect(baseIndex).toBeGreaterThan(0);
+    expect(barrelIndex).toBeGreaterThan(0);
+
+    // Update Rotation
+    Rotation.angle[eid] = Math.PI;
+
+    // Run render system
+    (mockSpriteManager.updateSpriteRotation as any).mockClear();
+    renderSystem(world);
+
+    // Should update barrel rotation ONLY
+    const updateRotCalls = (mockSpriteManager.updateSpriteRotation as any).mock.calls;
+    // We expect call for barrelIndex
+    const barrelCall = updateRotCalls.find((call: any[]) => call[0] === barrelIndex);
+    expect(barrelCall).toBeDefined();
+    if (barrelCall) {
+      expect(barrelCall[1]).toBeCloseTo(Math.PI);
+    }
+
+    // Base rotation should NOT be updated (or updated to 0 if implemented that way, but currently we only call updateSpriteRotation for barrel)
+    const baseCall = updateRotCalls.find((call: any[]) => call[0] === baseIndex);
+    expect(baseCall).toBeUndefined();
   });
 });

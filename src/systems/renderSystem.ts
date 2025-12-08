@@ -3,7 +3,7 @@
  * A bitECS system that syncs entity positions to sprites using SpriteManager
  */
 import { defineQuery, defineSystem, IWorld, enterQuery, exitQuery, hasComponent } from 'bitecs';
-import { Position, Faction, SpriteRef, Turret, Projectile, Rotation } from '../ecs/components';
+import { Position, Faction, SpriteRef, Turret, Projectile, Rotation, CompositeSpriteRef } from '../ecs/components';
 import { TurretType, SpriteType } from '../types/constants';
 import type { SpriteManager } from '../rendering/spriteManager';
 
@@ -11,6 +11,11 @@ import type { SpriteManager } from '../rendering/spriteManager';
 const renderQuery = defineQuery([Position, Faction, SpriteRef]);
 const renderEnterQuery = enterQuery(renderQuery);
 const renderExitQuery = exitQuery(renderQuery);
+
+// Query for composite sprites (Position, Faction, CompositeSpriteRef)
+const compositeQuery = defineQuery([Position, Faction, CompositeSpriteRef]);
+const compositeEnterQuery = enterQuery(compositeQuery);
+const compositeExitQuery = exitQuery(compositeQuery);
 
 // Special value to indicate unset sprite index
 const SPRITE_INDEX_UNSET = 0;
@@ -78,6 +83,78 @@ export function createRenderSystem(spriteManager: SpriteManager) {
         // Update rotation if entity has Rotation component
         if (hasComponent(world, Rotation, eid)) {
           spriteManager.updateSpriteRotation(spriteIndex, Rotation.angle[eid]);
+        }
+      }
+    }
+
+    // --- Composite Sprite Handling ---
+
+    // Handle new composite entities
+    const enteredComposite = compositeEnterQuery(world);
+    for (const eid of enteredComposite) {
+      if (CompositeSpriteRef.baseIndex[eid] === SPRITE_INDEX_UNSET) {
+        let baseType = 0;
+        let barrelType = 0;
+
+        if (hasComponent(world, Turret, eid)) {
+          switch (Turret.turretType[eid]) {
+            case TurretType.PHASER_ARRAY:
+              baseType = SpriteType.TURRET_BASE_PHASER;
+              barrelType = SpriteType.TURRET_BARREL_PHASER;
+              break;
+            case TurretType.TORPEDO_LAUNCHER:
+              baseType = SpriteType.TURRET_BASE_TORPEDO;
+              barrelType = SpriteType.TURRET_BARREL_TORPEDO;
+              break;
+            case TurretType.DISRUPTOR_BANK:
+              baseType = SpriteType.TURRET_BASE_DISRUPTOR;
+              barrelType = SpriteType.TURRET_BARREL_DISRUPTOR;
+              break;
+            default:
+              // Fallback
+              baseType = SpriteType.TURRET_BASE_PHASER;
+              barrelType = SpriteType.TURRET_BARREL_PHASER;
+          }
+        }
+
+        if (baseType !== 0) {
+          const x = Position.x[eid];
+          const y = Position.y[eid];
+          CompositeSpriteRef.baseIndex[eid] = spriteManager.createSprite(baseType, x, y);
+          CompositeSpriteRef.barrelIndex[eid] = spriteManager.createSprite(barrelType, x, y);
+        }
+      }
+    }
+
+    // Handle removed composite entities
+    const exitedComposite = compositeExitQuery(world);
+    for (const eid of exitedComposite) {
+      const baseIndex = CompositeSpriteRef.baseIndex[eid];
+      const barrelIndex = CompositeSpriteRef.barrelIndex[eid];
+      if (baseIndex !== SPRITE_INDEX_UNSET) {
+        spriteManager.removeSprite(baseIndex);
+        spriteManager.removeSprite(barrelIndex);
+        CompositeSpriteRef.baseIndex[eid] = SPRITE_INDEX_UNSET;
+        CompositeSpriteRef.barrelIndex[eid] = SPRITE_INDEX_UNSET;
+      }
+    }
+
+    // Update composite entities
+    const compositeEntities = compositeQuery(world);
+    for (const eid of compositeEntities) {
+      const baseIndex = CompositeSpriteRef.baseIndex[eid];
+      const barrelIndex = CompositeSpriteRef.barrelIndex[eid];
+      if (baseIndex !== SPRITE_INDEX_UNSET) {
+        const x = Position.x[eid];
+        const y = Position.y[eid];
+
+        // Update positions
+        spriteManager.updateSprite(baseIndex, x, y);
+        spriteManager.updateSprite(barrelIndex, x, y);
+
+        // Update rotation (Barrel only)
+        if (hasComponent(world, Rotation, eid)) {
+          spriteManager.updateSpriteRotation(barrelIndex, Rotation.angle[eid]);
         }
       }
     }

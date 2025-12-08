@@ -393,23 +393,68 @@ export function createEnemyRotationSystem() {
 ### Phase 4: Multi-Part Sprites (Advanced)
 
 > [!NOTE]
-> This is an **optional advanced feature** for later consideration.
+> This phase separates turrets into a stationary base and a rotating barrel/head.
 
-For turrets that need a stationary base and rotating barrel:
+#### Architecture Changes
 
-```mermaid
-graph TD
-    A[TurretEntity] --> B[BaseSpriteRef - Stationary]
-    A --> C[BarrelSpriteRef - Rotates]
-```
+1.  **New Component: `CompositeSpriteRef`**
+    We need a way to track *multiple* sprite indices for a single entity.
+    ```typescript
+    // in src/ecs/components.ts
+    export const CompositeSpriteRef = defineComponent({
+      baseIndex: Types.ui32,   // Index for stationary base sprite
+      barrelIndex: Types.ui32  // Index for rotating barrel sprite
+    });
+    ```
 
-Requires new component:
-```typescript
-export const CompositeSpriteRef = defineComponent({
-  baseIndex: Types.ui32,
-  barrelIndex: Types.ui32
-});
-```
+2.  **Texture Splitting**
+    We need to split current turret textures into two parts:
+    *   `createTurretBaseTexture`: Stationary part (e.g. tripod, mount)
+    *   `createTurretBarrelTexture`: Rotating part (e.g. guns, launcher)
+
+    *Update `src/rendering/textures.ts` to export these separate textures.*
+
+3.  **Sprite Manager Updates**
+    *   Update `createSprite` to support these new types?
+    *   Or handling them as standard sprite types in `SpriteManager` is fine, we just need unique `SpriteType` enums for `TURRET_BASE` and `TURRET_BARREL`.
+
+    *Update `src/types/constants.ts`:*
+    ```typescript
+    export enum SpriteType {
+      // ... existing
+      TURRET_BASE_PHASER = 100,
+      TURRET_BARREL_PHASER = 101,
+      // ... etc for other types
+      TURRET_BASE_TORPEDO = 102,
+      TURRET_BARREL_TORPEDO = 103,
+      // ...
+    }
+    ```
+
+4.  **Render System Logic**
+    Update `src/systems/renderSystem.ts` to handle `CompositeSpriteRef`:
+    *   If `CompositeSpriteRef` exists:
+        *   Update position for *both* base and barrel.
+        *   Update rotation *only* for barrel (using `Rotation` component).
+        *   Base rotation should stay 0 or fixed.
+
+5.  **Entity Factory Updates**
+    Update `src/ecs/entityFactory.ts`:
+    *   `createTurret`:
+        *   Remove `SpriteRef` (or set it to specific base?)
+        *   Add `CompositeSpriteRef`.
+        *   Initialize both sprites via `SpriteManager` (or separate initialization system).
+
+    *Wait, `RenderSystem` handles sprite creation currently based on `SpriteRef`. We need to update `RenderSystem` to handle creation for `CompositeSpriteRef` too.*
+
+#### Implementation Steps
+
+1.  **Define Constants**: Add `CompositeSpriteRef` to `components.ts` and new sprite types to `constants.ts`.
+2.  **Split Textures**: Update `textures.ts` to generate separate base and barrel textures.
+3.  **Update Rendering**: Modify `renderSystem.ts` to support `CompositeSpriteRef` creation, update, and removal.
+4.  **Update Factory**: Modify `createTurret` to use the new component.
+5.  **Verify**: Turrets should have stationary bases while heads track targets.
+
 
 ---
 

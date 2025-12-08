@@ -256,26 +256,37 @@ function createProjectileTexture(app: Application, color: number): RenderTexture
 }
 
 /**
- * Generate Phaser Turret texture (Hexagon base with barrel)
+ * Generate Phaser Turret Base (Hexagon)
  */
-function createTurretPhaserTexture(app: Application, color: number): RenderTexture {
+function createTurretBasePhaserTexture(app: Application, _color: number): RenderTexture {
   const graphics = new Graphics();
-  const size = 28;
+  const size = 32;
   const center = size / 2;
 
-  // Hexagon Base (stationary look)
+  // Hexagon Base
   const radius = size / 2;
   graphics.moveTo(center + radius, center);
   for (let i = 1; i <= 6; i++) {
     const angle = (i * Math.PI) / 3;
     graphics.lineTo(center + radius * Math.cos(angle), center + radius * Math.sin(angle));
   }
-  graphics.fill({ color: 0x3366AA }); // Darker Federation blue for base
+  graphics.fill({ color: 0x3366AA }); // Darker Federation blue
   graphics.stroke({ color: 0xFFFFFF, width: 1, alpha: 0.5 });
 
-  // Rotating part mock-up (since we rotate the whole sprite for now)
+  return renderToTexture(app, graphics, size, size);
+}
+
+/**
+ * Generate Phaser Turret Barrel
+ */
+function createTurretBarrelPhaserTexture(app: Application, color: number): RenderTexture {
+  const graphics = new Graphics();
+  const size = 32;
+  const center = size / 2;
+
   // Cannon barrel
-  graphics.rect(center - 2, 0, 4, center); // Barrel pointing up
+  // Draw relative to center being pivot point
+  graphics.rect(center - 2, 0, 4, center + 4);
   graphics.fill({ color });
 
   // Turret cap
@@ -286,11 +297,11 @@ function createTurretPhaserTexture(app: Application, color: number): RenderTextu
 }
 
 /**
- * Generate Torpedo Turret texture (Octagon base with dual launchers)
+ * Generate Torpedo Turret Base (Octagon)
  */
-function createTurretTorpedoTexture(app: Application, _color: number): RenderTexture {
+function createTurretBaseTorpedoTexture(app: Application, _color: number): RenderTexture {
   const graphics = new Graphics();
-  const size = 28;
+  const size = 32;
   const center = size / 2;
 
   // Octagon Base
@@ -303,10 +314,21 @@ function createTurretTorpedoTexture(app: Application, _color: number): RenderTex
   graphics.fill({ color: 0x444444 }); // Industrial grey
   graphics.stroke({ color: 0xFFFFFF, width: 1, alpha: 0.5 });
 
+  return renderToTexture(app, graphics, size, size);
+}
+
+/**
+ * Generate Torpedo Turret Barrel
+ */
+function createTurretBarrelTorpedoTexture(app: Application, _color: number): RenderTexture {
+  const graphics = new Graphics();
+  const size = 32;
+  const center = size / 2;
+
   // Dual launchers
-  graphics.rect(center - 6, 0, 4, center); // Left barrel
-  graphics.rect(center + 2, 0, 4, center); // Right barrel
-  graphics.fill({ color: 0xFF0000 }); // Red for torpedoes
+  graphics.rect(center - 6, 0, 4, center + 4); // Left barrel
+  graphics.rect(center + 2, 0, 4, center + 4); // Right barrel
+  graphics.fill({ color: 0xFF0000 }); // Red
 
   // Cap
   graphics.circle(center, center, 5);
@@ -316,16 +338,15 @@ function createTurretTorpedoTexture(app: Application, _color: number): RenderTex
 }
 
 /**
- * Generate Disruptor Turret texture (Pentagon base with focus crystal)
+ * Generate Disruptor Turret Base (Pentagon)
  */
-function createTurretDisruptorTexture(app: Application, _color: number): RenderTexture {
+function createTurretBaseDisruptorTexture(app: Application, _color: number): RenderTexture {
   const graphics = new Graphics();
-  const size = 28;
+  const size = 32;
   const center = size / 2;
 
   // Pentagon Base
   const radius = size / 2;
-  // Rotate -90 deg to point up
   const startAngle = -Math.PI / 2;
 
   graphics.moveTo(center + radius * Math.cos(startAngle), center + radius * Math.sin(startAngle));
@@ -333,16 +354,27 @@ function createTurretDisruptorTexture(app: Application, _color: number): RenderT
     const angle = startAngle + (i * 2 * Math.PI) / 5;
     graphics.lineTo(center + radius * Math.cos(angle), center + radius * Math.sin(angle));
   }
-  graphics.fill({ color: 0x228822 }); // Greenish base
+  graphics.fill({ color: 0x228822 });
   graphics.stroke({ color: 0xFFFFFF, width: 1, alpha: 0.5 });
+
+  return renderToTexture(app, graphics, size, size);
+}
+
+/**
+ * Generate Disruptor Turret Barrel
+ */
+function createTurretBarrelDisruptorTexture(app: Application, _color: number): RenderTexture {
+  const graphics = new Graphics();
+  const size = 32;
+  const center = size / 2;
 
   // Disruptor coil (triangular)
   graphics.poly([
     center, 2,
-    center - 4, center,
-    center + 4, center
+    center - 4, center + 4,
+    center + 4, center + 4
   ]);
-  graphics.fill({ color: 0x66FF66 }); // Bright green coil
+  graphics.fill({ color: 0x66FF66 });
 
   return renderToTexture(app, graphics, size, size);
 }
@@ -358,9 +390,16 @@ export interface FactionTextures {
   tholian: Texture;
   species8472: Texture;
   projectile: Texture;
-  turretPhaser: Texture;
+  turretPhaser: Texture; // Legacy/Fallback
   turretTorpedo: Texture;
   turretDisruptor: Texture;
+  // New split textures
+  turretBasePhaser: Texture;
+  turretBarrelPhaser: Texture;
+  turretBaseTorpedo: Texture;
+  turretBarrelTorpedo: Texture;
+  turretBaseDisruptor: Texture;
+  turretBarrelDisruptor: Texture;
 }
 
 // Texture cache keys for each faction
@@ -374,7 +413,13 @@ const TEXTURE_KEYS = {
   projectile: 'faction_projectile',
   turretPhaser: 'turret_phaser',
   turretTorpedo: 'turret_torpedo',
-  turretDisruptor: 'turret_disruptor'
+  turretDisruptor: 'turret_disruptor',
+  turretBasePhaser: 'turret_base_phaser',
+  turretBarrelPhaser: 'turret_barrel_phaser',
+  turretBaseTorpedo: 'turret_base_torpedo',
+  turretBarrelTorpedo: 'turret_barrel_torpedo',
+  turretBaseDisruptor: 'turret_base_disruptor',
+  turretBarrelDisruptor: 'turret_barrel_disruptor'
 } as const;
 
 /**
@@ -384,10 +429,8 @@ const TEXTURE_KEYS = {
 export function createFactionTextures(app: Application): FactionTextures {
   const cache = TextureCache.getInstance();
 
-  // Check if all textures are already cached using defined keys
-  const allCached = Object.values(TEXTURE_KEYS).every(key => cache.has(key));
-
-  if (allCached) {
+  // Check if key textures are cached (simplified check)
+  if (cache.has(TEXTURE_KEYS.federation) && cache.has(TEXTURE_KEYS.turretBasePhaser)) {
     return {
       federation: cache.get(TEXTURE_KEYS.federation)!,
       klingon: cache.get(TEXTURE_KEYS.klingon)!,
@@ -398,7 +441,13 @@ export function createFactionTextures(app: Application): FactionTextures {
       projectile: cache.get(TEXTURE_KEYS.projectile)!,
       turretPhaser: cache.get(TEXTURE_KEYS.turretPhaser)!,
       turretTorpedo: cache.get(TEXTURE_KEYS.turretTorpedo)!,
-      turretDisruptor: cache.get(TEXTURE_KEYS.turretDisruptor)!
+      turretDisruptor: cache.get(TEXTURE_KEYS.turretDisruptor)!,
+      turretBasePhaser: cache.get(TEXTURE_KEYS.turretBasePhaser)!,
+      turretBarrelPhaser: cache.get(TEXTURE_KEYS.turretBarrelPhaser)!,
+      turretBaseTorpedo: cache.get(TEXTURE_KEYS.turretBaseTorpedo)!,
+      turretBarrelTorpedo: cache.get(TEXTURE_KEYS.turretBarrelTorpedo)!,
+      turretBaseDisruptor: cache.get(TEXTURE_KEYS.turretBaseDisruptor)!,
+      turretBarrelDisruptor: cache.get(TEXTURE_KEYS.turretBarrelDisruptor)!
     };
   }
 
@@ -410,9 +459,19 @@ export function createFactionTextures(app: Application): FactionTextures {
   const tholian = createTholianTexture(app, FACTION_COLORS.THOLIAN);
   const species8472 = createSpecies8472Texture(app, FACTION_COLORS.SPECIES_8472);
   const projectile = createProjectileTexture(app, FACTION_COLORS.PROJECTILE);
-  const turretPhaser = createTurretPhaserTexture(app, FACTION_COLORS.FEDERATION);
-  const turretTorpedo = createTurretTorpedoTexture(app, FACTION_COLORS.FEDERATION);
-  const turretDisruptor = createTurretDisruptorTexture(app, FACTION_COLORS.FEDERATION);
+
+  // Legacy/Composite fallbacks (just in case)
+  const turretPhaser = createTurretBasePhaserTexture(app, FACTION_COLORS.FEDERATION);
+  const turretTorpedo = createTurretBaseTorpedoTexture(app, FACTION_COLORS.FEDERATION);
+  const turretDisruptor = createTurretBaseDisruptorTexture(app, FACTION_COLORS.FEDERATION);
+
+  // New split textures
+  const turretBasePhaser = createTurretBasePhaserTexture(app, FACTION_COLORS.FEDERATION);
+  const turretBarrelPhaser = createTurretBarrelPhaserTexture(app, FACTION_COLORS.FEDERATION);
+  const turretBaseTorpedo = createTurretBaseTorpedoTexture(app, FACTION_COLORS.FEDERATION);
+  const turretBarrelTorpedo = createTurretBarrelTorpedoTexture(app, FACTION_COLORS.FEDERATION);
+  const turretBaseDisruptor = createTurretBaseDisruptorTexture(app, FACTION_COLORS.FEDERATION);
+  const turretBarrelDisruptor = createTurretBarrelDisruptorTexture(app, FACTION_COLORS.FEDERATION);
 
   cache.set(TEXTURE_KEYS.federation, federation);
   cache.set(TEXTURE_KEYS.klingon, klingon);
@@ -425,6 +484,13 @@ export function createFactionTextures(app: Application): FactionTextures {
   cache.set(TEXTURE_KEYS.turretTorpedo, turretTorpedo);
   cache.set(TEXTURE_KEYS.turretDisruptor, turretDisruptor);
 
+  cache.set(TEXTURE_KEYS.turretBasePhaser, turretBasePhaser);
+  cache.set(TEXTURE_KEYS.turretBarrelPhaser, turretBarrelPhaser);
+  cache.set(TEXTURE_KEYS.turretBaseTorpedo, turretBaseTorpedo);
+  cache.set(TEXTURE_KEYS.turretBarrelTorpedo, turretBarrelTorpedo);
+  cache.set(TEXTURE_KEYS.turretBaseDisruptor, turretBaseDisruptor);
+  cache.set(TEXTURE_KEYS.turretBarrelDisruptor, turretBarrelDisruptor);
+
   return {
     federation,
     klingon,
@@ -435,6 +501,12 @@ export function createFactionTextures(app: Application): FactionTextures {
     projectile,
     turretPhaser,
     turretTorpedo,
-    turretDisruptor
+    turretDisruptor,
+    turretBasePhaser,
+    turretBarrelPhaser,
+    turretBaseTorpedo,
+    turretBarrelTorpedo,
+    turretBaseDisruptor,
+    turretBarrelDisruptor
   };
 }

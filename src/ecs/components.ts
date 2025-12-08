@@ -405,3 +405,14 @@ export const SpecialAbility = defineComponent({
 export const Rotation = defineComponent({
   angle: Types.f32
 });
+
+/**
+ * Composite sprite reference for entities with multiple parts (e.g., base + turret).
+ * 
+ * @property baseIndex - Sprite index for stationary base
+ * @property barrelIndex - Sprite index for rotating barrel
+ */
+export const CompositeSpriteRef = defineComponent({
+  baseIndex: Types.ui32,
+  barrelIndex: Types.ui32
+});

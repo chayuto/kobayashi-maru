@@ -3,7 +3,7 @@
  * Handles entity destruction when health reaches 0 and returns entities to pool
  */
 import { defineQuery, removeEntity, IWorld } from 'bitecs';
-import { Health, Faction, Position, SpriteRef } from '../ecs/components';
+import { Health, Faction, Position, SpriteRef, CompositeSpriteRef } from '../ecs/components';
 import { FactionId } from '../types/constants';
 import { GameEventType } from '../types/events';
 import { AudioManager, SoundType } from '../audio';
@@ -96,6 +96,15 @@ export function createDamageSystem(particleSystem?: ParticleSystem, spriteManage
       if (spriteIndex !== SPRITE_INDEX_UNSET && spriteManager) {
         spriteManager.removeSprite(spriteIndex);
         SpriteRef.index[eid] = SPRITE_INDEX_UNSET;
+      }
+
+      // Immediately remove composite sprites
+      const baseIndex = CompositeSpriteRef.baseIndex[eid];
+      if (baseIndex !== SPRITE_INDEX_UNSET && spriteManager) {
+        spriteManager.removeSprite(baseIndex);
+        spriteManager.removeSprite(CompositeSpriteRef.barrelIndex[eid]);
+        CompositeSpriteRef.baseIndex[eid] = SPRITE_INDEX_UNSET;
+        CompositeSpriteRef.barrelIndex[eid] = SPRITE_INDEX_UNSET;
       }
 
       // Remove entity from world or Return to appropriate pool
