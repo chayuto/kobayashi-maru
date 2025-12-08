@@ -344,7 +344,8 @@ export class GameBootstrap {
         services.register('placementRenderer', () => {
             return new PlacementRenderer(
                 services.get('app'),
-                services.get('placementManager')
+                services.get('placementManager'),
+                services.get('world')
             );
         });
     }

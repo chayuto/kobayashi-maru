@@ -4,27 +4,41 @@
  * Subscribes to PlacementManager events to render ghost sprite and range circle.
  */
 import { Application, Graphics, Container } from 'pixi.js';
+import { defineQuery } from 'bitecs';
 import { GAME_CONFIG, TURRET_CONFIG, TurretType } from '../types/constants';
 import { PlacementManager, PlacementEvent } from '../game/PlacementManager';
+import { Position, Turret } from '../ecs/components';
+import type { GameWorld } from '../ecs/world';
+
+// Query for all turrets to show their ranges
+const turretQuery = defineQuery([Position, Turret]);
 
 /**
  * Renders placement preview visuals (ghost sprite and range circle)
  */
 export class PlacementRenderer {
   private app: Application;
+  private world: GameWorld;
   private placementManager: PlacementManager;
   private previewContainer: Container;
   private ghostSprite: Graphics;
   private rangeCircle: Graphics;
+  private existingTurretRanges: Container;
   private boundMouseMove: (e: MouseEvent) => void;
   private boundMouseClick: (e: MouseEvent) => void;
   private boundTouchMove: (e: TouchEvent) => void;
   private boundTouchEnd: (e: TouchEvent) => void;
   private boundKeyDown: (e: KeyboardEvent) => void;
 
-  constructor(app: Application, placementManager: PlacementManager) {
+  constructor(app: Application, placementManager: PlacementManager, world: GameWorld) {
     this.app = app;
+    this.world = world;
     this.placementManager = placementManager;
+
+    // Create container for existing turret ranges (shown below placement preview)
+    this.existingTurretRanges = new Container();
+    this.existingTurretRanges.visible = false;
+    this.app.stage.addChild(this.existingTurretRanges);
 
     // Create preview container
     this.previewContainer = new Container();
@@ -61,11 +75,47 @@ export class PlacementRenderer {
   }
 
   /**
+   * Draw range circles for all existing turrets in the field
+   */
+  private drawExistingTurretRanges(): void {
+    // Clear previous drawings
+    this.existingTurretRanges.removeChildren();
+
+    // Query all turrets and draw their ranges
+    const turretEntities = turretQuery(this.world);
+
+    for (const eid of turretEntities) {
+      const x = Position.x[eid];
+      const y = Position.y[eid];
+      const range = Turret.range[eid];
+
+      const rangeGraphic = new Graphics();
+      rangeGraphic.circle(0, 0, range);
+      rangeGraphic.fill({ color: 0x4488FF, alpha: 0.08 });
+      rangeGraphic.stroke({ color: 0x4488FF, width: 1, alpha: 0.25 });
+      rangeGraphic.position.set(x, y);
+
+      this.existingTurretRanges.addChild(rangeGraphic);
+    }
+
+    this.existingTurretRanges.visible = true;
+  }
+
+  /**
+   * Hide and clear existing turret range indicators
+   */
+  private hideExistingTurretRanges(): void {
+    this.existingTurretRanges.visible = false;
+    this.existingTurretRanges.removeChildren();
+  }
+
+  /**
    * Handle placement start event
    */
   private handlePlacementStart(event: PlacementEvent): void {
     this.previewContainer.visible = true;
     this.updateGhostAppearance(event.turretType!);
+    this.drawExistingTurretRanges();
     this.addInputListeners();
   }
 
@@ -74,6 +124,7 @@ export class PlacementRenderer {
    */
   private handlePlacementCancel(): void {
     this.previewContainer.visible = false;
+    this.hideExistingTurretRanges();
     this.removeInputListeners();
   }
 
@@ -82,6 +133,7 @@ export class PlacementRenderer {
    */
   private handlePlacementPlaced(): void {
     this.previewContainer.visible = false;
+    this.hideExistingTurretRanges();
     this.removeInputListeners();
   }
 
@@ -294,5 +346,6 @@ export class PlacementRenderer {
   destroy(): void {
     this.removeInputListeners();
     this.previewContainer.destroy({ children: true });
+    this.existingTurretRanges.destroy({ children: true });
   }
 }
