@@ -92,8 +92,15 @@ export function createRenderSystem(spriteManager: SpriteManager) {
         spriteManager.updateSprite(spriteIndex, x, y);
 
         // Update rotation if entity has Rotation component
+        // Skip rotation for Kobayashi Maru (it's a stationary base)
         if (hasComponent(world, Rotation, eid)) {
-          spriteManager.updateSpriteRotation(spriteIndex, Rotation.angle[eid]);
+          const isFedWithHealth = Faction.id[eid] === 0 && hasComponent(world, Health, eid);
+          const hasNoComposite = !hasComponent(world, CompositeSpriteRef, eid);
+          const isKobayashiMaru = isFedWithHealth && hasComponent(world, Turret, eid) && hasNoComposite;
+
+          if (!isKobayashiMaru) {
+            spriteManager.updateSpriteRotation(spriteIndex, Rotation.angle[eid]);
+          }
         }
       }
     }

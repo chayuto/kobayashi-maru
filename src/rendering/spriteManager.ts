@@ -63,7 +63,14 @@ export class SpriteManager {
       [SpriteType.PROJECTILE, this.textures.projectile],
       [SpriteType.TURRET_PHASER, this.textures.turretPhaser],
       [SpriteType.TURRET_TORPEDO, this.textures.turretTorpedo],
-      [SpriteType.TURRET_DISRUPTOR, this.textures.turretDisruptor]
+      [SpriteType.TURRET_DISRUPTOR, this.textures.turretDisruptor],
+      // Composite turret sprites (base + barrel)
+      [SpriteType.TURRET_BASE_PHASER, this.textures.turretBasePhaser],
+      [SpriteType.TURRET_BARREL_PHASER, this.textures.turretBarrelPhaser],
+      [SpriteType.TURRET_BASE_TORPEDO, this.textures.turretBaseTorpedo],
+      [SpriteType.TURRET_BARREL_TORPEDO, this.textures.turretBarrelTorpedo],
+      [SpriteType.TURRET_BASE_DISRUPTOR, this.textures.turretBaseDisruptor],
+      [SpriteType.TURRET_BARREL_DISRUPTOR, this.textures.turretBarrelDisruptor]
     ];
 
     for (const [spriteType, texture] of factionTextures) {
@@ -113,6 +120,19 @@ export class SpriteManager {
         return this.textures.turretTorpedo;
       case SpriteType.TURRET_DISRUPTOR:
         return this.textures.turretDisruptor;
+      // Composite turret sprites
+      case SpriteType.TURRET_BASE_PHASER:
+        return this.textures.turretBasePhaser;
+      case SpriteType.TURRET_BARREL_PHASER:
+        return this.textures.turretBarrelPhaser;
+      case SpriteType.TURRET_BASE_TORPEDO:
+        return this.textures.turretBaseTorpedo;
+      case SpriteType.TURRET_BARREL_TORPEDO:
+        return this.textures.turretBarrelTorpedo;
+      case SpriteType.TURRET_BASE_DISRUPTOR:
+        return this.textures.turretBaseDisruptor;
+      case SpriteType.TURRET_BARREL_DISRUPTOR:
+        return this.textures.turretBarrelDisruptor;
       default:
         return this.textures.federation;
     }
