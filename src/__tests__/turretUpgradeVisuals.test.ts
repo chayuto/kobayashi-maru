@@ -123,6 +123,29 @@ describe('TurretUpgradeVisuals', () => {
       upgradeVisuals.update();
 
       // Check that children were added to glow container
+      // Note: With SpriteRef in query, we might need render system to run first to assign sprite
+      // BUT for test, we can just manually set sprite index > 0 if query depends on it
+      // However, TurretUpgradeVisuals implementation uses Position and TurretUpgrade, but ALSO SpriteRef in query
+      // "const turretQuery = defineQuery([Position, Turret, TurretUpgrade, SpriteRef]);"
+
+      // So we need to ensure entity has SpriteRef component (which createTurret adds)
+      // AND that SpriteRef has valid data if query checks values? No, bitECS queries just check component presence.
+      // createTurret DOES add SpriteRef.
+
+      // Debug: why is glowContainer empty?
+      // Maybe position is NaN?
+      // Position is set in createTurret.
+
+      // Ah, bitECS queries are deferred/lazy sometimes? No.
+      // Wait, createTurret adds components.
+
+      // Let's check if updateTurretVisuals is called.
+      // The issue is likely that Position.x[eid] is 100, etc.
+
+      // Actually, createTurret adds SpriteRef component.
+
+      // Let's verify the query matches.
+
       expect(glowContainer.children.length).toBeGreaterThan(0);
     });
 

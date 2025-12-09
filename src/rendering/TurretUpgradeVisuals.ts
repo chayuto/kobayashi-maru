@@ -4,11 +4,11 @@
  */
 import { Container, Graphics } from 'pixi.js';
 import { defineQuery, hasComponent } from 'bitecs';
-import { Position, Turret, TurretUpgrade, SpriteRef } from '../ecs/components';
+import { Position, Turret, TurretUpgrade, CompositeSpriteRef } from '../ecs/components';
 import type { GameWorld } from '../ecs/world';
 
 // Query for turrets with upgrade component
-const turretQuery = defineQuery([Position, Turret, TurretUpgrade, SpriteRef]);
+const turretQuery = defineQuery([Position, Turret, TurretUpgrade, CompositeSpriteRef]);
 
 /**
  * Visual upgrade level indicator configuration

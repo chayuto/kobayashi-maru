@@ -147,7 +147,7 @@ export class AchievementManager {
         this.boundHandlers.set(GameEventType.COMBO_UPDATED, comboHandler as (p: unknown) => void);
     }
 
-    private handleEnemyKilled(_payload: EnemyKilledPayload): void {
+    private handleEnemyKilled(): void {
         this.sessionKills++;
 
         if (this.sessionKills === 1) {

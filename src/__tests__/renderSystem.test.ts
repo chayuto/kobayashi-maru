@@ -102,7 +102,7 @@ describe('Render System', () => {
 
     // Sprite rotation should be updated
     // Use manual check for float precision (f32 vs f64)
-    const updateRotationMock = mockSpriteManager.updateSpriteRotation as any;
+    const updateRotationMock = mockSpriteManager.updateSpriteRotation as ReturnType<typeof vi.fn>;
     const calls = updateRotationMock.mock.calls;
     const lastCall = calls[calls.length - 1];
 
@@ -171,20 +171,20 @@ describe('Render System', () => {
     Rotation.angle[eid] = Math.PI;
 
     // Run render system
-    (mockSpriteManager.updateSpriteRotation as any).mockClear();
+    (mockSpriteManager.updateSpriteRotation as ReturnType<typeof vi.fn>).mockClear();
     renderSystem(world);
 
     // Should update barrel rotation ONLY
-    const updateRotCalls = (mockSpriteManager.updateSpriteRotation as any).mock.calls;
+    const updateRotCalls = (mockSpriteManager.updateSpriteRotation as ReturnType<typeof vi.fn>).mock.calls;
     // We expect call for barrelIndex
-    const barrelCall = updateRotCalls.find((call: any[]) => call[0] === barrelIndex);
+    const barrelCall = updateRotCalls.find((call: unknown[]) => call[0] === barrelIndex);
     expect(barrelCall).toBeDefined();
     if (barrelCall) {
       expect(barrelCall[1]).toBeCloseTo(Math.PI);
     }
 
     // Base rotation should NOT be updated (or updated to 0 if implemented that way, but currently we only call updateSpriteRotation for barrel)
-    const baseCall = updateRotCalls.find((call: any[]) => call[0] === baseIndex);
+    const baseCall = updateRotCalls.find((call: unknown[]) => call[0] === baseIndex);
     expect(baseCall).toBeUndefined();
   });
 });
