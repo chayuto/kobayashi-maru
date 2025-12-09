@@ -26,6 +26,7 @@ export interface WaveConfig {
 
 /**
  * Pre-defined wave configurations for waves 1-10
+ * Story text is loaded separately from waveStories.json
  */
 export const WAVE_CONFIGS: WaveConfig[] = [
   // Wave 1: Simple introduction - Klingons only
@@ -122,50 +123,50 @@ export function generateProceduralWave(waveNumber: number): WaveConfig {
   // Base counts that scale with wave number
   const baseMultiplier = 1 + (waveNumber - 10) * 0.2; // 20% more enemies per wave after 10
   const exponentialFactor = Math.pow(1.1, waveNumber - 10); // Slight exponential scaling
-  
+
   // Calculate counts for each faction (all factions available after wave 10)
   const klingonCount = Math.floor(15 * baseMultiplier * exponentialFactor);
   const romulanCount = Math.floor(12 * baseMultiplier * exponentialFactor);
   const borgCount = Math.floor(8 * baseMultiplier * exponentialFactor);
   const tholianCount = Math.floor(4 * baseMultiplier * exponentialFactor);
   const species8472Count = Math.floor(2 * baseMultiplier * exponentialFactor);
-  
+
   // Spawn delays decrease with wave number (faster spawning)
   const delayMultiplier = Math.max(0.5, 1 - (waveNumber - 10) * 0.05);
-  
+
   const enemies: EnemySpawnConfig[] = [
-    { 
-      faction: FactionId.KLINGON, 
-      count: klingonCount, 
-      spawnDelay: Math.floor(250 * delayMultiplier), 
-      formation: 'v-formation' 
+    {
+      faction: FactionId.KLINGON,
+      count: klingonCount,
+      spawnDelay: Math.floor(250 * delayMultiplier),
+      formation: 'v-formation'
     },
-    { 
-      faction: FactionId.ROMULAN, 
-      count: romulanCount, 
-      spawnDelay: Math.floor(350 * delayMultiplier), 
-      formation: 'cluster' 
+    {
+      faction: FactionId.ROMULAN,
+      count: romulanCount,
+      spawnDelay: Math.floor(350 * delayMultiplier),
+      formation: 'cluster'
     },
-    { 
-      faction: FactionId.BORG, 
-      count: borgCount, 
-      spawnDelay: Math.floor(600 * delayMultiplier), 
-      formation: 'cluster' 
+    {
+      faction: FactionId.BORG,
+      count: borgCount,
+      spawnDelay: Math.floor(600 * delayMultiplier),
+      formation: 'cluster'
     },
-    { 
-      faction: FactionId.THOLIAN, 
-      count: tholianCount, 
-      spawnDelay: Math.floor(800 * delayMultiplier), 
-      formation: 'random' 
+    {
+      faction: FactionId.THOLIAN,
+      count: tholianCount,
+      spawnDelay: Math.floor(800 * delayMultiplier),
+      formation: 'random'
     },
-    { 
-      faction: FactionId.SPECIES_8472, 
-      count: species8472Count, 
-      spawnDelay: Math.floor(1200 * delayMultiplier), 
-      formation: 'random' 
+    {
+      faction: FactionId.SPECIES_8472,
+      count: species8472Count,
+      spawnDelay: Math.floor(1200 * delayMultiplier),
+      formation: 'random'
     }
   ];
-  
+
   return {
     waveNumber,
     enemies
@@ -181,11 +182,11 @@ export function getWaveConfig(waveNumber: number): WaveConfig {
   if (waveNumber <= 0) {
     return WAVE_CONFIGS[0]; // Default to wave 1
   }
-  
+
   if (waveNumber <= WAVE_CONFIGS.length) {
     return WAVE_CONFIGS[waveNumber - 1];
   }
-  
+
   // Generate procedural wave for waves beyond predefined ones
   return generateProceduralWave(waveNumber);
 }
@@ -201,11 +202,31 @@ export function getDifficultyScale(waveNumber: number): number {
   if (waveNumber <= 10) {
     return 1 + (waveNumber - 1) * 0.05; // 5% increase per wave
   }
-  
+
   // Base scale at wave 10 + exponential growth
   const baseScale = 1.45; // Scale at wave 10
   const exponentialGrowth = Math.pow(1.03, waveNumber - 10);
   return baseScale * exponentialGrowth;
+}
+
+// Import story texts from JSON config
+import waveStoriesConfig from '../config/waveStories.json';
+
+// Total number of unique story texts
+const TOTAL_STORY_COUNT = waveStoriesConfig.stories.length;
+
+/**
+ * Gets the story text for a given wave number
+ * @param waveNumber - The wave number (1-indexed)
+ * @returns The story text for the wave
+ */
+export function getWaveStoryText(waveNumber: number): string {
+  // Normalize wave number to loop after 50 stages
+  const normalizedWave = ((waveNumber - 1) % TOTAL_STORY_COUNT) + 1;
+
+  // Find the story for this wave
+  const story = waveStoriesConfig.stories.find(s => s.wave === normalizedWave);
+  return story?.text ?? `Wave ${waveNumber}: The battle continues...`;
 }
 
 // ============================================================================

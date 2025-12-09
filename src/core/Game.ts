@@ -25,6 +25,7 @@ import { getServices, resetServices } from './services';
 import { GameLoopManager } from './loop';
 import { RenderManager, GameplayManager, UIController, InputRouter, InputAction } from './managers';
 import { PoolManager } from '../ecs/PoolManager';
+import { getWaveStoryText } from '../game/waveConfig';
 
 // Query for counting turrets
 const turretQuery = defineQuery([Turret]);
@@ -111,6 +112,11 @@ export class Game {
       },
       onWaveStart: (waveNumber, enemyCount) => {
         this.uiController.addLogMessage(`⚠ Wave ${waveNumber} started!`, 'wave');
+        // Display story text for the wave
+        const storyText = getWaveStoryText(waveNumber);
+        if (storyText) {
+          this.uiController.addLogMessage(storyText, 'info');
+        }
         if (enemyCount > 0) {
           this.uiController.addLogMessage(`${enemyCount} enemies incoming`, 'warning');
         }
@@ -118,8 +124,8 @@ export class Game {
       onWaveComplete: (waveNumber) => {
         this.uiController.addLogMessage(`✓ Wave ${waveNumber} complete!`, 'wave');
       },
-      onEnemyKilled: (reward) => {
-        this.uiController.addLogMessage(`Enemy destroyed (+${reward} matter)`, 'kill');
+      onEnemyKilled: () => {
+        // Kill logging removed intentionally - was too spammy
       },
       onKobayashiMaruDamaged: () => {
         this.renderManager.shake(5, 0.3);
