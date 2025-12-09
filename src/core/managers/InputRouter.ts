@@ -113,6 +113,10 @@ export class InputRouter {
     private actionCallbacks: Map<InputAction, InputActionCallback[]> = new Map();
     private selectedTurretId: number = -1;
 
+    // Debounce to prevent accidental placement from the same click that started placement mode
+    private placementStartTime: number = 0;
+    private static readonly PLACEMENT_DEBOUNCE_MS = 50;
+
     // Bound event handlers
     private boundHandleKeyDown: (e: KeyboardEvent) => void;
     private boundHandleCanvasClick: (e: PointerEvent) => void;
@@ -155,6 +159,15 @@ export class InputRouter {
         window.addEventListener('keydown', this.boundHandleKeyDown);
         this.app.canvas.addEventListener('pointerdown', this.boundHandleCanvasClick);
         this.app.canvas.addEventListener('pointermove', this.boundHandleCanvasMove);
+
+        // Subscribe to placement events to track when placement starts
+        // This is used to debounce and prevent accidental placement from the same click
+        const placementManager = getServices().tryGet('placementManager');
+        if (placementManager) {
+            placementManager.on('start', () => {
+                this.placementStartTime = Date.now();
+            });
+        }
 
         // Initialize touch input for mobile support
         getServices().get('touchInputManager');
@@ -277,6 +290,12 @@ export class InputRouter {
 
         // If placing turret, emit place action
         if (this.isPlacingTurret()) {
+            // Prevent accidental placement from the same click that started placement mode
+            // This happens when clicking a turret menu button - the button handler starts
+            // placement mode, then this canvas handler fires and would place immediately
+            if (Date.now() - this.placementStartTime < InputRouter.PLACEMENT_DEBOUNCE_MS) {
+                return;
+            }
             this.emit(InputAction.PLACE_TURRET, { worldX, worldY });
             return;
         }
