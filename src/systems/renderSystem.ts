@@ -58,6 +58,15 @@ export function createRenderSystem(spriteManager: SpriteManager) {
             case TurretType.DISRUPTOR_BANK:
               spriteType = SpriteType.TURRET_DISRUPTOR;
               break;
+            case TurretType.TETRYON_BEAM:
+              spriteType = SpriteType.TURRET_TETRYON;
+              break;
+            case TurretType.PLASMA_CANNON:
+              spriteType = SpriteType.TURRET_PLASMA;
+              break;
+            case TurretType.POLARON_BEAM:
+              spriteType = SpriteType.TURRET_POLARON;
+              break;
           }
         }
         // Override for Projectiles
@@ -128,10 +137,18 @@ export function createRenderSystem(spriteManager: SpriteManager) {
               baseType = SpriteType.TURRET_BASE_DISRUPTOR;
               barrelType = SpriteType.TURRET_BARREL_DISRUPTOR;
               break;
-            default:
-              // Fallback
-              baseType = SpriteType.TURRET_BASE_PHASER;
-              barrelType = SpriteType.TURRET_BARREL_PHASER;
+            case TurretType.TETRYON_BEAM:
+              baseType = SpriteType.TURRET_BASE_TETRYON;
+              barrelType = SpriteType.TURRET_BARREL_TETRYON;
+              break;
+            case TurretType.PLASMA_CANNON:
+              baseType = SpriteType.TURRET_BASE_PLASMA;
+              barrelType = SpriteType.TURRET_BARREL_PLASMA;
+              break;
+            case TurretType.POLARON_BEAM:
+              baseType = SpriteType.TURRET_BASE_POLARON;
+              barrelType = SpriteType.TURRET_BARREL_POLARON;
+              break;
           }
         }
 

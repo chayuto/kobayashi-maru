@@ -64,13 +64,22 @@ export class SpriteManager {
       [SpriteType.TURRET_PHASER, this.textures.turretPhaser],
       [SpriteType.TURRET_TORPEDO, this.textures.turretTorpedo],
       [SpriteType.TURRET_DISRUPTOR, this.textures.turretDisruptor],
+      [SpriteType.TURRET_TETRYON, this.textures.turretTetryon],
+      [SpriteType.TURRET_PLASMA, this.textures.turretPlasma],
+      [SpriteType.TURRET_POLARON, this.textures.turretPolaron],
       // Composite turret sprites (base + barrel)
       [SpriteType.TURRET_BASE_PHASER, this.textures.turretBasePhaser],
       [SpriteType.TURRET_BARREL_PHASER, this.textures.turretBarrelPhaser],
       [SpriteType.TURRET_BASE_TORPEDO, this.textures.turretBaseTorpedo],
       [SpriteType.TURRET_BARREL_TORPEDO, this.textures.turretBarrelTorpedo],
       [SpriteType.TURRET_BASE_DISRUPTOR, this.textures.turretBaseDisruptor],
-      [SpriteType.TURRET_BARREL_DISRUPTOR, this.textures.turretBarrelDisruptor]
+      [SpriteType.TURRET_BARREL_DISRUPTOR, this.textures.turretBarrelDisruptor],
+      [SpriteType.TURRET_BASE_TETRYON, this.textures.turretBaseTetryon],
+      [SpriteType.TURRET_BARREL_TETRYON, this.textures.turretBarrelTetryon],
+      [SpriteType.TURRET_BASE_PLASMA, this.textures.turretBasePlasma],
+      [SpriteType.TURRET_BARREL_PLASMA, this.textures.turretBarrelPlasma],
+      [SpriteType.TURRET_BASE_POLARON, this.textures.turretBasePolaron],
+      [SpriteType.TURRET_BARREL_POLARON, this.textures.turretBarrelPolaron]
     ];
 
     for (const [spriteType, texture] of factionTextures) {
@@ -133,6 +142,24 @@ export class SpriteManager {
         return this.textures.turretBaseDisruptor;
       case SpriteType.TURRET_BARREL_DISRUPTOR:
         return this.textures.turretBarrelDisruptor;
+      case SpriteType.TURRET_TETRYON:
+        return this.textures.turretTetryon;
+      case SpriteType.TURRET_PLASMA:
+        return this.textures.turretPlasma;
+      case SpriteType.TURRET_POLARON:
+        return this.textures.turretPolaron;
+      case SpriteType.TURRET_BASE_TETRYON:
+        return this.textures.turretBaseTetryon;
+      case SpriteType.TURRET_BARREL_TETRYON:
+        return this.textures.turretBarrelTetryon;
+      case SpriteType.TURRET_BASE_PLASMA:
+        return this.textures.turretBasePlasma;
+      case SpriteType.TURRET_BARREL_PLASMA:
+        return this.textures.turretBarrelPlasma;
+      case SpriteType.TURRET_BASE_POLARON:
+        return this.textures.turretBasePolaron;
+      case SpriteType.TURRET_BARREL_POLARON:
+        return this.textures.turretBarrelPolaron;
       default:
         return this.textures.federation;
     }
