@@ -4,11 +4,11 @@
  */
 import { Container, Graphics } from 'pixi.js';
 import { defineQuery, hasComponent } from 'bitecs';
-import { Position, Turret, TurretUpgrade, SpriteRef } from '../ecs/components';
+import { Position, Turret, TurretUpgrade, CompositeSpriteRef } from '../ecs/components';
 import type { GameWorld } from '../ecs/world';
 
 // Query for turrets with upgrade component
-const turretQuery = defineQuery([Position, Turret, TurretUpgrade, SpriteRef]);
+const turretQuery = defineQuery([Position, Turret, TurretUpgrade, CompositeSpriteRef]);
 
 /**
  * Visual upgrade level indicator configuration
@@ -98,7 +98,7 @@ export class TurretUpgradeVisuals {
       const eid = turrets[i];
 
       // Calculate total upgrade level
-      const totalLevel = 
+      const totalLevel =
         TurretUpgrade.damageLevel[eid] +
         TurretUpgrade.rangeLevel[eid] +
         TurretUpgrade.fireRateLevel[eid] +
@@ -128,7 +128,7 @@ export class TurretUpgradeVisuals {
     // Update or create glow graphic
     if (config.glowRadius > 0) {
       let glow = this.glowGraphics.get(eid);
-      
+
       if (!glow) {
         glow = new Graphics();
         this.glowContainer.addChild(glow);
@@ -159,7 +159,7 @@ export class TurretUpgradeVisuals {
    */
   private cleanupRemovedTurrets(currentTurrets: number[] | Uint32Array): void {
     const currentIds = new Set(Array.from(currentTurrets));
-    
+
     for (const [eid, glow] of this.glowGraphics) {
       if (!currentIds.has(eid)) {
         glow.destroy();
@@ -178,7 +178,7 @@ export class TurretUpgradeVisuals {
       return null;
     }
 
-    const totalLevel = 
+    const totalLevel =
       TurretUpgrade.damageLevel[eid] +
       TurretUpgrade.rangeLevel[eid] +
       TurretUpgrade.fireRateLevel[eid] +

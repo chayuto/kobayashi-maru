@@ -6,7 +6,7 @@
  * @module game/AchievementManager
  */
 import { EventBus } from '../core/EventBus';
-import { GameEventType, EnemyKilledPayload, WaveCompletedPayload, ComboUpdatedPayload } from '../types/events';
+import { GameEventType, WaveCompletedPayload, ComboUpdatedPayload } from '../types/events';
 
 /** Achievement definition */
 export interface Achievement {
@@ -134,7 +134,7 @@ export class AchievementManager {
     }
 
     private subscribeToEvents(): void {
-        const killHandler = (payload: EnemyKilledPayload) => this.handleEnemyKilled(payload);
+        const killHandler = () => this.handleEnemyKilled();
         const waveHandler = (payload: WaveCompletedPayload) => this.handleWaveCompleted(payload);
         const comboHandler = (payload: ComboUpdatedPayload) => this.handleComboUpdated(payload);
 
@@ -147,7 +147,7 @@ export class AchievementManager {
         this.boundHandlers.set(GameEventType.COMBO_UPDATED, comboHandler as (p: unknown) => void);
     }
 
-    private handleEnemyKilled(_payload: EnemyKilledPayload): void {
+    private handleEnemyKilled(): void {
         this.sessionKills++;
 
         if (this.sessionKills === 1) {

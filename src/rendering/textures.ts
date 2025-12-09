@@ -379,7 +379,7 @@ function createProjectileTexture(app: Application, color: number): RenderTexture
 /**
  * Generate Phaser Turret Base (Hexagon)
  */
-function createTurretBasePhaserTexture(app: Application, _color: number): RenderTexture {
+function createTurretBasePhaserTexture(app: Application): RenderTexture {
   const graphics = new Graphics();
   const size = 32;
   const center = size / 2;
@@ -420,7 +420,7 @@ function createTurretBarrelPhaserTexture(app: Application, color: number): Rende
 /**
  * Generate Torpedo Turret Base (Octagon)
  */
-function createTurretBaseTorpedoTexture(app: Application, _color: number): RenderTexture {
+function createTurretBaseTorpedoTexture(app: Application): RenderTexture {
   const graphics = new Graphics();
   const size = 32;
   const center = size / 2;
@@ -441,7 +441,7 @@ function createTurretBaseTorpedoTexture(app: Application, _color: number): Rende
 /**
  * Generate Torpedo Turret Barrel
  */
-function createTurretBarrelTorpedoTexture(app: Application, _color: number): RenderTexture {
+function createTurretBarrelTorpedoTexture(app: Application): RenderTexture {
   const graphics = new Graphics();
   const size = 32;
   const center = size / 2;
@@ -461,7 +461,7 @@ function createTurretBarrelTorpedoTexture(app: Application, _color: number): Ren
 /**
  * Generate Disruptor Turret Base (Pentagon)
  */
-function createTurretBaseDisruptorTexture(app: Application, _color: number): RenderTexture {
+function createTurretBaseDisruptorTexture(app: Application): RenderTexture {
   const graphics = new Graphics();
   const size = 32;
   const center = size / 2;
@@ -484,7 +484,7 @@ function createTurretBaseDisruptorTexture(app: Application, _color: number): Ren
 /**
  * Generate Disruptor Turret Barrel
  */
-function createTurretBarrelDisruptorTexture(app: Application, _color: number): RenderTexture {
+function createTurretBarrelDisruptorTexture(app: Application): RenderTexture {
   const graphics = new Graphics();
   const size = 32;
   const center = size / 2;
@@ -503,7 +503,7 @@ function createTurretBarrelDisruptorTexture(app: Application, _color: number): R
 /**
  * Generate Tetryon Turret Base (Diamond/Rhombus - Shield-stripping theme)
  */
-function createTurretBaseTetryonTexture(app: Application, _color: number): RenderTexture {
+function createTurretBaseTetryonTexture(app: Application): RenderTexture {
   const graphics = new Graphics();
   const size = 32;
   const center = size / 2;
@@ -528,7 +528,7 @@ function createTurretBaseTetryonTexture(app: Application, _color: number): Rende
 /**
  * Generate Tetryon Turret Barrel
  */
-function createTurretBarrelTetryonTexture(app: Application, _color: number): RenderTexture {
+function createTurretBarrelTetryonTexture(app: Application): RenderTexture {
   const graphics = new Graphics();
   const size = 32;
   const center = size / 2;
@@ -549,7 +549,7 @@ function createTurretBarrelTetryonTexture(app: Application, _color: number): Ren
 /**
  * Generate Plasma Turret Base (Star/Burst shape - Burning theme)
  */
-function createTurretBasePlasmaTexture(app: Application, _color: number): RenderTexture {
+function createTurretBasePlasmaTexture(app: Application): RenderTexture {
   const graphics = new Graphics();
   const size = 32;
   const center = size / 2;
@@ -582,7 +582,7 @@ function createTurretBasePlasmaTexture(app: Application, _color: number): Render
 /**
  * Generate Plasma Turret Barrel
  */
-function createTurretBarrelPlasmaTexture(app: Application, _color: number): RenderTexture {
+function createTurretBarrelPlasmaTexture(app: Application): RenderTexture {
   const graphics = new Graphics();
   const size = 32;
   const center = size / 2;
@@ -609,7 +609,7 @@ function createTurretBarrelPlasmaTexture(app: Application, _color: number): Rend
 /**
  * Generate Polaron Turret Base (Triangle - Power drain theme)
  */
-function createTurretBasePollarronTexture(app: Application, _color: number): RenderTexture {
+function createTurretBasePollarronTexture(app: Application): RenderTexture {
   const graphics = new Graphics();
   const size = 32;
   const center = size / 2;
@@ -638,7 +638,7 @@ function createTurretBasePollarronTexture(app: Application, _color: number): Ren
 /**
  * Generate Polaron Turret Barrel
  */
-function createTurretBarrelPolaronTexture(app: Application, _color: number): RenderTexture {
+function createTurretBarrelPolaronTexture(app: Application): RenderTexture {
   const graphics = new Graphics();
   const size = 32;
   const center = size / 2;
@@ -769,26 +769,26 @@ export function createFactionTextures(app: Application): FactionTextures {
   const projectile = createProjectileTexture(app, FACTION_COLORS.PROJECTILE);
 
   // Legacy/Composite fallbacks (just in case)
-  const turretPhaser = createTurretBasePhaserTexture(app, FACTION_COLORS.FEDERATION);
-  const turretTorpedo = createTurretBaseTorpedoTexture(app, FACTION_COLORS.FEDERATION);
-  const turretDisruptor = createTurretBaseDisruptorTexture(app, FACTION_COLORS.FEDERATION);
-  const turretTetryon = createTurretBaseTetryonTexture(app, FACTION_COLORS.FEDERATION);
-  const turretPlasma = createTurretBasePlasmaTexture(app, FACTION_COLORS.FEDERATION);
-  const turretPolaron = createTurretBasePollarronTexture(app, FACTION_COLORS.FEDERATION);
+  const turretPhaser = createTurretBasePhaserTexture(app);
+  const turretTorpedo = createTurretBaseTorpedoTexture(app);
+  const turretDisruptor = createTurretBaseDisruptorTexture(app);
+  const turretTetryon = createTurretBaseTetryonTexture(app);
+  const turretPlasma = createTurretBasePlasmaTexture(app);
+  const turretPolaron = createTurretBasePollarronTexture(app);
 
   // New split textures
-  const turretBasePhaser = createTurretBasePhaserTexture(app, FACTION_COLORS.FEDERATION);
+  const turretBasePhaser = createTurretBasePhaserTexture(app);
   const turretBarrelPhaser = createTurretBarrelPhaserTexture(app, FACTION_COLORS.FEDERATION);
-  const turretBaseTorpedo = createTurretBaseTorpedoTexture(app, FACTION_COLORS.FEDERATION);
-  const turretBarrelTorpedo = createTurretBarrelTorpedoTexture(app, FACTION_COLORS.FEDERATION);
-  const turretBaseDisruptor = createTurretBaseDisruptorTexture(app, FACTION_COLORS.FEDERATION);
-  const turretBarrelDisruptor = createTurretBarrelDisruptorTexture(app, FACTION_COLORS.FEDERATION);
-  const turretBaseTetryon = createTurretBaseTetryonTexture(app, FACTION_COLORS.FEDERATION);
-  const turretBarrelTetryon = createTurretBarrelTetryonTexture(app, FACTION_COLORS.FEDERATION);
-  const turretBasePlasma = createTurretBasePlasmaTexture(app, FACTION_COLORS.FEDERATION);
-  const turretBarrelPlasma = createTurretBarrelPlasmaTexture(app, FACTION_COLORS.FEDERATION);
-  const turretBasePolaron = createTurretBasePollarronTexture(app, FACTION_COLORS.FEDERATION);
-  const turretBarrelPolaron = createTurretBarrelPolaronTexture(app, FACTION_COLORS.FEDERATION);
+  const turretBaseTorpedo = createTurretBaseTorpedoTexture(app);
+  const turretBarrelTorpedo = createTurretBarrelTorpedoTexture(app);
+  const turretBaseDisruptor = createTurretBaseDisruptorTexture(app);
+  const turretBarrelDisruptor = createTurretBarrelDisruptorTexture(app);
+  const turretBaseTetryon = createTurretBaseTetryonTexture(app);
+  const turretBarrelTetryon = createTurretBarrelTetryonTexture(app);
+  const turretBasePlasma = createTurretBasePlasmaTexture(app);
+  const turretBarrelPlasma = createTurretBarrelPlasmaTexture(app);
+  const turretBasePolaron = createTurretBasePollarronTexture(app);
+  const turretBarrelPolaron = createTurretBarrelPolaronTexture(app);
 
   cache.set(TEXTURE_KEYS.federation, federation);
   cache.set(TEXTURE_KEYS.kobayashiMaru, kobayashiMaru);
