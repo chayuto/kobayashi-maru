@@ -280,7 +280,7 @@ export class Game {
       const turretCount = turretQuery(this.world).length;
 
       this.uiController.updateHUD(snapshot, this.combatSystem, turretCount);
-      this.uiController.updateDebug(this.app.ticker.deltaMS, snapshot);
+      this.uiController.updateDebug(snapshot);
       this.uiController.updateEntityCount();
     });
   }

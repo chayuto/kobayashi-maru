@@ -162,15 +162,14 @@ export class UIController {
     /**
      * Update debug overlay.
      * 
-     * @param deltaMS - Delta time in milliseconds
      * @param snapshot - Current gameplay state
      */
-    updateDebug(deltaMS: number, snapshot: GameplaySnapshot): void {
+    updateDebug(snapshot: GameplaySnapshot): void {
         const services = getServices();
         const debugManager = services.get('debugManager');
         const perfMon = services.get('performanceMonitor');
 
-        debugManager.update(deltaMS);
+        debugManager.update();
         debugManager.updateEntityCount(getEntityCount());
 
         debugManager.updateGameStats({

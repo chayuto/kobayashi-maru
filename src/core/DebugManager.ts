@@ -176,8 +176,8 @@ export class DebugManager {
         return section;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    public update(_deltaTime: number): void {
+
+    public update(): void {
         this.frameCount++;
         const currentTime = performance.now();
 
