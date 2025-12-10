@@ -2,7 +2,7 @@
  * ECS World setup for Kobayashi Maru
  * Creates and manages the bitecs world
  */
-import { createWorld, IWorld } from 'bitecs';
+import { createWorld, World } from 'bitecs';
 import {
   createEnemy,
   createKobayashiMaru,
@@ -16,12 +16,12 @@ let entityCounter = 0;
  * Create a new ECS world
  * @returns A new bitecs world instance
  */
-export function createGameWorld(): IWorld {
+export function createGameWorld(): World {
   entityCounter = 0;
   return createWorld();
 }
 
-export type GameWorld = IWorld;
+export type GameWorld = World;
 
 /**
  * Increments the entity counter (called when entities are created)

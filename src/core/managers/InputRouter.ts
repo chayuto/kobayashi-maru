@@ -8,15 +8,12 @@
  */
 
 import { Application } from 'pixi.js';
-import { defineQuery } from 'bitecs';
+import { query } from 'bitecs';
 import { Position, Turret } from '../../ecs/components';
 import { GAME_CONFIG } from '../../types';
 import { UI_CONFIG } from '../../config';
 import { getServices } from '../services';
 import type { GameWorld } from '../../ecs/world';
-
-// Query for turret entities
-const turretQuery = defineQuery([Position, Turret]);
 
 /**
  * Input action types
@@ -346,7 +343,7 @@ export class InputRouter {
      * Find a turret at the given position.
      */
     private findTurretAtPosition(x: number, y: number): number {
-        const turretEntities = turretQuery(this.world);
+        const turretEntities = query(this.world, [Position, Turret]);
 
         for (const eid of turretEntities) {
             const turretX = Position.x[eid];

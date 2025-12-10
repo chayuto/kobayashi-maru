@@ -2,15 +2,12 @@
  * Projectile System for Kobayashi Maru
  * Handles projectile movement, lifetime, and collision detection
  */
-import { defineQuery, hasComponent, IWorld } from 'bitecs';
+import { query, hasComponent, World } from 'bitecs';
 import { Position, Velocity, Projectile, Collider, Health, Faction } from '../ecs/components';
 import { SpatialHash } from '../collision';
 import { FactionId } from '../types/constants';
 import { applyDamage } from '../services';
 import { PoolManager } from '../ecs/PoolManager';
-
-// Query for active projectiles
-const projectileQuery = defineQuery([Position, Velocity, Projectile, Collider]);
 
 // Callback type for recording projectile hits
 type ProjectileHitCallback = (damage: number, currentTime: number) => void;
@@ -24,9 +21,9 @@ export function createProjectileSystem(spatialHash: SpatialHash) {
     let onHitCallback: ProjectileHitCallback | null = null;
     let gameTime = 0;
 
-    function projectileSystem(world: IWorld, deltaTime: number, currentTime?: number): IWorld {
+    function projectileSystem(world: World, deltaTime: number, currentTime?: number): World {
         gameTime = currentTime ?? gameTime + deltaTime;
-        const projectiles = projectileQuery(world);
+        const projectiles = query(world, [Position, Velocity, Projectile, Collider]);
 
         for (const eid of projectiles) {
             // 1. Update lifetime
@@ -59,11 +56,11 @@ export function createProjectileSystem(spatialHash: SpatialHash) {
                 if (targetEid === eid) continue;
 
                 // Check if target is valid and has health
-                if (!hasComponent(world, Health, targetEid)) continue;
+                if (!hasComponent(world, targetEid, Health)) continue;
                 if (Health.current[targetEid] <= 0) continue;
 
                 // Check faction (don't hit friendly)
-                if (hasComponent(world, Faction, targetEid)) {
+                if (hasComponent(world, targetEid, Faction)) {
                     // Ignore Federation ships (friendly fire)
                     if (Faction.id[targetEid] === FactionId.FEDERATION) continue;
                     // Ignore other projectiles
@@ -75,7 +72,7 @@ export function createProjectileSystem(spatialHash: SpatialHash) {
                 const targetY = Position.y[targetEid];
                 // Assuming enemies have a default radius if not specified (e.g., 16)
                 // Ideally enemies should have Collider component too
-                const targetRadius = hasComponent(world, Collider, targetEid) ? Collider.radius[targetEid] : 16;
+                const targetRadius = hasComponent(world, targetEid, Collider) ? Collider.radius[targetEid] : 16;
 
                 const dx = x - targetX;
                 const dy = y - targetY;

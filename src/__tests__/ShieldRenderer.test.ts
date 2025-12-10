@@ -4,13 +4,13 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { ShieldRenderer } from '../rendering/ShieldRenderer';
 import { Application, Container } from 'pixi.js';
-import { createWorld, IWorld, addEntity } from 'bitecs';
+import { createWorld, World, addEntity } from 'bitecs';
 import { Position, Shield, Health } from '../ecs/components';
 
 describe('ShieldRenderer', () => {
   let shieldRenderer: ShieldRenderer;
   let app: Application;
-  let world: IWorld;
+  let world: World;
 
   beforeEach(() => {
     app = new Application();

@@ -2,8 +2,8 @@
  * ECS Components for Kobayashi Maru
  * 
  * Components are data containers used by the Entity-Component-System architecture.
- * Each component is defined using bitecs which stores data in typed arrays for
- * high performance. Components do not contain logic - that belongs in systems.
+ * Each component stores data in arrays indexed by entity ID for high performance.
+ * Components do not contain logic - that belongs in systems.
  * 
  * ## Usage Pattern
  * ```typescript
@@ -21,7 +21,6 @@
  * @module components
  * @see {@link https://github.com/NateTheGreatt/bitecs} bitECS documentation
  */
-import { defineComponent, Types } from 'bitecs';
 
 /**
  * Position component for entity world coordinates.
@@ -39,10 +38,10 @@ import { defineComponent, Types } from 'bitecs';
  * Position.y[entityId] = 540;
  * ```
  */
-export const Position = defineComponent({
-  x: Types.f32,
-  y: Types.f32
-});
+export const Position = {
+  x: [] as number[],
+  y: [] as number[]
+};
 
 /**
  * Velocity component for movement direction and speed.
@@ -67,10 +66,10 @@ export const Position = defineComponent({
  * Velocity.y[entityId] = (dy / distance) * speed;
  * ```
  */
-export const Velocity = defineComponent({
-  x: Types.f32,
-  y: Types.f32
-});
+export const Velocity = {
+  x: [] as number[],
+  y: [] as number[]
+};
 
 /**
  * Faction component identifying which team an entity belongs to.
@@ -91,9 +90,9 @@ export const Velocity = defineComponent({
  * const isEnemy = Faction.id[entityId] !== FactionId.FEDERATION;
  * ```
  */
-export const Faction = defineComponent({
-  id: Types.ui8
-});
+export const Faction = {
+  id: [] as number[]
+};
 
 /**
  * SpriteRef component linking entity to visual representation.
@@ -103,9 +102,9 @@ export const Faction = defineComponent({
  * 
  * @property index - Sprite index in the particle container (managed by SpriteManager)
  */
-export const SpriteRef = defineComponent({
-  index: Types.ui32
-});
+export const SpriteRef = {
+  index: [] as number[]
+};
 
 /**
  * Health component for entity hit points.
@@ -129,10 +128,10 @@ export const SpriteRef = defineComponent({
  * const healthPercent = Health.current[entityId] / Health.max[entityId];
  * ```
  */
-export const Health = defineComponent({
-  current: Types.f32,
-  max: Types.f32
-});
+export const Health = {
+  current: [] as number[],
+  max: [] as number[]
+};
 
 /**
  * Shield component for damage absorption.
@@ -155,10 +154,10 @@ export const Health = defineComponent({
  * const remainingDamage = damage - shieldDamage;
  * ```
  */
-export const Shield = defineComponent({
-  current: Types.f32,
-  max: Types.f32
-});
+export const Shield = {
+  current: [] as number[],
+  max: [] as number[]
+};
 
 /**
  * Collider component for collision detection.
@@ -178,11 +177,11 @@ export const Shield = defineComponent({
  * Collider.mask[entityId] = 0b00000101;  // Collides with layers 0 and 2
  * ```
  */
-export const Collider = defineComponent({
-  radius: Types.f32,
-  layer: Types.ui8,
-  mask: Types.ui8
-});
+export const Collider = {
+  radius: [] as number[],
+  layer: [] as number[],
+  mask: [] as number[]
+};
 
 /**
  * Turret component for defensive weapons.
@@ -198,13 +197,13 @@ export const Collider = defineComponent({
  * 
  * @see TurretType in constants.ts for available turret types
  */
-export const Turret = defineComponent({
-  range: Types.f32,
-  fireRate: Types.f32,
-  damage: Types.f32,
-  lastFired: Types.f32,
-  turretType: Types.ui8
-});
+export const Turret = {
+  range: [] as number[],
+  fireRate: [] as number[],
+  damage: [] as number[],
+  lastFired: [] as number[],
+  turretType: [] as number[]
+};
 
 /**
  * Target component for tracking attack targets.
@@ -219,14 +218,14 @@ export const Turret = defineComponent({
  * @property entityId3 - Tertiary target (multi-target upgrade level 2)
  * @property hasTarget3 - 0/1 flag for tertiary target
  */
-export const Target = defineComponent({
-  entityId: Types.ui32,
-  hasTarget: Types.ui8,
-  entityId2: Types.ui32,
-  hasTarget2: Types.ui8,
-  entityId3: Types.ui32,
-  hasTarget3: Types.ui8
-});
+export const Target = {
+  entityId: [] as number[],
+  hasTarget: [] as number[],
+  entityId2: [] as number[],
+  hasTarget2: [] as number[],
+  entityId3: [] as number[],
+  hasTarget3: [] as number[]
+};
 
 /**
  * AI Behavior component for enemy movement patterns.
@@ -242,13 +241,13 @@ export const Target = defineComponent({
  * 
  * @see AIBehaviorType in constants.ts: DIRECT, STRAFE, ORBIT, SWARM, HUNTER
  */
-export const AIBehavior = defineComponent({
-  behaviorType: Types.ui8,
-  stateTimer: Types.f32,
-  targetX: Types.f32,
-  targetY: Types.f32,
-  aggression: Types.f32
-});
+export const AIBehavior = {
+  behaviorType: [] as number[],
+  stateTimer: [] as number[],
+  targetX: [] as number[],
+  targetY: [] as number[],
+  aggression: [] as number[]
+};
 
 /**
  * Projectile component for moving weapons (torpedoes, bolts, etc).
@@ -264,13 +263,13 @@ export const AIBehavior = defineComponent({
  * 
  * @see ProjectileType in constants.ts for available projectile types
  */
-export const Projectile = defineComponent({
-  damage: Types.f32,
-  speed: Types.f32,
-  lifetime: Types.f32,
-  targetEntityId: Types.ui32,
-  projectileType: Types.ui8
-});
+export const Projectile = {
+  damage: [] as number[],
+  speed: [] as number[],
+  lifetime: [] as number[],
+  targetEntityId: [] as number[],
+  projectileType: [] as number[]
+};
 
 /**
  * EnemyWeapon component for enemies that fire projectiles.
@@ -284,13 +283,13 @@ export const Projectile = defineComponent({
  * @property lastFired - Game time of last shot
  * @property projectileType - Type of projectile fired (use ProjectileType enum)
  */
-export const EnemyWeapon = defineComponent({
-  range: Types.f32,
-  fireRate: Types.f32,
-  damage: Types.f32,
-  lastFired: Types.f32,
-  projectileType: Types.ui8
-});
+export const EnemyWeapon = {
+  range: [] as number[],
+  fireRate: [] as number[],
+  damage: [] as number[],
+  lastFired: [] as number[],
+  projectileType: [] as number[]
+};
 
 
 
@@ -302,40 +301,40 @@ export const EnemyWeapon = defineComponent({
  * Burning status - DOT damage over time
  * Used by: Plasma Cannon
  */
-export const BurningStatus = defineComponent({
-  damagePerTick: Types.f32,    // Damage dealt per tick
-  ticksRemaining: Types.ui8,   // Number of ticks left
-  tickInterval: Types.f32,     // Time between ticks (seconds)
-  lastTickTime: Types.f32      // Last time damage was applied
-});
+export const BurningStatus = {
+  damagePerTick: [] as number[],    // Damage dealt per tick
+  ticksRemaining: [] as number[],   // Number of ticks left
+  tickInterval: [] as number[],     // Time between ticks (seconds)
+  lastTickTime: [] as number[]      // Last time damage was applied
+};
 
 /**
  * Slowed status - Reduces movement speed
  * Used by: Chroniton Torpedo, Polaron Beam
  */
-export const SlowedStatus = defineComponent({
-  slowPercent: Types.f32,      // 0.0 to 1.0 (0.5 = 50% slow)
-  duration: Types.f32,         // Time remaining (seconds)
-  originalSpeed: Types.f32     // Speed before slow applied
-});
+export const SlowedStatus = {
+  slowPercent: [] as number[],      // 0.0 to 1.0 (0.5 = 50% slow)
+  duration: [] as number[],         // Time remaining (seconds)
+  originalSpeed: [] as number[]     // Speed before slow applied
+};
 
 /**
  * Drained status - Stacking power drain
  * Used by: Polaron Beam Emitter
  */
-export const DrainedStatus = defineComponent({
-  stacks: Types.ui8,           // 0-3 stacks
-  duration: Types.f32          // Time remaining per stack
-});
+export const DrainedStatus = {
+  stacks: [] as number[],           // 0-3 stacks
+  duration: [] as number[]          // Time remaining per stack
+};
 
 /**
  * Disabled status - Systems offline
  * Used by: Phaser Array (5% chance)
  */
-export const DisabledStatus = defineComponent({
-  duration: Types.f32,         // Time remaining (seconds)
-  disabledSystems: Types.ui8   // Bitfield: 1=weapons, 2=engines, 4=shields
-});
+export const DisabledStatus = {
+  duration: [] as number[],         // Time remaining (seconds)
+  disabledSystems: [] as number[]   // Bitfield: 1=weapons, 2=engines, 4=shields
+};
 
 // ============================================================================
 // WEAPON PROPERTY COMPONENTS
@@ -345,27 +344,27 @@ export const DisabledStatus = defineComponent({
  * Extended weapon properties for special mechanics
  * Attached to turret entities
  */
-export const WeaponProperties = defineComponent({
-  shieldDamageMultiplier: Types.f32,  // Damage multiplier vs shields (default 1.0)
-  hullDamageMultiplier: Types.f32,    // Damage multiplier vs hull (default 1.0)
-  critChance: Types.f32,              // Critical hit chance 0.0-1.0
-  critMultiplier: Types.f32,          // Critical damage multiplier (default 2.0)
-  aoeRadius: Types.f32,               // AOE explosion radius (0 = no AOE)
-  statusEffectType: Types.ui8,        // 0=none, 1=burn, 2=slow, 3=drain, 4=disable
-  statusEffectChance: Types.f32       // Chance to apply status 0.0-1.0
-});
+export const WeaponProperties = {
+  shieldDamageMultiplier: [] as number[],  // Damage multiplier vs shields (default 1.0)
+  hullDamageMultiplier: [] as number[],    // Damage multiplier vs hull (default 1.0)
+  critChance: [] as number[],              // Critical hit chance 0.0-1.0
+  critMultiplier: [] as number[],          // Critical damage multiplier (default 2.0)
+  aoeRadius: [] as number[],               // AOE explosion radius (0 = no AOE)
+  statusEffectType: [] as number[],        // 0=none, 1=burn, 2=slow, 3=drain, 4=disable
+  statusEffectChance: [] as number[]       // Chance to apply status 0.0-1.0
+};
 
 /**
  * TurretUpgrade component - tracks upgrade state for turrets
  * Each turret can be upgraded through multiple paths
  */
-export const TurretUpgrade = defineComponent({
-  damageLevel: Types.ui8,      // Damage upgrade level (0-3)
-  rangeLevel: Types.ui8,       // Range upgrade level (0-3)
-  fireRateLevel: Types.ui8,    // Fire rate upgrade level (0-3)
-  multiTargetLevel: Types.ui8, // Multi-target upgrade level (0-2, enables multiple targets)
-  specialLevel: Types.ui8      // Special ability upgrade level (0-3, turret-specific)
-});
+export const TurretUpgrade = {
+  damageLevel: [] as number[],      // Damage upgrade level (0-3)
+  rangeLevel: [] as number[],       // Range upgrade level (0-3)
+  fireRateLevel: [] as number[],    // Fire rate upgrade level (0-3)
+  multiTargetLevel: [] as number[], // Multi-target upgrade level (0-2, enables multiple targets)
+  specialLevel: [] as number[]      // Special ability upgrade level (0-3, turret-specific)
+};
 
 // ============================================================================
 // ENEMY VARIANT & SPECIAL ABILITY COMPONENTS
@@ -375,23 +374,23 @@ export const TurretUpgrade = defineComponent({
  * EnemyVariant component - identifies enemy rank/variant
  * Used to distinguish Normal, Elite, and Boss enemies
  */
-export const EnemyVariant = defineComponent({
-  rank: Types.ui8,           // 0=Normal, 1=Elite, 2=Boss
-  sizeScale: Types.f32,      // Visual size multiplier
-  statMultiplier: Types.f32  // Health/damage multiplier
-});
+export const EnemyVariant = {
+  rank: [] as number[],           // 0=Normal, 1=Elite, 2=Boss
+  sizeScale: [] as number[],      // Visual size multiplier
+  statMultiplier: [] as number[]  // Health/damage multiplier
+};
 
 /**
  * SpecialAbility component - tracks ability cooldowns and state
  * Enemies with special abilities use this to manage their unique powers
  */
-export const SpecialAbility = defineComponent({
-  abilityType: Types.ui8,      // Type of special ability (see AbilityType in constants)
-  cooldown: Types.f32,         // Time between uses (seconds)
-  lastUsed: Types.f32,         // Timestamp of last use (game time in seconds)
-  duration: Types.f32,         // Duration of ability effect (seconds)
-  active: Types.ui8            // 0/1 flag if currently active
-});
+export const SpecialAbility = {
+  abilityType: [] as number[],      // Type of special ability (see AbilityType in constants)
+  cooldown: [] as number[],         // Time between uses (seconds)
+  lastUsed: [] as number[],         // Timestamp of last use (game time in seconds)
+  duration: [] as number[],         // Duration of ability effect (seconds)
+  active: [] as number[]            // 0/1 flag if currently active
+};
 
 
 /**
@@ -402,9 +401,9 @@ export const SpecialAbility = defineComponent({
  * 
  * @property angle - Rotation angle in radians
  */
-export const Rotation = defineComponent({
-  angle: Types.f32
-});
+export const Rotation = {
+  angle: [] as number[]
+};
 
 /**
  * Composite sprite reference for entities with multiple parts (e.g., base + turret).
@@ -412,7 +411,7 @@ export const Rotation = defineComponent({
  * @property baseIndex - Sprite index for stationary base
  * @property barrelIndex - Sprite index for rotating barrel
  */
-export const CompositeSpriteRef = defineComponent({
-  baseIndex: Types.ui32,
-  barrelIndex: Types.ui32
-});
+export const CompositeSpriteRef = {
+  baseIndex: [] as number[],
+  barrelIndex: [] as number[]
+};

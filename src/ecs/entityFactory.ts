@@ -35,40 +35,40 @@ const PLACEHOLDER_SPRITE_INDEX = 0;
 export function createKobayashiMaru(world: GameWorld, x: number, y: number): number {
   const eid = addEntity(world);
 
-  addComponent(world, Position, eid);
+  addComponent(world, eid, Position);
   Position.x[eid] = x;
   Position.y[eid] = y;
 
-  addComponent(world, Velocity, eid);
+  addComponent(world, eid, Velocity);
   Velocity.x[eid] = 0;
   Velocity.y[eid] = 0;
 
-  addComponent(world, Faction, eid);
+  addComponent(world, eid, Faction);
   Faction.id[eid] = FactionId.FEDERATION;
 
-  addComponent(world, SpriteRef, eid);
+  addComponent(world, eid, SpriteRef);
   SpriteRef.index[eid] = PLACEHOLDER_SPRITE_INDEX;
 
-  addComponent(world, Rotation, eid);
+  addComponent(world, eid, Rotation);
   Rotation.angle[eid] = 0;
 
-  addComponent(world, Health, eid);
+  addComponent(world, eid, Health);
   Health.current[eid] = 500;
   Health.max[eid] = 500;
 
-  addComponent(world, Shield, eid);
+  addComponent(world, eid, Shield);
   Shield.current[eid] = 200;
   Shield.max[eid] = 200;
 
   // Add basic defense weapon to Kobayashi Maru
-  addComponent(world, Turret, eid);
+  addComponent(world, eid, Turret);
   Turret.range[eid] = GAME_CONFIG.KOBAYASHI_MARU_DEFENSE_RANGE;
   Turret.fireRate[eid] = GAME_CONFIG.KOBAYASHI_MARU_DEFENSE_FIRE_RATE;
   Turret.damage[eid] = GAME_CONFIG.KOBAYASHI_MARU_DEFENSE_DAMAGE;
   Turret.lastFired[eid] = 0;
   Turret.turretType[eid] = TurretType.DISRUPTOR_BANK; // Use disruptor type for main ship
 
-  addComponent(world, Target, eid);
+  addComponent(world, eid, Target);
   Target.entityId[eid] = 0;
   Target.hasTarget[eid] = 0;
   Target.entityId2[eid] = 0;
@@ -91,43 +91,43 @@ export function createKobayashiMaru(world: GameWorld, x: number, y: number): num
 export function createTurret(world: GameWorld, x: number, y: number, turretType: number): number {
   const eid = addEntity(world);
 
-  addComponent(world, Position, eid);
+  addComponent(world, eid, Position);
   Position.x[eid] = x;
   Position.y[eid] = y;
 
-  addComponent(world, Velocity, eid);
+  addComponent(world, eid, Velocity);
   Velocity.x[eid] = 0;
   Velocity.y[eid] = 0;
 
-  addComponent(world, Faction, eid);
+  addComponent(world, eid, Faction);
   Faction.id[eid] = FactionId.FEDERATION;
 
-  addComponent(world, CompositeSpriteRef, eid);
+  addComponent(world, eid, CompositeSpriteRef);
   CompositeSpriteRef.baseIndex[eid] = PLACEHOLDER_SPRITE_INDEX;
   CompositeSpriteRef.barrelIndex[eid] = PLACEHOLDER_SPRITE_INDEX;
 
-  addComponent(world, Rotation, eid);
+  addComponent(world, eid, Rotation);
   Rotation.angle[eid] = 0;
 
   // Get turret stats based on type
   const config = TURRET_CONFIG[turretType] || TURRET_CONFIG[TurretType.PHASER_ARRAY];
 
-  addComponent(world, Health, eid);
+  addComponent(world, eid, Health);
   Health.current[eid] = config.health;
   Health.max[eid] = config.health;
 
-  addComponent(world, Shield, eid);
+  addComponent(world, eid, Shield);
   Shield.current[eid] = config.shield;
   Shield.max[eid] = config.shield;
 
-  addComponent(world, Turret, eid);
+  addComponent(world, eid, Turret);
   Turret.range[eid] = config.range;
   Turret.fireRate[eid] = config.fireRate;
   Turret.damage[eid] = config.damage;
   Turret.lastFired[eid] = 0;
   Turret.turretType[eid] = turretType;
 
-  addComponent(world, Target, eid);
+  addComponent(world, eid, Target);
   Target.entityId[eid] = 0;
   Target.hasTarget[eid] = 0;
   Target.entityId2[eid] = 0;
@@ -136,7 +136,7 @@ export function createTurret(world: GameWorld, x: number, y: number, turretType:
   Target.hasTarget3[eid] = 0;
 
   // Add upgrade component to all turrets (starts at level 0)
-  addComponent(world, TurretUpgrade, eid);
+  addComponent(world, eid, TurretUpgrade);
   TurretUpgrade.damageLevel[eid] = 0;
   TurretUpgrade.rangeLevel[eid] = 0;
   TurretUpgrade.fireRateLevel[eid] = 0;
@@ -146,7 +146,7 @@ export function createTurret(world: GameWorld, x: number, y: number, turretType:
   // Add weapon properties for special turrets
   if (turretType === TurretType.TETRYON_BEAM) {
     // Tetryon: 3x shield damage, 0.5x hull damage
-    addComponent(world, WeaponProperties, eid);
+    addComponent(world, eid, WeaponProperties);
     WeaponProperties.shieldDamageMultiplier[eid] = 3.0;
     WeaponProperties.hullDamageMultiplier[eid] = 0.5;
     WeaponProperties.critChance[eid] = 0;
@@ -156,7 +156,7 @@ export function createTurret(world: GameWorld, x: number, y: number, turretType:
     WeaponProperties.statusEffectChance[eid] = 0;
   } else if (turretType === TurretType.PLASMA_CANNON) {
     // Plasma: Applies burning (4 dmg/sec for 5 seconds)
-    addComponent(world, WeaponProperties, eid);
+    addComponent(world, eid, WeaponProperties);
     WeaponProperties.shieldDamageMultiplier[eid] = 1.0;
     WeaponProperties.hullDamageMultiplier[eid] = 1.0;
     WeaponProperties.critChance[eid] = 0;
@@ -166,7 +166,7 @@ export function createTurret(world: GameWorld, x: number, y: number, turretType:
     WeaponProperties.statusEffectChance[eid] = 1.0; // 100% chance
   } else if (turretType === TurretType.POLARON_BEAM) {
     // Polaron: Stacking drain effect
-    addComponent(world, WeaponProperties, eid);
+    addComponent(world, eid, WeaponProperties);
     WeaponProperties.shieldDamageMultiplier[eid] = 1.0;
     WeaponProperties.hullDamageMultiplier[eid] = 1.0;
     WeaponProperties.critChance[eid] = 0;
@@ -210,16 +210,16 @@ export function createProjectile(
     resetProjectileComponents(eid);
   }
 
-  addComponent(world, Position, eid);
+  addComponent(world, eid, Position);
   Position.x[eid] = x;
   Position.y[eid] = y;
 
-  addComponent(world, Velocity, eid);
+  addComponent(world, eid, Velocity);
   // Velocity will be set by the projectile system or caller
   Velocity.x[eid] = 0;
   Velocity.y[eid] = 0;
 
-  addComponent(world, Projectile, eid);
+  addComponent(world, eid, Projectile);
   Projectile.damage[eid] = damage;
   Projectile.projectileType[eid] = projectileType;
   Projectile.targetEntityId[eid] = targetEntityId;
@@ -242,17 +242,17 @@ export function createProjectile(
     angle = Math.atan2(dy, dx);
   }
 
-  addComponent(world, Rotation, eid);
+  addComponent(world, eid, Rotation);
   // Add 90 degrees (HALF_PI) because textures point up by default
   Rotation.angle[eid] = angle + Math.PI / 2;
 
-  addComponent(world, Faction, eid);
+  addComponent(world, eid, Faction);
   Faction.id[eid] = FactionId.PROJECTILE; // Projectiles belong to Federation for now
 
-  addComponent(world, SpriteRef, eid);
+  addComponent(world, eid, SpriteRef);
   SpriteRef.index[eid] = PLACEHOLDER_SPRITE_INDEX; // Will be handled by sprite manager
 
-  addComponent(world, Collider, eid);
+  addComponent(world, eid, Collider);
   Collider.radius[eid] = config.size;
   Collider.layer[eid] = 2; // Projectile layer (need to define layers properly later)
   Collider.mask[eid] = 1;  // Collides with enemies (layer 1)
@@ -310,13 +310,13 @@ export function createEnemyProjectile(
     resetProjectileComponents(eid);
   }
 
-  addComponent(world, Position, eid);
+  addComponent(world, eid, Position);
   Position.x[eid] = x;
   Position.y[eid] = y;
 
-  addComponent(world, Velocity, eid);
+  addComponent(world, eid, Velocity);
 
-  addComponent(world, Projectile, eid);
+  addComponent(world, eid, Projectile);
   Projectile.damage[eid] = damage;
   Projectile.projectileType[eid] = projectileType;
   Projectile.targetEntityId[eid] = 0; // No homing for enemy projectiles
@@ -338,17 +338,17 @@ export function createEnemyProjectile(
     angle = Math.atan2(dy, dx);
   }
 
-  addComponent(world, Rotation, eid);
+  addComponent(world, eid, Rotation);
   // Add 90 degrees because textures point up
   Rotation.angle[eid] = angle + Math.PI / 2;
 
-  addComponent(world, Faction, eid);
+  addComponent(world, eid, Faction);
   Faction.id[eid] = FactionId.ENEMY_PROJECTILE; // Enemy projectile faction
 
-  addComponent(world, SpriteRef, eid);
+  addComponent(world, eid, SpriteRef);
   SpriteRef.index[eid] = PLACEHOLDER_SPRITE_INDEX;
 
-  addComponent(world, Collider, eid);
+  addComponent(world, eid, Collider);
   Collider.radius[eid] = config.size;
   Collider.layer[eid] = 3; // Enemy projectile layer
   Collider.mask[eid] = 0;  // Federation entities (layer 0)

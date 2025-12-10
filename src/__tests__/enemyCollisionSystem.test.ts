@@ -21,16 +21,16 @@ describe('EnemyCollisionSystem', () => {
 
     // Create Kobayashi Maru (Federation ship at center)
     kobayashiMaruId = addEntity(world);
-    addComponent(world, Position, kobayashiMaruId);
+    addComponent(world, kobayashiMaruId, Position);
     Position.x[kobayashiMaruId] = 960;  // Center X
     Position.y[kobayashiMaruId] = 540;  // Center Y
-    addComponent(world, Health, kobayashiMaruId);
+    addComponent(world, kobayashiMaruId, Health);
     Health.current[kobayashiMaruId] = 500;
     Health.max[kobayashiMaruId] = 500;
-    addComponent(world, Shield, kobayashiMaruId);
+    addComponent(world, kobayashiMaruId, Shield);
     Shield.current[kobayashiMaruId] = 200;
     Shield.max[kobayashiMaruId] = 200;
-    addComponent(world, Faction, kobayashiMaruId);
+    addComponent(world, kobayashiMaruId, Faction);
     Faction.id[kobayashiMaruId] = FactionId.FEDERATION;
 
     // Create collision system
@@ -43,15 +43,15 @@ describe('EnemyCollisionSystem', () => {
   it('should not damage Kobayashi Maru when enemy is far away', () => {
     // Create enemy far from Kobayashi Maru
     const enemyId = addEntity(world);
-    addComponent(world, Position, enemyId);
+    addComponent(world, enemyId, Position);
     Position.x[enemyId] = 100;  // Far from center
     Position.y[enemyId] = 100;
-    addComponent(world, Health, enemyId);
+    addComponent(world, enemyId, Health);
     Health.current[enemyId] = 50;
     Health.max[enemyId] = 50;
-    addComponent(world, Faction, enemyId);
+    addComponent(world, enemyId, Faction);
     Faction.id[enemyId] = FactionId.KLINGON;
-    addComponent(world, AIBehavior, enemyId);
+    addComponent(world, enemyId, AIBehavior);
     AIBehavior.behaviorType[enemyId] = 0;
 
     enemyCollisionSystem.update(world);
@@ -66,15 +66,15 @@ describe('EnemyCollisionSystem', () => {
   it('should damage Kobayashi Maru shield when enemy collides', () => {
     // Create enemy at Kobayashi Maru position (collision)
     const enemyId = addEntity(world);
-    addComponent(world, Position, enemyId);
+    addComponent(world, enemyId, Position);
     Position.x[enemyId] = 960;  // Same position as Kobayashi Maru
     Position.y[enemyId] = 540;
-    addComponent(world, Health, enemyId);
+    addComponent(world, enemyId, Health);
     Health.current[enemyId] = 50;
     Health.max[enemyId] = 50;
-    addComponent(world, Faction, enemyId);
+    addComponent(world, enemyId, Faction);
     Faction.id[enemyId] = FactionId.KLINGON;
-    addComponent(world, AIBehavior, enemyId);
+    addComponent(world, enemyId, AIBehavior);
     AIBehavior.behaviorType[enemyId] = 0;
 
     enemyCollisionSystem.update(world);
@@ -93,15 +93,15 @@ describe('EnemyCollisionSystem', () => {
 
     // Create enemy at Kobayashi Maru position
     const enemyId = addEntity(world);
-    addComponent(world, Position, enemyId);
+    addComponent(world, enemyId, Position);
     Position.x[enemyId] = 960;
     Position.y[enemyId] = 540;
-    addComponent(world, Health, enemyId);
+    addComponent(world, enemyId, Health);
     Health.current[enemyId] = 50;
     Health.max[enemyId] = 50;
-    addComponent(world, Faction, enemyId);
+    addComponent(world, enemyId, Faction);
     Faction.id[enemyId] = FactionId.KLINGON;
-    addComponent(world, AIBehavior, enemyId);
+    addComponent(world, enemyId, AIBehavior);
     AIBehavior.behaviorType[enemyId] = 0;
 
     enemyCollisionSystem.update(world);
@@ -115,15 +115,15 @@ describe('EnemyCollisionSystem', () => {
   it('should detect collision within collision radius', () => {
     // Create enemy just within collision radius
     const enemyId = addEntity(world);
-    addComponent(world, Position, enemyId);
+    addComponent(world, enemyId, Position);
     Position.x[enemyId] = 960 + (COLLISION_RADIUS - 10);  // Within collision radius
     Position.y[enemyId] = 540;
-    addComponent(world, Health, enemyId);
+    addComponent(world, enemyId, Health);
     Health.current[enemyId] = 50;
     Health.max[enemyId] = 50;
-    addComponent(world, Faction, enemyId);
+    addComponent(world, enemyId, Faction);
     Faction.id[enemyId] = FactionId.KLINGON;
-    addComponent(world, AIBehavior, enemyId);
+    addComponent(world, enemyId, AIBehavior);
     AIBehavior.behaviorType[enemyId] = 0;
 
     enemyCollisionSystem.update(world);
@@ -135,15 +135,15 @@ describe('EnemyCollisionSystem', () => {
   it('should not collide when just outside collision radius', () => {
     // Create enemy just outside collision radius
     const enemyId = addEntity(world);
-    addComponent(world, Position, enemyId);
+    addComponent(world, enemyId, Position);
     Position.x[enemyId] = 960 + (COLLISION_RADIUS + 10);  // Outside collision radius
     Position.y[enemyId] = 540;
-    addComponent(world, Health, enemyId);
+    addComponent(world, enemyId, Health);
     Health.current[enemyId] = 50;
     Health.max[enemyId] = 50;
-    addComponent(world, Faction, enemyId);
+    addComponent(world, enemyId, Faction);
     Faction.id[enemyId] = FactionId.KLINGON;
-    addComponent(world, AIBehavior, enemyId);
+    addComponent(world, enemyId, AIBehavior);
     AIBehavior.behaviorType[enemyId] = 0;
 
     enemyCollisionSystem.update(world);
@@ -155,15 +155,15 @@ describe('EnemyCollisionSystem', () => {
   it('should track destroyed entities this frame', () => {
     // Create enemy at collision point
     const enemyId = addEntity(world);
-    addComponent(world, Position, enemyId);
+    addComponent(world, enemyId, Position);
     Position.x[enemyId] = 960;
     Position.y[enemyId] = 540;
-    addComponent(world, Health, enemyId);
+    addComponent(world, enemyId, Health);
     Health.current[enemyId] = 50;
     Health.max[enemyId] = 50;
-    addComponent(world, Faction, enemyId);
+    addComponent(world, enemyId, Faction);
     Faction.id[enemyId] = FactionId.KLINGON;
-    addComponent(world, AIBehavior, enemyId);
+    addComponent(world, enemyId, AIBehavior);
     AIBehavior.behaviorType[enemyId] = 0;
 
     enemyCollisionSystem.update(world);
@@ -175,15 +175,15 @@ describe('EnemyCollisionSystem', () => {
   it('should clear destroyed list between frames', () => {
     // Create first enemy
     const enemy1 = addEntity(world);
-    addComponent(world, Position, enemy1);
+    addComponent(world, enemy1, Position);
     Position.x[enemy1] = 960;
     Position.y[enemy1] = 540;
-    addComponent(world, Health, enemy1);
+    addComponent(world, enemy1, Health);
     Health.current[enemy1] = 50;
     Health.max[enemy1] = 50;
-    addComponent(world, Faction, enemy1);
+    addComponent(world, enemy1, Faction);
     Faction.id[enemy1] = FactionId.KLINGON;
-    addComponent(world, AIBehavior, enemy1);
+    addComponent(world, enemy1, AIBehavior);
     AIBehavior.behaviorType[enemy1] = 0;
 
     // First frame
@@ -198,15 +198,15 @@ describe('EnemyCollisionSystem', () => {
   it('should not damage Federation entities', () => {
     // Create a Federation turret near Kobayashi Maru (should not trigger collision)
     const turretId = addEntity(world);
-    addComponent(world, Position, turretId);
+    addComponent(world, turretId, Position);
     Position.x[turretId] = 960;
     Position.y[turretId] = 540;
-    addComponent(world, Health, turretId);
+    addComponent(world, turretId, Health);
     Health.current[turretId] = 50;
     Health.max[turretId] = 50;
-    addComponent(world, Faction, turretId);
+    addComponent(world, turretId, Faction);
     Faction.id[turretId] = FactionId.FEDERATION;
-    addComponent(world, AIBehavior, turretId);  // Even with AIBehavior
+    addComponent(world, turretId, AIBehavior);  // Even with AIBehavior
     AIBehavior.behaviorType[turretId] = 0;
 
     enemyCollisionSystem.update(world);
@@ -222,15 +222,15 @@ describe('EnemyCollisionSystem', () => {
     const enemies = [];
     for (let i = 0; i < 3; i++) {
       const enemyId = addEntity(world);
-      addComponent(world, Position, enemyId);
+      addComponent(world, enemyId, Position);
       Position.x[enemyId] = 960;
       Position.y[enemyId] = 540;
-      addComponent(world, Health, enemyId);
+      addComponent(world, enemyId, Health);
       Health.current[enemyId] = 50;
       Health.max[enemyId] = 50;
-      addComponent(world, Faction, enemyId);
+      addComponent(world, enemyId, Faction);
       Faction.id[enemyId] = FactionId.KLINGON;
-      addComponent(world, AIBehavior, enemyId);
+      addComponent(world, enemyId, AIBehavior);
       AIBehavior.behaviorType[enemyId] = 0;
       enemies.push(enemyId);
     }

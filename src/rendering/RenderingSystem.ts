@@ -3,13 +3,10 @@
  * Manages sprite creation and updates based on ECS data
  */
 import { Application, Sprite, Container } from 'pixi.js';
-import { defineQuery, IWorld } from 'bitecs';
+import { query, World } from 'bitecs';
 import { Position, Faction, SpriteRef } from '../ecs/components';
 import { FactionId } from '../types/constants';
 import { createFactionTextures, FactionTextures } from './textures';
-
-// Query for entities with Position, Faction, and SpriteRef components
-const renderableQuery = defineQuery([Position, Faction, SpriteRef]);
 
 /**
  * RenderingSystem manages all visual entities in the game
@@ -90,7 +87,7 @@ export class RenderingSystem {
 
     sprite.anchor.set(0.5, 0.5);
     sprite.position.set(x, y);
-    
+
     this.entityContainer.addChild(sprite);
     this.sprites.set(entityId, sprite);
 
@@ -100,12 +97,12 @@ export class RenderingSystem {
   /**
    * Update rendering system - syncs sprites with ECS data
    */
-  update(world: IWorld): void {
+  update(world: World): void {
     if (!this.initialized || !this.textures) {
       return;
     }
 
-    const entities = renderableQuery(world);
+    const entities = query(world, [Position, Faction, SpriteRef]);
 
     // Update or create sprites for all renderable entities
     for (const eid of entities) {

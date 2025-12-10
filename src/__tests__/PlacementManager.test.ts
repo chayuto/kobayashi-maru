@@ -159,8 +159,8 @@ describe('PlacementManager', () => {
     it('should reject positions too close to existing turrets', () => {
       // Add an existing turret to the world
       const existingTurret = addEntity(world);
-      addComponent(world, Position, existingTurret);
-      addComponent(world, Turret, existingTurret);
+      addComponent(world, existingTurret, Position);
+      addComponent(world, existingTurret, Turret);
       Position.x[existingTurret] = 500;
       Position.y[existingTurret] = 500;
       
@@ -174,8 +174,8 @@ describe('PlacementManager', () => {
     it('should accept positions far enough from existing turrets', () => {
       // Add an existing turret to the world
       const existingTurret = addEntity(world);
-      addComponent(world, Position, existingTurret);
-      addComponent(world, Turret, existingTurret);
+      addComponent(world, existingTurret, Position);
+      addComponent(world, existingTurret, Turret);
       Position.x[existingTurret] = 500;
       Position.y[existingTurret] = 500;
       

@@ -2,12 +2,12 @@
  * Tests for System Manager
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { createWorld, IWorld } from 'bitecs';
+import { createWorld, World } from 'bitecs';
 import { SystemManager } from '../systems/SystemManager';
 
 describe('SystemManager', () => {
   let systemManager: SystemManager;
-  let world: IWorld;
+  let world: World;
 
   beforeEach(() => {
     systemManager = new SystemManager();
@@ -16,7 +16,7 @@ describe('SystemManager', () => {
 
   describe('registration', () => {
     it('should register a system with a name and priority', () => {
-      const mockSystem = vi.fn((w: IWorld) => w);
+      const mockSystem = vi.fn((w: World) => w);
       systemManager.register('testSystem', mockSystem, 10);
       
       const names = systemManager.getSystemNames();
@@ -25,8 +25,8 @@ describe('SystemManager', () => {
 
     it('should warn when registering a system with duplicate name', () => {
       const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-      const mockSystem1 = vi.fn((w: IWorld) => w);
-      const mockSystem2 = vi.fn((w: IWorld) => w);
+      const mockSystem1 = vi.fn((w: World) => w);
+      const mockSystem2 = vi.fn((w: World) => w);
       
       systemManager.register('duplicateSystem', mockSystem1, 10);
       systemManager.register('duplicateSystem', mockSystem2, 20);
@@ -36,7 +36,7 @@ describe('SystemManager', () => {
     });
 
     it('should unregister a system by name', () => {
-      const mockSystem = vi.fn((w: IWorld) => w);
+      const mockSystem = vi.fn((w: World) => w);
       systemManager.register('testSystem', mockSystem, 10);
       
       const result = systemManager.unregister('testSystem');
@@ -56,9 +56,9 @@ describe('SystemManager', () => {
     it('should run systems in priority order (lower first)', () => {
       const executionOrder: string[] = [];
       
-      const systemA = vi.fn((w: IWorld) => { executionOrder.push('A'); return w; });
-      const systemB = vi.fn((w: IWorld) => { executionOrder.push('B'); return w; });
-      const systemC = vi.fn((w: IWorld) => { executionOrder.push('C'); return w; });
+      const systemA = vi.fn((w: World) => { executionOrder.push('A'); return w; });
+      const systemB = vi.fn((w: World) => { executionOrder.push('B'); return w; });
+      const systemC = vi.fn((w: World) => { executionOrder.push('C'); return w; });
       
       // Register in random order
       systemManager.register('systemB', systemB, 20);
@@ -73,8 +73,8 @@ describe('SystemManager', () => {
     it('should update priority and re-sort', () => {
       const executionOrder: string[] = [];
       
-      const systemA = vi.fn((w: IWorld) => { executionOrder.push('A'); return w; });
-      const systemB = vi.fn((w: IWorld) => { executionOrder.push('B'); return w; });
+      const systemA = vi.fn((w: World) => { executionOrder.push('A'); return w; });
+      const systemB = vi.fn((w: World) => { executionOrder.push('B'); return w; });
       
       systemManager.register('systemA', systemA, 10);
       systemManager.register('systemB', systemB, 20);
@@ -94,7 +94,7 @@ describe('SystemManager', () => {
 
   describe('enable/disable', () => {
     it('should not run disabled systems', () => {
-      const mockSystem = vi.fn((w: IWorld) => w);
+      const mockSystem = vi.fn((w: World) => w);
       systemManager.register('testSystem', mockSystem, 10);
       
       systemManager.setEnabled('testSystem', false);
@@ -104,7 +104,7 @@ describe('SystemManager', () => {
     });
 
     it('should run re-enabled systems', () => {
-      const mockSystem = vi.fn((w: IWorld) => w);
+      const mockSystem = vi.fn((w: World) => w);
       systemManager.register('testSystem', mockSystem, 10);
       
       systemManager.setEnabled('testSystem', false);
@@ -115,7 +115,7 @@ describe('SystemManager', () => {
     });
 
     it('should correctly report enabled status', () => {
-      const mockSystem = vi.fn((w: IWorld) => w);
+      const mockSystem = vi.fn((w: World) => w);
       systemManager.register('testSystem', mockSystem, 10);
       
       expect(systemManager.isEnabled('testSystem')).toBe(true);
@@ -131,7 +131,7 @@ describe('SystemManager', () => {
 
   describe('system execution', () => {
     it('should pass world, delta, and gameTime to systems with requiresGameTime', () => {
-      const mockSystem = vi.fn((w: IWorld, d: number, gt: number) => {
+      const mockSystem = vi.fn((w: World, d: number, gt: number) => {
         expect(d).toBe(0.016);
         expect(gt).toBe(5.5);
         return w;
@@ -144,7 +144,7 @@ describe('SystemManager', () => {
     });
 
     it('should pass world and delta to systems with requiresDelta (default)', () => {
-      const mockSystem = vi.fn((w: IWorld, d: number) => {
+      const mockSystem = vi.fn((w: World, d: number) => {
         expect(d).toBe(0.016);
         return w;
       });
@@ -156,7 +156,7 @@ describe('SystemManager', () => {
     });
 
     it('should pass only world to systems without delta requirement', () => {
-      const mockSystem = vi.fn((w: IWorld) => w);
+      const mockSystem = vi.fn((w: World) => w);
       
       systemManager.register('testSystem', mockSystem, 10, { requiresDelta: false });
       systemManager.run(world, 0.016);
@@ -165,7 +165,7 @@ describe('SystemManager', () => {
     });
 
     it('should handle systems with update method pattern', () => {
-      const mockUpdate = vi.fn((w: IWorld) => w);
+      const mockUpdate = vi.fn((w: World) => w);
       const systemWithUpdate = { update: mockUpdate };
       
       systemManager.register('testSystem', systemWithUpdate, 10, { requiresDelta: false });
@@ -175,7 +175,7 @@ describe('SystemManager', () => {
     });
 
     it('should pass delta to systems with update method and requiresDelta', () => {
-      const mockUpdate = vi.fn().mockImplementation((w: IWorld) => w);
+      const mockUpdate = vi.fn().mockImplementation((w: World) => w);
       const systemWithUpdate = { update: mockUpdate };
       
       systemManager.register('testSystem', systemWithUpdate, 10, { requiresDelta: true });
@@ -185,7 +185,7 @@ describe('SystemManager', () => {
     });
 
     it('should pass delta and gameTime to systems with update method and requiresGameTime', () => {
-      const mockUpdate = vi.fn().mockImplementation((w: IWorld) => w);
+      const mockUpdate = vi.fn().mockImplementation((w: World) => w);
       const systemWithUpdate = { update: mockUpdate };
       
       systemManager.register('testSystem', systemWithUpdate, 10, { requiresGameTime: true });
@@ -205,13 +205,13 @@ describe('SystemManager', () => {
 
     it('should propagate world through system chain', () => {
       // Verify that world is passed from one system to the next
-      let passedWorld: IWorld | undefined;
+      let passedWorld: World | undefined;
       
-      const systemA = vi.fn((w: IWorld) => {
+      const systemA = vi.fn((w: World) => {
         passedWorld = w;
         return w;
       });
-      const systemB = vi.fn((w: IWorld) => {
+      const systemB = vi.fn((w: World) => {
         expect(w).toBe(passedWorld);
         return w;
       });
@@ -249,7 +249,7 @@ describe('SystemManager', () => {
       const failingSystem = vi.fn(() => {
         throw new Error('System error');
       });
-      const workingSystem = vi.fn((w: IWorld) => w);
+      const workingSystem = vi.fn((w: World) => w);
       
       systemManager.register('failingSystem', failingSystem, 10, { requiresDelta: false });
       systemManager.register('workingSystem', workingSystem, 20, { requiresDelta: false });
@@ -263,8 +263,8 @@ describe('SystemManager', () => {
 
   describe('clear', () => {
     it('should remove all registered systems', () => {
-      const systemA = vi.fn((w: IWorld) => w);
-      const systemB = vi.fn((w: IWorld) => w);
+      const systemA = vi.fn((w: World) => w);
+      const systemB = vi.fn((w: World) => w);
       
       systemManager.register('systemA', systemA, 10, { requiresDelta: false });
       systemManager.register('systemB', systemB, 20, { requiresDelta: false });
@@ -276,7 +276,7 @@ describe('SystemManager', () => {
     });
 
     it('should not run any systems after clear', () => {
-      const mockSystem = vi.fn((w: IWorld) => w);
+      const mockSystem = vi.fn((w: World) => w);
       systemManager.register('testSystem', mockSystem, 10, { requiresDelta: false });
       
       systemManager.clear();
@@ -288,9 +288,9 @@ describe('SystemManager', () => {
 
   describe('getSystemNames', () => {
     it('should return system names in priority order', () => {
-      const systemA = vi.fn((w: IWorld) => w);
-      const systemB = vi.fn((w: IWorld) => w);
-      const systemC = vi.fn((w: IWorld) => w);
+      const systemA = vi.fn((w: World) => w);
+      const systemB = vi.fn((w: World) => w);
+      const systemC = vi.fn((w: World) => w);
       
       systemManager.register('collision', systemA, 10);
       systemManager.register('damage', systemC, 30);

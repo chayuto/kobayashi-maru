@@ -23,7 +23,7 @@
  * }
  * ```
  */
-import { hasComponent, IWorld } from 'bitecs';
+import { hasComponent, World } from 'bitecs';
 import { Health, Shield } from '../ecs/components';
 
 /**
@@ -62,11 +62,11 @@ export interface DamageResult {
  * }
  * ```
  */
-export function applyDamage(world: IWorld, entityId: number, damage: number): number {
+export function applyDamage(world: World, entityId: number, damage: number): number {
     let totalDamageDealt = 0;
 
     // Apply damage to shields first if entity has Shield component
-    if (hasComponent(world, Shield, entityId)) {
+    if (hasComponent(world, entityId, Shield)) {
         const currentShield = Shield.current[entityId];
         if (currentShield > 0) {
             const shieldDamage = Math.min(currentShield, damage);
@@ -77,7 +77,7 @@ export function applyDamage(world: IWorld, entityId: number, damage: number): nu
     }
 
     // Apply remaining damage to health
-    if (damage > 0 && hasComponent(world, Health, entityId)) {
+    if (damage > 0 && hasComponent(world, entityId, Health)) {
         const currentHealth = Health.current[entityId];
         const healthDamage = Math.min(currentHealth, damage);
         Health.current[entityId] = currentHealth - healthDamage;
@@ -107,13 +107,13 @@ export function applyDamage(world: IWorld, entityId: number, damage: number): nu
  * console.log(`Dealt ${result.shieldDamage} shield, ${result.healthDamage} health`);
  * ```
  */
-export function applyDamageDetailed(world: IWorld, entityId: number, damage: number): DamageResult {
+export function applyDamageDetailed(world: World, entityId: number, damage: number): DamageResult {
     let shieldDamage = 0;
     let healthDamage = 0;
     let remainingDamage = damage;
 
     // Apply damage to shields first
-    if (hasComponent(world, Shield, entityId)) {
+    if (hasComponent(world, entityId, Shield)) {
         const currentShield = Shield.current[entityId];
         if (currentShield > 0) {
             shieldDamage = Math.min(currentShield, remainingDamage);
@@ -123,13 +123,13 @@ export function applyDamageDetailed(world: IWorld, entityId: number, damage: num
     }
 
     // Apply remaining damage to health
-    if (remainingDamage > 0 && hasComponent(world, Health, entityId)) {
+    if (remainingDamage > 0 && hasComponent(world, entityId, Health)) {
         const currentHealth = Health.current[entityId];
         healthDamage = Math.min(currentHealth, remainingDamage);
         Health.current[entityId] = currentHealth - healthDamage;
     }
 
-    const killed = hasComponent(world, Health, entityId) && Health.current[entityId] <= 0;
+    const killed = hasComponent(world, entityId, Health) && Health.current[entityId] <= 0;
 
     return {
         totalDamage: shieldDamage + healthDamage,

@@ -4,14 +4,11 @@
  * Subscribes to PlacementManager events to render ghost sprite and range circle.
  */
 import { Application, Graphics, Container } from 'pixi.js';
-import { defineQuery } from 'bitecs';
+import { query } from 'bitecs';
 import { GAME_CONFIG, TURRET_CONFIG, TurretType } from '../types/constants';
 import { PlacementManager, PlacementEvent } from '../game/PlacementManager';
 import { Position, Turret } from '../ecs/components';
 import type { GameWorld } from '../ecs/world';
-
-// Query for all turrets to show their ranges
-const turretQuery = defineQuery([Position, Turret]);
 
 /**
  * Renders placement preview visuals (ghost sprite and range circle)
@@ -82,7 +79,7 @@ export class PlacementRenderer {
     this.existingTurretRanges.removeChildren();
 
     // Query all turrets and draw their ranges
-    const turretEntities = turretQuery(this.world);
+    const turretEntities = query(this.world, [Position, Turret]);
 
     for (const eid of turretEntities) {
       const x = Position.x[eid];

@@ -2,7 +2,7 @@
  * Combat System for Kobayashi Maru
  * Handles turret firing logic, cooldowns, and damage application
  */
-import { defineQuery, hasComponent, IWorld } from 'bitecs';
+import { query, hasComponent, World } from 'bitecs';
 import { Position, Turret, Target, Faction, Health, Shield, WeaponProperties } from '../ecs/components';
 import { TurretType, ProjectileType } from '../types/constants';
 import { COMBAT_CONFIG } from '../config';
@@ -10,9 +10,6 @@ import { createProjectile } from '../ecs/entityFactory';
 import { AudioManager, SoundType } from '../audio';
 import { ParticleSystem, EFFECTS } from '../rendering';
 import { applyBurning, applyDrained } from './statusEffectSystem';
-
-// Query for turrets with targets
-const combatQuery = defineQuery([Position, Turret, Target, Faction]);
 
 /**
  * Beam segment for multi-segment beams with jitter
@@ -140,12 +137,12 @@ export function createCombatSystem(particleSystem?: ParticleSystem) {
    * @param turretEid - The turret entity ID (for WeaponProperties)
    * @returns The actual damage dealt (for stats tracking)
    */
-  function applyDamage(world: IWorld, entityId: number, damage: number, hitX: number, hitY: number, currentTime: number, turretEid: number): number {
+  function applyDamage(world: World, entityId: number, damage: number, hitX: number, hitY: number, currentTime: number, turretEid: number): number {
     let finalDamage = damage;
 
     // Check for weapon properties to modify damage
-    if (hasComponent(world, WeaponProperties, turretEid)) {
-      const hasShield = hasComponent(world, Shield, entityId) && Shield.current[entityId] > 0;
+    if (hasComponent(world, turretEid, WeaponProperties)) {
+      const hasShield = hasComponent(world, entityId, Shield) && Shield.current[entityId] > 0;
 
       if (hasShield) {
         // Apply shield damage multiplier
@@ -161,7 +158,7 @@ export function createCombatSystem(particleSystem?: ParticleSystem) {
     let actualDamage = 0;
 
     // Apply damage to shields first if entity has Shield component
-    if (hasComponent(world, Shield, entityId)) {
+    if (hasComponent(world, entityId, Shield)) {
       const currentShield = Shield.current[entityId];
       if (currentShield > 0) {
         const shieldDamage = Math.min(currentShield, finalDamage);
@@ -195,7 +192,7 @@ export function createCombatSystem(particleSystem?: ParticleSystem) {
     }
 
     // Apply status effects if weapon has them
-    if (hasComponent(world, WeaponProperties, turretEid)) {
+    if (hasComponent(world, turretEid, WeaponProperties)) {
       const statusType = WeaponProperties.statusEffectType[turretEid];
       const statusChance = WeaponProperties.statusEffectChance[turretEid];
 
@@ -221,11 +218,11 @@ export function createCombatSystem(particleSystem?: ParticleSystem) {
     return actualDamage;
   }
 
-  function combatSystem(world: IWorld, _deltaTime: number, currentTime: number): IWorld {
+  function combatSystem(world: World, _deltaTime: number, currentTime: number): World {
     // Clear beam visuals from last frame
     activeBeams.length = 0;
 
-    const turrets = combatQuery(world);
+    const turrets = query(world, [Position, Turret, Target, Faction]);
 
     for (const turretEid of turrets) {
       // Collect all valid targets for this turret
@@ -233,7 +230,7 @@ export function createCombatSystem(particleSystem?: ParticleSystem) {
 
       if (Target.hasTarget[turretEid] === 1) {
         const targetEid = Target.entityId[turretEid];
-        if (hasComponent(world, Health, targetEid) && Health.current[targetEid] > 0) {
+        if (hasComponent(world, targetEid, Health) && Health.current[targetEid] > 0) {
           activeTargets.push(targetEid);
         } else {
           Target.hasTarget[turretEid] = 0;
@@ -242,7 +239,7 @@ export function createCombatSystem(particleSystem?: ParticleSystem) {
 
       if (Target.hasTarget2[turretEid] === 1) {
         const targetEid2 = Target.entityId2[turretEid];
-        if (hasComponent(world, Health, targetEid2) && Health.current[targetEid2] > 0) {
+        if (hasComponent(world, targetEid2, Health) && Health.current[targetEid2] > 0) {
           activeTargets.push(targetEid2);
         } else {
           Target.hasTarget2[turretEid] = 0;
@@ -251,7 +248,7 @@ export function createCombatSystem(particleSystem?: ParticleSystem) {
 
       if (Target.hasTarget3[turretEid] === 1) {
         const targetEid3 = Target.entityId3[turretEid];
-        if (hasComponent(world, Health, targetEid3) && Health.current[targetEid3] > 0) {
+        if (hasComponent(world, targetEid3, Health) && Health.current[targetEid3] > 0) {
           activeTargets.push(targetEid3);
         } else {
           Target.hasTarget3[turretEid] = 0;
@@ -352,19 +349,19 @@ export function createCombatSystem(particleSystem?: ParticleSystem) {
       // Check if any targets were killed and clear their flags
       if (Target.hasTarget[turretEid] === 1) {
         const targetEid = Target.entityId[turretEid];
-        if (!hasComponent(world, Health, targetEid) || Health.current[targetEid] <= 0) {
+        if (!hasComponent(world, targetEid, Health) || Health.current[targetEid] <= 0) {
           Target.hasTarget[turretEid] = 0;
         }
       }
       if (Target.hasTarget2[turretEid] === 1) {
         const targetEid2 = Target.entityId2[turretEid];
-        if (!hasComponent(world, Health, targetEid2) || Health.current[targetEid2] <= 0) {
+        if (!hasComponent(world, targetEid2, Health) || Health.current[targetEid2] <= 0) {
           Target.hasTarget2[turretEid] = 0;
         }
       }
       if (Target.hasTarget3[turretEid] === 1) {
         const targetEid3 = Target.entityId3[turretEid];
-        if (!hasComponent(world, Health, targetEid3) || Health.current[targetEid3] <= 0) {
+        if (!hasComponent(world, targetEid3, Health) || Health.current[targetEid3] <= 0) {
           Target.hasTarget3[turretEid] = 0;
         }
       }

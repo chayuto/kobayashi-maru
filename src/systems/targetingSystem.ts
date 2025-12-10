@@ -3,13 +3,10 @@
  * Handles turret target acquisition based on proximity and enemy status
  * Supports multi-target for upgraded turrets
  */
-import { defineQuery, hasComponent, IWorld } from 'bitecs';
+import { query, hasComponent, World } from 'bitecs';
 import { Position, Turret, Target, Faction, Health, TurretUpgrade } from '../ecs/components';
 import { FactionId, UPGRADE_CONFIG, UpgradePath } from '../types/constants';
 import { SpatialHash } from '../collision/spatialHash';
-
-// Query for turrets with targeting capability
-const turretQuery = defineQuery([Position, Turret, Target]);
 
 /**
  * Creates the targeting system that finds enemies within turret range
@@ -17,17 +14,17 @@ const turretQuery = defineQuery([Position, Turret, Target]);
  * @returns A system function that updates turret targets
  */
 export function createTargetingSystem(spatialHash: SpatialHash) {
-  return function targetingSystem(world: IWorld): IWorld {
-    const turrets = turretQuery(world);
+  return function targetingSystem(world: World): World {
+    const turrets = query(world, [Position, Turret, Target]);
 
     for (const turretEid of turrets) {
       const turretX = Position.x[turretEid];
       const turretY = Position.y[turretEid];
       const range = Turret.range[turretEid];
-      
+
       // Determine max targets based on multi-target upgrade level
       let maxTargets = 1;
-      if (hasComponent(world, TurretUpgrade, turretEid)) {
+      if (hasComponent(world, turretEid, TurretUpgrade)) {
         const multiTargetLevel = TurretUpgrade.multiTargetLevel[turretEid];
         if (multiTargetLevel > 0 && multiTargetLevel <= UPGRADE_CONFIG[UpgradePath.MULTI_TARGET].targets.length) {
           maxTargets = UPGRADE_CONFIG[UpgradePath.MULTI_TARGET].targets[multiTargetLevel - 1];
@@ -69,15 +66,15 @@ export function createTargetingSystem(spatialHash: SpatialHash) {
         if (validTargets.includes(candidateEid)) continue;
 
         // Check if it's an enemy (not Federation)
-        if (!hasComponent(world, Faction, candidateEid)) continue;
+        if (!hasComponent(world, candidateEid, Faction)) continue;
         if (Faction.id[candidateEid] === FactionId.FEDERATION) continue;
 
         // Check if it has health (is alive)
-        if (!hasComponent(world, Health, candidateEid)) continue;
+        if (!hasComponent(world, candidateEid, Health)) continue;
         if (Health.current[candidateEid] <= 0) continue;
 
         // Check if it has position
-        if (!hasComponent(world, Position, candidateEid)) continue;
+        if (!hasComponent(world, candidateEid, Position)) continue;
 
         // Calculate distance
         const dx = Position.x[candidateEid] - turretX;
@@ -111,16 +108,16 @@ export function createTargetingSystem(spatialHash: SpatialHash) {
  * Checks if a target entity is still valid (alive, in range, exists)
  */
 function isValidTarget(
-  world: IWorld,
+  world: World,
   targetEid: number,
   turretX: number,
   turretY: number,
   range: number
 ): boolean {
   // Check if entity still has required components
-  if (!hasComponent(world, Position, targetEid)) return false;
-  if (!hasComponent(world, Health, targetEid)) return false;
-  if (!hasComponent(world, Faction, targetEid)) return false;
+  if (!hasComponent(world, targetEid, Position)) return false;
+  if (!hasComponent(world, targetEid, Health)) return false;
+  if (!hasComponent(world, targetEid, Faction)) return false;
 
   // Check if still an enemy
   if (Faction.id[targetEid] === FactionId.FEDERATION) return false;

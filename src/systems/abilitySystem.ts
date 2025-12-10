@@ -2,7 +2,7 @@
  * Ability System
  * Processes special abilities for elite and boss enemies
  */
-import { defineQuery, hasComponent, IWorld } from 'bitecs';
+import { query, hasComponent, World } from 'bitecs';
 import { Position, Velocity, Health, Shield, SpecialAbility, Faction } from '../ecs/components';
 import { AbilityType, ABILITY_CONFIG, GAME_CONFIG, FactionId } from '../types/constants';
 import { createEnemy } from '../ecs/entityFactory';
@@ -11,9 +11,6 @@ import { ParticleSystem } from '../rendering';
 import { SpriteManager } from '../rendering';
 import { AudioManager } from '../audio';
 import { SpatialHash } from '../collision';
-
-// Query for entities with special abilities
-const abilityQuery = defineQuery([SpecialAbility, Position, Health]);
 
 // Game time tracker (in seconds)
 let gameTime = 0;
@@ -32,11 +29,11 @@ export function createAbilitySystem(
   audioManager?: AudioManager,
   spatialHash?: SpatialHash
 ) {
-  return function abilitySystem(world: IWorld, deltaTime: number) {
+  return function abilitySystem(world: World, deltaTime: number) {
     // Update game time
     gameTime += deltaTime;
 
-    const entities = abilityQuery(world);
+    const entities = query(world, [SpecialAbility, Position, Health]);
 
     for (let i = 0; i < entities.length; i++) {
       const eid = entities[i];
@@ -76,7 +73,7 @@ export function createAbilitySystem(
  * Teleport ability - relocates enemy to safe position when in danger
  */
 function processTeleportAbility(
-  _world: IWorld,
+  _world: World,
   entity: number,
   particleSystem?: ParticleSystem,
   _audioManager?: AudioManager,
@@ -152,7 +149,7 @@ function processTeleportAbility(
  * Cloaking ability - reduces visibility when health is low
  */
 function processCloakAbility(
-  _world: IWorld,
+  _world: World,
   entity: number,
   particleSystem?: ParticleSystem
 ): void {
@@ -238,12 +235,12 @@ function processCloakAbility(
  * Shield regeneration ability - passive regen of shields
  */
 function processShieldRegenAbility(
-  world: IWorld,
+  world: World,
   entity: number,
   deltaTime: number,
   particleSystem?: ParticleSystem
 ): void {
-  if (hasComponent(world, Shield, entity)) {
+  if (hasComponent(world, entity, Shield)) {
     const currentShield = Shield.current[entity];
     const maxShield = Shield.max[entity];
 
@@ -278,7 +275,7 @@ function processShieldRegenAbility(
  * Split ability - splits into smaller enemies on death
  */
 function processSplitAbility(
-  world: IWorld,
+  world: World,
   entity: number,
   particleSystem?: ParticleSystem
 ): void {
@@ -336,7 +333,7 @@ function processSplitAbility(
  * Summon ability - spawns reinforcements
  */
 function processSummonAbility(
-  world: IWorld,
+  world: World,
   entity: number,
   particleSystem?: ParticleSystem
 ): void {
@@ -401,7 +398,7 @@ function processEMPBurstAbility(): void {
  * Ramming Speed ability - increases movement speed temporarily
  */
 function processRammingSpeedAbility(
-  world: IWorld,
+  world: World,
   entity: number,
   particleSystem?: ParticleSystem
 ): void {
@@ -419,7 +416,7 @@ function processRammingSpeedAbility(
       SpecialAbility.lastUsed[entity] = gameTime;
 
       // Double velocity
-      if (hasComponent(world, Velocity, entity)) {
+      if (hasComponent(world, entity, Velocity)) {
         Velocity.x[entity] *= 2;
         Velocity.y[entity] *= 2;
       }
@@ -446,7 +443,7 @@ function processRammingSpeedAbility(
       SpecialAbility.active[entity] = 0;
 
       // Restore normal velocity
-      if (hasComponent(world, Velocity, entity)) {
+      if (hasComponent(world, entity, Velocity)) {
         Velocity.x[entity] *= 0.5;
         Velocity.y[entity] *= 0.5;
       }
@@ -526,7 +523,7 @@ function isBeingTargeted(): boolean {
 /**
  * Creates an enemy by faction type
  */
-function createEnemyByFaction(world: IWorld, faction: number, x: number, y: number): number {
+function createEnemyByFaction(world: World, faction: number, x: number, y: number): number {
   // Federation faction doesn't have enemy ships to spawn
   if (faction === FactionId.FEDERATION) {
     return -1;

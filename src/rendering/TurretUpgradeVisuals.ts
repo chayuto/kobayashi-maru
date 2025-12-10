@@ -3,12 +3,9 @@
  * Provides visual feedback for turret upgrade levels through tint, scale, and glow effects
  */
 import { Container, Graphics } from 'pixi.js';
-import { defineQuery, hasComponent } from 'bitecs';
+import { query, hasComponent } from 'bitecs';
 import { Position, Turret, TurretUpgrade, CompositeSpriteRef } from '../ecs/components';
 import type { GameWorld } from '../ecs/world';
-
-// Query for turrets with upgrade component
-const turretQuery = defineQuery([Position, Turret, TurretUpgrade, CompositeSpriteRef]);
 
 /**
  * Visual upgrade level indicator configuration
@@ -92,7 +89,7 @@ export class TurretUpgradeVisuals {
    * Should be called each frame in the rendering system
    */
   update(): void {
-    const turrets = turretQuery(this.world);
+    const turrets = query(this.world, [Position, Turret, TurretUpgrade, CompositeSpriteRef]);
 
     for (let i = 0; i < turrets.length; i++) {
       const eid = turrets[i];
@@ -157,7 +154,7 @@ export class TurretUpgradeVisuals {
   /**
    * Clean up glow graphics for turrets that no longer exist
    */
-  private cleanupRemovedTurrets(currentTurrets: number[] | Uint32Array): void {
+  private cleanupRemovedTurrets(currentTurrets: Iterable<number>): void {
     const currentIds = new Set(Array.from(currentTurrets));
 
     for (const [eid, glow] of this.glowGraphics) {
@@ -174,7 +171,7 @@ export class TurretUpgradeVisuals {
    * Useful for testing and debugging
    */
   getConfigForTurret(eid: number): UpgradeVisualConfig | null {
-    if (!hasComponent(this.world, TurretUpgrade, eid)) {
+    if (!hasComponent(this.world, eid, TurretUpgrade)) {
       return null;
     }
 

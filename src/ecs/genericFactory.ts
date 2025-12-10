@@ -77,40 +77,40 @@ export function createEnemyFromTemplate(
     }
 
     // Position component
-    addComponent(world, Position, eid);
+    addComponent(world, eid, Position);
     Position.x[eid] = x;
     Position.y[eid] = y;
 
     // Velocity component (starts stationary)
-    addComponent(world, Velocity, eid);
+    addComponent(world, eid, Velocity);
     Velocity.x[eid] = 0;
     Velocity.y[eid] = 0;
 
     // Faction component
-    addComponent(world, Faction, eid);
+    addComponent(world, eid, Faction);
     Faction.id[eid] = template.factionId;
 
     // Sprite component
-    addComponent(world, SpriteRef, eid);
+    addComponent(world, eid, SpriteRef);
     SpriteRef.index[eid] = PLACEHOLDER_SPRITE_INDEX;
 
     // Rotation component
-    addComponent(world, Rotation, eid);
+    addComponent(world, eid, Rotation);
     Rotation.angle[eid] = 0;
 
     // Health component
-    addComponent(world, Health, eid);
+    addComponent(world, eid, Health);
     Health.current[eid] = template.health;
     Health.max[eid] = template.health;
 
     // Shield component
-    addComponent(world, Shield, eid);
+    addComponent(world, eid, Shield);
     Shield.current[eid] = template.shield;
     Shield.max[eid] = template.shield;
 
     // AI Behavior component (if template has AI config)
     if (template.ai) {
-        addComponent(world, AIBehavior, eid);
+        addComponent(world, eid, AIBehavior);
         AIBehavior.behaviorType[eid] = template.ai.behaviorType;
         AIBehavior.aggression[eid] = template.ai.aggression;
         AIBehavior.stateTimer[eid] = 0;
@@ -118,7 +118,7 @@ export function createEnemyFromTemplate(
 
     // Enemy Weapon component (if template has weapon config)
     if (template.weapon) {
-        addComponent(world, EnemyWeapon, eid);
+        addComponent(world, eid, EnemyWeapon);
         EnemyWeapon.range[eid] = template.weapon.range;
         EnemyWeapon.fireRate[eid] = template.weapon.fireRate;
         EnemyWeapon.damage[eid] = template.weapon.damage;

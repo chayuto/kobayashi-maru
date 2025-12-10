@@ -21,7 +21,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "bitecs": "~0.3.40",
+    "bitecs": "0.4.0",
     "gl-matrix": "^3.4.4",
     "pixi.js": "^8.14.3"
   },

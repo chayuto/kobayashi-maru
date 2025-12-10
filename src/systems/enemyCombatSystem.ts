@@ -2,13 +2,10 @@
  * Enemy Combat System for Kobayashi Maru
  * Handles enemy projectile shooting toward the target (Kobayashi Maru)
  */
-import { defineQuery, hasComponent, IWorld } from 'bitecs';
+import { query, hasComponent, World } from 'bitecs';
 import { Position, EnemyWeapon, Health, Faction, AIBehavior } from '../ecs/components';
 import { FactionId, GAME_CONFIG } from '../types/constants';
 import { createEnemyProjectile } from '../ecs/entityFactory';
-
-// Query for enemies with weapons
-const enemyWeaponQuery = defineQuery([Position, EnemyWeapon, Health, Faction, AIBehavior]);
 
 /**
  * Creates the enemy combat system that handles enemy shooting
@@ -19,18 +16,18 @@ export function createEnemyCombatSystem(getKobayashiMaruId?: () => number) {
   const centerX = GAME_CONFIG.WORLD_WIDTH / 2;
   const centerY = GAME_CONFIG.WORLD_HEIGHT / 2;
 
-  function enemyCombatSystem(world: IWorld, _deltaTime: number, currentTime: number): IWorld {
+  function enemyCombatSystem(world: World, _deltaTime: number, currentTime: number): World {
     // Get the target (Kobayashi Maru position or center)
     const kmId = getKobayashiMaruId?.() ?? -1;
     let targetX = centerX;
     let targetY = centerY;
 
-    if (kmId !== -1 && hasComponent(world, Position, kmId)) {
+    if (kmId !== -1 && hasComponent(world, kmId, Position)) {
       targetX = Position.x[kmId];
       targetY = Position.y[kmId];
     }
 
-    const enemies = enemyWeaponQuery(world);
+    const enemies = query(world, [Position, EnemyWeapon, Health, Faction, AIBehavior]);
 
     for (const eid of enemies) {
       // Skip dead enemies

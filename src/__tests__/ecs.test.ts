@@ -158,13 +158,13 @@ describe('Entity Factory - Kobayashi Maru', () => {
     const eid = createKobayashiMaru(world, 960, 540);
 
     // Verify Turret component exists
-    expect(hasComponent(world, Turret, eid)).toBe(true);
+    expect(hasComponent(world, eid, Turret)).toBe(true);
     expect(Turret.range[eid]).toBe(GAME_CONFIG.KOBAYASHI_MARU_DEFENSE_RANGE);
     expect(Turret.fireRate[eid]).toBe(GAME_CONFIG.KOBAYASHI_MARU_DEFENSE_FIRE_RATE);
     expect(Turret.damage[eid]).toBe(GAME_CONFIG.KOBAYASHI_MARU_DEFENSE_DAMAGE);
 
     // Verify Target component exists
-    expect(hasComponent(world, Target, eid)).toBe(true);
+    expect(hasComponent(world, eid, Target)).toBe(true);
     expect(Target.hasTarget[eid]).toBe(0);
   });
 });

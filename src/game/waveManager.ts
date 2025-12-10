@@ -279,7 +279,7 @@ export class WaveManager {
     if (!this.world) return;
 
     // Add variant component
-    addComponent(this.world, EnemyVariant, eid);
+    addComponent(this.world, eid, EnemyVariant);
     EnemyVariant.rank[eid] = EnemyRank.ELITE;
     EnemyVariant.sizeScale[eid] = RANK_MULTIPLIERS[EnemyRank.ELITE].size;
     EnemyVariant.statMultiplier[eid] = RANK_MULTIPLIERS[EnemyRank.ELITE].health;
@@ -290,7 +290,7 @@ export class WaveManager {
     Shield.max[eid] = Math.floor(Shield.max[eid] * RANK_MULTIPLIERS[EnemyRank.ELITE].health);
     Shield.current[eid] = Math.floor(Shield.current[eid] * RANK_MULTIPLIERS[EnemyRank.ELITE].health);
 
-    if (hasComponent(this.world, EnemyWeapon, eid)) {
+    if (hasComponent(this.world, eid, EnemyWeapon)) {
       EnemyWeapon.damage[eid] *= RANK_MULTIPLIERS[EnemyRank.ELITE].damage;
     }
 
@@ -311,7 +311,7 @@ export class WaveManager {
     if (!this.world) return;
 
     // Add variant component
-    addComponent(this.world, EnemyVariant, eid);
+    addComponent(this.world, eid, EnemyVariant);
     EnemyVariant.rank[eid] = EnemyRank.BOSS;
     EnemyVariant.sizeScale[eid] = RANK_MULTIPLIERS[EnemyRank.BOSS].size;
     EnemyVariant.statMultiplier[eid] = RANK_MULTIPLIERS[EnemyRank.BOSS].health;
@@ -322,7 +322,7 @@ export class WaveManager {
     Shield.max[eid] = Math.floor(Shield.max[eid] * RANK_MULTIPLIERS[EnemyRank.BOSS].health);
     Shield.current[eid] = Math.floor(Shield.current[eid] * RANK_MULTIPLIERS[EnemyRank.BOSS].health);
 
-    if (hasComponent(this.world, EnemyWeapon, eid)) {
+    if (hasComponent(this.world, eid, EnemyWeapon)) {
       EnemyWeapon.damage[eid] *= RANK_MULTIPLIERS[EnemyRank.BOSS].damage;
     }
 
@@ -336,7 +336,7 @@ export class WaveManager {
     if (bossWave.bossAbilities.length > 0) {
       // Add the first ability (can be extended to support multiple)
       const abilityType = bossWave.bossAbilities[0];
-      addComponent(this.world, SpecialAbility, eid);
+      addComponent(this.world, eid, SpecialAbility);
       SpecialAbility.abilityType[eid] = abilityType;
       SpecialAbility.cooldown[eid] = ABILITY_CONFIG[abilityType].cooldown;
       SpecialAbility.duration[eid] = ABILITY_CONFIG[abilityType].duration;

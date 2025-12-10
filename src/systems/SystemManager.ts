@@ -3,24 +3,24 @@
  * Manages ECS system registration, ordering, and execution.
  * Ensures all systems follow the functional pattern and run in explicit order.
  */
-import { IWorld } from 'bitecs';
+import { World } from 'bitecs';
 
 /**
  * Standard system function signature for bitECS systems.
  * All systems should conform to this signature.
  */
-export type SystemFunction = (world: IWorld, delta: number) => IWorld;
+export type SystemFunction = (world: World, delta: number) => World;
 
 /**
  * Extended system function that includes game time.
  * Used for systems that need absolute time (e.g., AI, combat).
  */
-export type ExtendedSystemFunction = (world: IWorld, delta: number, gameTime: number) => IWorld | void;
+export type ExtendedSystemFunction = (world: World, delta: number, gameTime: number) => World | void;
 
 /**
  * System function that only takes world (no delta or gameTime needed)
  */
-export type WorldOnlySystemFunction = (world: IWorld) => IWorld | void;
+export type WorldOnlySystemFunction = (world: World) => World | void;
 
 /**
  * System with update method pattern (for systems that return objects).
@@ -28,7 +28,7 @@ export type WorldOnlySystemFunction = (world: IWorld) => IWorld | void;
  * The update method is a generic callable that accepts world and optionally delta/gameTime.
  */
 export interface SystemWithUpdate {
-  update: (world: IWorld, ...args: number[]) => IWorld | void;
+  update: (world: World, ...args: number[]) => World | void;
 }
 
 /**
@@ -156,7 +156,7 @@ export class SystemManager {
    * @param delta - Time delta in seconds
    * @param gameTime - Total game time in seconds (optional)
    */
-  run(world: IWorld, delta: number, gameTime: number = 0): IWorld {
+  run(world: World, delta: number, gameTime: number = 0): World {
     this.ensureSorted();
 
     let currentWorld = world;
@@ -167,7 +167,7 @@ export class SystemManager {
       const system = entry.system;
 
       try {
-        let result: IWorld | void;
+        let result: World | void;
 
         if (this.isSystemWithUpdate(system)) {
           // System with update method

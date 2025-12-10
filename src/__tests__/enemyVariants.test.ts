@@ -2,12 +2,12 @@
  * Tests for enemy variant system
  */
 import { describe, it, expect, beforeEach } from 'vitest';
-import { createWorld, addComponent, addEntity, IWorld } from 'bitecs';
+import { createWorld, addComponent, addEntity, World } from 'bitecs';
 import { Position, Health, Shield, EnemyVariant, EnemyWeapon } from '../ecs/components';
 import { EnemyRank, RANK_MULTIPLIERS } from '../types/constants';
 
 describe('Enemy Variants', () => {
-  let world: IWorld;
+  let world: World;
 
   beforeEach(() => {
     world = createWorld();
@@ -18,10 +18,10 @@ describe('Enemy Variants', () => {
       const entity = addEntity(world);
       
       // Base stats
-      addComponent(world, Position, entity);
-      addComponent(world, Health, entity);
-      addComponent(world, Shield, entity);
-      addComponent(world, EnemyVariant, entity);
+      addComponent(world, entity, Position);
+      addComponent(world, entity, Health);
+      addComponent(world, entity, Shield);
+      addComponent(world, entity, EnemyVariant);
       
       Health.current[entity] = 100;
       Health.max[entity] = 100;
@@ -50,8 +50,8 @@ describe('Enemy Variants', () => {
     it('should apply damage multiplier to elite weapons', () => {
       const entity = addEntity(world);
       
-      addComponent(world, EnemyWeapon, entity);
-      addComponent(world, EnemyVariant, entity);
+      addComponent(world, entity, EnemyWeapon);
+      addComponent(world, entity, EnemyVariant);
       
       EnemyWeapon.damage[entity] = 10;
       EnemyVariant.rank[entity] = EnemyRank.ELITE;
@@ -67,10 +67,10 @@ describe('Enemy Variants', () => {
     it('should apply boss stat multipliers', () => {
       const entity = addEntity(world);
       
-      addComponent(world, Position, entity);
-      addComponent(world, Health, entity);
-      addComponent(world, Shield, entity);
-      addComponent(world, EnemyVariant, entity);
+      addComponent(world, entity, Position);
+      addComponent(world, entity, Health);
+      addComponent(world, entity, Shield);
+      addComponent(world, entity, EnemyVariant);
       
       Health.current[entity] = 100;
       Health.max[entity] = 100;
@@ -99,8 +99,8 @@ describe('Enemy Variants', () => {
     it('should apply boss damage multiplier', () => {
       const entity = addEntity(world);
       
-      addComponent(world, EnemyWeapon, entity);
-      addComponent(world, EnemyVariant, entity);
+      addComponent(world, entity, EnemyWeapon);
+      addComponent(world, entity, EnemyVariant);
       
       EnemyWeapon.damage[entity] = 20;
       EnemyVariant.rank[entity] = EnemyRank.BOSS;
