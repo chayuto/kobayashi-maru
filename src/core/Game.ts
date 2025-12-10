@@ -134,7 +134,6 @@ export class Game {
 
     // UI controller
     this.uiController = new UIController(this.app);
-    this.uiController.setGameRef(this);
     this.uiController.setCallbacks({
       onRestart: () => this.restart(),
       onResume: () => this.resume(),
@@ -142,6 +141,8 @@ export class Game {
       onTurretSelect: (type) => {
         services.get('placementManager').startPlacing(type);
       },
+      onToggleGodMode: () => this.toggleGodMode(),
+      onToggleSlowMode: () => this.toggleSlowMode(),
     });
     this.uiController.init();
 

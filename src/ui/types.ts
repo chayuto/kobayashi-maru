@@ -24,4 +24,7 @@ export interface HUDData {
   totalShotsFired?: number;
   accuracy?: number;
   dps?: number;
+  // Cheat modes
+  godModeEnabled?: boolean;
+  slowModeEnabled?: boolean;
 }

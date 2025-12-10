@@ -278,6 +278,43 @@ describe('HUDManager', () => {
       expect(hudManager.container.destroy).toHaveBeenCalledWith({ children: true });
     });
   });
+
+  describe('cheat modes', () => {
+    it('should initialize with callbacks', () => {
+      const callbacks = {
+        onToggleGodMode: vi.fn(),
+        onToggleSlowMode: vi.fn()
+      };
+
+      expect(() => hudManager.init(mockApp, callbacks)).not.toThrow();
+    });
+
+    it('should update local state from HUDData', () => {
+      hudManager.init(mockApp);
+
+      const mockHUDData: HUDData = {
+        waveNumber: 5,
+        waveState: 'active',
+        activeEnemies: 10,
+        resources: 750,
+        timeSurvived: 125.5,
+        enemiesDefeated: 42,
+        kobayashiMaruHealth: 400,
+        kobayashiMaruMaxHealth: 500,
+        kobayashiMaruShield: 150,
+        kobayashiMaruMaxShield: 200,
+        turretCount: 3
+      };
+
+      const dataWithCheats: HUDData = {
+        ...mockHUDData,
+        godModeEnabled: true,
+        slowModeEnabled: true
+      };
+
+      expect(() => hudManager.update(dataWithCheats)).not.toThrow();
+    });
+  });
 });
 
 describe('UI_STYLES', () => {

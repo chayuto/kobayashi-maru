@@ -18,11 +18,9 @@ import { ToggleButton } from './components';
 
 // Forward declaration for Game type to avoid circular imports
 // Forward declaration for Game type to avoid circular imports
-export interface GameInterface {
-  toggleGodMode(): boolean;
-  toggleSlowMode(): boolean;
-  isGodModeEnabled(): boolean;
-  isSlowModeEnabled(): boolean;
+export interface HUDCallbacks {
+  onToggleGodMode: () => void;
+  onToggleSlowMode: () => void;
 }
 
 /**
@@ -32,8 +30,12 @@ export class HUDManager {
   public container: Container;
   private visible: boolean = true;
   private app: Application | null = null;
-  private game: GameInterface | null = null;
+  private callbacks: HUDCallbacks | null = null;
   private responsiveUIManager: ResponsiveUIManager | null = null;
+
+  // Local state for cheat modes
+  private godModeEnabled: boolean = false;
+  private slowModeEnabled: boolean = false;
 
   // UI Panels
   private wavePanel: WavePanel | null = null;
@@ -68,11 +70,11 @@ export class HUDManager {
   /**
    * Initialize the HUD with PixiJS Application
    * @param app - PixiJS Application instance
-   * @param game - Optional Game instance for mode toggles
+   * @param callbacks - Optional callbacks for HUD actions
    */
-  init(app: Application, game?: GameInterface): void {
+  init(app: Application, callbacks?: HUDCallbacks): void {
     this.app = app;
-    this.game = game ?? null;
+    this.callbacks = callbacks ?? null;
     this.responsiveUIManager = new ResponsiveUIManager(app);
 
     // Add HUD container to stage (on top of everything)
@@ -388,18 +390,15 @@ export class HUDManager {
    * Create god mode toggle button using ToggleButton component
    */
   private createGodModeButton(): void {
-    if (!this.game) return;
-
     const padding = UI_STYLES.PADDING;
     const x = padding;
     const y = padding + 100 + padding + 40 + padding + 90 + padding;
 
-    const game = this.game;
     this.godModeButton = new ToggleButton({
       label: 'GOD MODE',
       enabledColor: UI_STYLES.COLORS.HEALTH,
-      onClick: () => game.toggleGodMode(),
-      isEnabled: () => game.isGodModeEnabled()
+      onClick: () => this.callbacks?.onToggleGodMode(),
+      isEnabled: () => this.godModeEnabled
     });
     this.godModeButton.init(this.container);
     this.godModeButton.setPosition(x, y);
@@ -409,19 +408,16 @@ export class HUDManager {
    * Create slow mode toggle button using ToggleButton component
    */
   private createSlowModeButton(): void {
-    if (!this.game) return;
-
     const padding = UI_STYLES.PADDING;
     const toggleBtnHeight = ToggleButton.getDimensions().height;
     const x = padding;
     const y = padding + 100 + padding + 40 + padding + 90 + padding + toggleBtnHeight + padding;
 
-    const game = this.game;
     this.slowModeButton = new ToggleButton({
       label: 'SLOW MODE',
       enabledColor: UI_STYLES.COLORS.SECONDARY,
-      onClick: () => game.toggleSlowMode(),
-      isEnabled: () => game.isSlowModeEnabled()
+      onClick: () => this.callbacks?.onToggleSlowMode(),
+      isEnabled: () => this.slowModeEnabled
     });
     this.slowModeButton.init(this.container);
     this.slowModeButton.setPosition(x, y);
@@ -481,6 +477,14 @@ export class HUDManager {
         accuracy: data.accuracy,
         totalDamageDealt: data.totalDamageDealt
       });
+    }
+
+    // Update cheat mode states
+    if (data.godModeEnabled !== undefined) {
+      this.godModeEnabled = data.godModeEnabled;
+    }
+    if (data.slowModeEnabled !== undefined) {
+      this.slowModeEnabled = data.slowModeEnabled;
     }
 
     // Update message log fade effect

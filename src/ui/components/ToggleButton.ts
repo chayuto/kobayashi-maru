@@ -17,7 +17,7 @@ export interface ToggleButtonConfig {
     /** Color when enabled */
     enabledColor: number;
     /** Callback when button is clicked, receives current enabled state */
-    onClick: () => boolean;
+    onClick: () => boolean | void;
     /** Function to check current enabled state */
     isEnabled: () => boolean;
 }
@@ -84,8 +84,10 @@ export class ToggleButton {
 
         // Click handler
         this.container.on('pointerdown', () => {
-            const enabled = this.config.onClick();
-            this.updateVisualState(enabled);
+            const result = this.config.onClick();
+            if (typeof result === 'boolean') {
+                this.updateVisualState(result);
+            }
         });
 
         // Hover effects

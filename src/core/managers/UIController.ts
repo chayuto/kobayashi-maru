@@ -13,10 +13,9 @@ import { getEntityCount } from '../../ecs';
 import { PoolManager } from '../../ecs/PoolManager';
 
 import type { GameplaySnapshot } from './GameplayManager';
-import type { GameInterface } from '../../ui/HUDManager';
 import type { CombatSystem } from '../../systems/combatSystem';
 import type { ScoreData } from '../../game/scoreManager';
-import type { WaveState } from '../../game/waveManager';
+import type { HUDData } from '../../ui/types';
 
 /**
  * UI action callbacks
@@ -28,31 +27,12 @@ export interface UICallbacks {
     onTurretSelect?: (turretType: number) => void;
     onTurretUpgrade?: (turretId: number, upgradePath: number) => void;
     onTurretSell?: (turretId: number) => void;
+    // Cheat modes
+    onToggleGodMode?: () => void;
+    onToggleSlowMode?: () => void;
 }
 
-/**
- * Extended HUD data including combat stats
- */
-export interface HUDData {
-    // From GameplaySnapshot
-    waveNumber: number;
-    waveState: WaveState;
-    activeEnemies: number;
-    resources: number;
-    timeSurvived: number;
-    enemiesDefeated: number;
-    kobayashiMaruHealth: number;
-    kobayashiMaruMaxHealth: number;
-    kobayashiMaruShield: number;
-    kobayashiMaruMaxShield: number;
-    turretCount: number;
-
-    // Combat stats
-    totalDamageDealt: number;
-    totalShotsFired: number;
-    accuracy: number;
-    dps: number;
-}
+// HUDData imported from ui/types
 
 /**
  * Manages all UI components.
@@ -62,8 +42,6 @@ export class UIController {
     private callbacks: UICallbacks = {};
     private initialized: boolean = false;
 
-    // Reference to game for HUD init (temporary - will be removed in final refactor)
-    private gameRef: GameInterface | null = null;
 
     constructor(app: Application) {
         this.app = app;
@@ -76,17 +54,6 @@ export class UIController {
         this.callbacks = { ...this.callbacks, ...callbacks };
     }
 
-    /**
-     * Set game reference for HUD initialization.
-     * This is a temporary bridge until HUD is fully decoupled.
-     */
-    /**
-     * Set game reference for HUD initialization.
-     * This is a temporary bridge until HUD is fully decoupled.
-     */
-    setGameRef(game: GameInterface): void {
-        this.gameRef = game;
-    }
 
     /**
      * Initialize all UI components.
@@ -97,14 +64,11 @@ export class UIController {
         const services = getServices();
 
         // Initialize HUD
-        // Initialize HUD
         const hudManager = services.get('hudManager');
-        if (this.gameRef) {
-            hudManager.init(this.app, this.gameRef);
-        } else {
-            // Fallback for initialization without game ref (though it should be set)
-            hudManager.init(this.app);
-        }
+        hudManager.init(this.app, {
+            onToggleGodMode: () => this.callbacks.onToggleGodMode?.(),
+            onToggleSlowMode: () => this.callbacks.onToggleSlowMode?.(),
+        });
 
         // Connect turret menu
         const turretMenu = hudManager.getTurretMenu();
@@ -175,6 +139,8 @@ export class UIController {
             totalShotsFired: combatStats?.totalShotsFired ?? 0,
             accuracy: combatStats?.accuracy ?? 0,
             dps: combatStats?.dps ?? 0,
+            godModeEnabled: snapshot.godModeEnabled,
+            slowModeEnabled: snapshot.slowModeEnabled,
         };
 
 
@@ -328,7 +294,6 @@ export class UIController {
      */
     destroy(): void {
         this.callbacks = {};
-        this.gameRef = null;
         this.initialized = false;
     }
 }
