@@ -2,25 +2,22 @@
  * Collision System for Kobayashi Maru
  * A bitECS system that updates spatial hash each frame for efficient collision detection
  */
-import { defineQuery, defineSystem, IWorld } from 'bitecs';
+import { query, World } from 'bitecs';
 import { Position } from '../ecs/components';
 import { SpatialHash } from '../collision/spatialHash';
-
-// Query for all entities with Position (for spatial queries)
-const positionQuery = defineQuery([Position]);
 
 /**
  * Creates the collision system that updates spatial hash each frame
  * @param spatialHash The spatial hash instance to update
- * @returns A bitECS system function and methods to query nearby entities
+ * @returns A system function and methods to query nearby entities
  */
 export function createCollisionSystem(spatialHash: SpatialHash) {
-  const system = defineSystem((world: IWorld) => {
+  function collisionSystemUpdate(world: World): World {
     // Clear hash at start of frame
     spatialHash.clear();
 
     // Insert all entities with Position into hash based on position
-    const entities = positionQuery(world);
+    const entities = query(world, [Position]);
     for (const eid of entities) {
       const x = Position.x[eid];
       const y = Position.y[eid];
@@ -28,13 +25,13 @@ export function createCollisionSystem(spatialHash: SpatialHash) {
     }
 
     return world;
-  });
+  }
 
   return {
     /**
      * Run the collision system update
      */
-    update: system,
+    update: collisionSystemUpdate,
 
     /**
      * Query nearby entities within a circular radius

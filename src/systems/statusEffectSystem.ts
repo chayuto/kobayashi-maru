@@ -2,7 +2,7 @@
  * Status Effect System for Kobayashi Maru
  * Processes burning, slowed, drained, and disabled status effects
  */
-import { defineQuery, removeComponent, addComponent, hasComponent } from 'bitecs';
+import { query, removeComponent, addComponent, hasComponent } from 'bitecs';
 import type { GameWorld } from '../ecs/world';
 import {
     BurningStatus,
@@ -13,12 +13,6 @@ import {
     Velocity,
     AIBehavior
 } from '../ecs/components';
-
-// Queries for entities with status effects (enemies only, identified by AIBehavior)
-const burningQuery = defineQuery([BurningStatus, Health, AIBehavior]);
-const slowedQuery = defineQuery([SlowedStatus, Velocity, AIBehavior]);
-const drainedQuery = defineQuery([DrainedStatus, Velocity, AIBehavior]);
-const disabledQuery = defineQuery([DisabledStatus, AIBehavior]);
 
 /**
  * Process all status effects
@@ -34,7 +28,7 @@ export function statusEffectSystem(world: GameWorld, deltaTime: number): void {
  * Process burning status - Apply DOT damage
  */
 function processBurning(world: GameWorld, deltaTime: number): void {
-    const entities = burningQuery(world);
+    const entities = query(world, [BurningStatus, Health, AIBehavior]);
 
     for (let i = 0; i < entities.length; i++) {
         const eid = entities[i];
@@ -54,7 +48,7 @@ function processBurning(world: GameWorld, deltaTime: number): void {
 
             // Remove if expired
             if (BurningStatus.ticksRemaining[eid] <= 0) {
-                removeComponent(world, BurningStatus, eid);
+                removeComponent(world, eid, BurningStatus);
             }
         }
     }
@@ -64,7 +58,7 @@ function processBurning(world: GameWorld, deltaTime: number): void {
  * Process slowed status - Reduce movement speed
  */
 function processSlowed(world: GameWorld, deltaTime: number): void {
-    const entities = slowedQuery(world);
+    const entities = query(world, [SlowedStatus, Velocity, AIBehavior]);
 
     for (let i = 0; i < entities.length; i++) {
         const eid = entities[i];
@@ -84,7 +78,7 @@ function processSlowed(world: GameWorld, deltaTime: number): void {
                 Velocity.y[eid] *= multiplier;
             }
 
-            removeComponent(world, SlowedStatus, eid);
+            removeComponent(world, eid, SlowedStatus);
         }
     }
 }
@@ -93,7 +87,7 @@ function processSlowed(world: GameWorld, deltaTime: number): void {
  * Process drained status - Stacking speed reduction
  */
 function processDrained(world: GameWorld, deltaTime: number): void {
-    const entities = drainedQuery(world);
+    const entities = query(world, [DrainedStatus, Velocity, AIBehavior]);
 
     for (let i = 0; i < entities.length; i++) {
         const eid = entities[i];
@@ -107,7 +101,7 @@ function processDrained(world: GameWorld, deltaTime: number): void {
             DrainedStatus.stacks[eid]--;
 
             if (DrainedStatus.stacks[eid] <= 0) {
-                removeComponent(world, DrainedStatus, eid);
+                removeComponent(world, eid, DrainedStatus);
             } else {
                 // Reset duration for remaining stacks
                 DrainedStatus.duration[eid] = 3.0; // 3 second duration per stack
@@ -120,7 +114,7 @@ function processDrained(world: GameWorld, deltaTime: number): void {
  * Process disabled status - Systems offline
  */
 function processDisabled(world: GameWorld, deltaTime: number): void {
-    const entities = disabledQuery(world);
+    const entities = query(world, [DisabledStatus, AIBehavior]);
 
     for (let i = 0; i < entities.length; i++) {
         const eid = entities[i];
@@ -130,7 +124,7 @@ function processDisabled(world: GameWorld, deltaTime: number): void {
 
         // Remove if expired
         if (DisabledStatus.duration[eid] <= 0) {
-            removeComponent(world, DisabledStatus, eid);
+            removeComponent(world, eid, DisabledStatus);
         }
     }
 }
@@ -148,8 +142,8 @@ export function applyBurning(
     const ticks = Math.floor(duration / tickInterval);
 
     // Add component if not already present
-    if (!hasComponent(world, BurningStatus, eid)) {
-        addComponent(world, BurningStatus, eid);
+    if (!hasComponent(world, eid, BurningStatus)) {
+        addComponent(world, eid, BurningStatus);
     }
 
     BurningStatus.damagePerTick[eid] = damagePerTick;
@@ -168,8 +162,8 @@ export function applySlowed(
     duration: number
 ): void {
     // Add component if not already present
-    if (!hasComponent(world, SlowedStatus, eid)) {
-        addComponent(world, SlowedStatus, eid);
+    if (!hasComponent(world, eid, SlowedStatus)) {
+        addComponent(world, eid, SlowedStatus);
 
         // Store original speed only on first application
         const currentSpeed = Math.sqrt(
@@ -198,8 +192,8 @@ export function applyDrained(
     const maxStacks = 3;
 
     // Add component if not already present
-    if (!hasComponent(world, DrainedStatus, eid)) {
-        addComponent(world, DrainedStatus, eid);
+    if (!hasComponent(world, eid, DrainedStatus)) {
+        addComponent(world, eid, DrainedStatus);
         DrainedStatus.stacks[eid] = 0;
     }
 
@@ -223,8 +217,8 @@ export function applyDisabled(
     systems: number = 1 // Default: weapons only
 ): void {
     // Add component if not already present
-    if (!hasComponent(world, DisabledStatus, eid)) {
-        addComponent(world, DisabledStatus, eid);
+    if (!hasComponent(world, eid, DisabledStatus)) {
+        addComponent(world, eid, DisabledStatus);
     }
 
     DisabledStatus.duration[eid] = duration;

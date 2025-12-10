@@ -52,22 +52,22 @@ describe('Projectile System', () => {
         // In bitecs, removing entity removes components from the entity mask
         // We can check if the entity still has the Projectile component
         // Note: hasComponent returns boolean
-        const exists = hasComponent(world, Projectile, projectileId);
+        const exists = hasComponent(world, projectileId, Projectile);
         expect(exists).toBe(false);
     });
 
     it('should damage enemy on collision', () => {
         // Create enemy
         const enemyId = addEntity(world);
-        addComponent(world, Position, enemyId);
+        addComponent(world, enemyId, Position);
         Position.x[enemyId] = 100;
         Position.y[enemyId] = 100;
-        addComponent(world, Health, enemyId);
+        addComponent(world, enemyId, Health);
         Health.current[enemyId] = 100;
         Health.max[enemyId] = 100;
-        addComponent(world, Faction, enemyId);
+        addComponent(world, enemyId, Faction);
         Faction.id[enemyId] = FactionId.KLINGON;
-        addComponent(world, Collider, enemyId);
+        addComponent(world, enemyId, Collider);
         Collider.radius[enemyId] = 10;
 
         // Add enemy to spatial hash
@@ -83,21 +83,21 @@ describe('Projectile System', () => {
         expect(Health.current[enemyId]).toBe(50);
 
         // Projectile should be removed
-        const exists = hasComponent(world, Projectile, projectileId);
+        const exists = hasComponent(world, projectileId, Projectile);
         expect(exists).toBe(false);
     });
 
     it('should ignore friendly fire (Federation)', () => {
         // Create friendly ship
         const friendId = addEntity(world);
-        addComponent(world, Position, friendId);
+        addComponent(world, friendId, Position);
         Position.x[friendId] = 100;
         Position.y[friendId] = 100;
-        addComponent(world, Health, friendId);
+        addComponent(world, friendId, Health);
         Health.current[friendId] = 100;
-        addComponent(world, Faction, friendId);
+        addComponent(world, friendId, Faction);
         Faction.id[friendId] = FactionId.FEDERATION;
-        addComponent(world, Collider, friendId);
+        addComponent(world, friendId, Collider);
         Collider.radius[friendId] = 10;
 
         // Add to spatial hash
@@ -113,7 +113,7 @@ describe('Projectile System', () => {
         expect(Health.current[friendId]).toBe(100);
 
         // Projectile should still exist
-        const exists = hasComponent(world, Projectile, projectileId);
+        const exists = hasComponent(world, projectileId, Projectile);
         expect(exists).toBe(true);
     });
 });

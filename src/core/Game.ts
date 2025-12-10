@@ -8,7 +8,7 @@
  */
 
 import { Application } from 'pixi.js';
-import { defineQuery } from 'bitecs';
+import { query } from 'bitecs';
 import { Turret } from '../ecs/components';
 import { GameWorld } from '../ecs';
 import {
@@ -26,9 +26,6 @@ import { GameLoopManager } from './loop';
 import { RenderManager, GameplayManager, UIController, InputRouter, InputAction } from './managers';
 import { PoolManager } from '../ecs/PoolManager';
 import { getWaveStoryText } from '../game/waveConfig';
-
-// Query for counting turrets
-const turretQuery = defineQuery([Turret]);
 
 /**
  * Main game class - orchestrates all game systems.
@@ -277,7 +274,7 @@ export class Game {
     // UI: HUD and debug
     this.loopManager.onUI(() => {
       const snapshot = this.gameplayManager.getSnapshot();
-      const turretCount = turretQuery(this.world).length;
+      const turretCount = query(this.world, [Turret]).length;
 
       this.uiController.updateHUD(snapshot, this.combatSystem, turretCount);
       this.uiController.updateDebug(snapshot);

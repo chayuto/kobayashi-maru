@@ -206,7 +206,7 @@ describe('Movement System', () => {
   it('should NOT wrap projectile position when going off edge', () => {
     // Create projectile entity near right edge
     const eid = createEnemy(world, FactionId.FEDERATION, GAME_CONFIG.WORLD_WIDTH - 10, 500);
-    addComponent(world, Projectile, eid); // Make it a projectile
+    addComponent(world, eid, Projectile); // Make it a projectile
     Velocity.x[eid] = 100; // Moving right
     Velocity.y[eid] = 0;
 

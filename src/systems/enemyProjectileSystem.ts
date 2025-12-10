@@ -2,15 +2,12 @@
  * Enemy Projectile System for Kobayashi Maru
  * Handles enemy projectile collisions with Federation entities (Kobayashi Maru, turrets)
  */
-import { defineQuery, hasComponent, IWorld, removeEntity } from 'bitecs';
+import { query, hasComponent, World, removeEntity } from 'bitecs';
 import { Position, Velocity, Projectile, Collider, Health, Faction, Turret } from '../ecs/components';
 import { SpatialHash } from '../collision';
 import { decrementEntityCount } from '../ecs/world';
 import { FactionId, GAME_CONFIG } from '../types/constants';
 import { applyDamage } from '../services';
-
-// Query for enemy projectiles
-const enemyProjectileQuery = defineQuery([Position, Velocity, Projectile, Collider, Faction]);
 
 /**
  * Creates the enemy projectile system
@@ -25,8 +22,8 @@ export function createEnemyProjectileSystem(
   // Track total damage dealt to the Kobayashi Maru
   let totalDamageToKM = 0;
 
-  function enemyProjectileSystem(world: IWorld, deltaTime: number): IWorld {
-    const projectiles = enemyProjectileQuery(world);
+  function enemyProjectileSystem(world: World, deltaTime: number): World {
+    const projectiles = query(world, [Position, Velocity, Projectile, Collider, Faction]);
     const kmId = getKobayashiMaruId?.() ?? -1;
 
     for (const eid of projectiles) {
@@ -57,10 +54,10 @@ export function createEnemyProjectileSystem(
         if (targetEid === eid) continue;
 
         // Check if target has health component and is alive (early filtering)
-        if (!hasComponent(world, Health, targetEid) || Health.current[targetEid] <= 0) continue;
+        if (!hasComponent(world, targetEid, Health) || Health.current[targetEid] <= 0) continue;
 
         // Check faction (only hit Federation entities)
-        if (!hasComponent(world, Faction, targetEid) || Faction.id[targetEid] !== FactionId.FEDERATION) {
+        if (!hasComponent(world, targetEid, Faction) || Faction.id[targetEid] !== FactionId.FEDERATION) {
           continue;
         }
 
@@ -68,9 +65,9 @@ export function createEnemyProjectileSystem(
         const targetX = Position.x[targetEid];
         const targetY = Position.y[targetEid];
         // Use configured collision radii for Kobayashi Maru and turrets
-        const targetRadius = hasComponent(world, Collider, targetEid)
+        const targetRadius = hasComponent(world, targetEid, Collider)
           ? Collider.radius[targetEid]
-          : (hasComponent(world, Turret, targetEid) ? GAME_CONFIG.TURRET_RADIUS : GAME_CONFIG.KOBAYASHI_MARU_RADIUS);
+          : (hasComponent(world, targetEid, Turret) ? GAME_CONFIG.TURRET_RADIUS : GAME_CONFIG.KOBAYASHI_MARU_RADIUS);
 
         const dx = x - targetX;
         const dy = y - targetY;

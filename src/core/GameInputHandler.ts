@@ -3,7 +3,7 @@
  * Handles keyboard and pointer input for the game.
  * Extracted from Game.ts for better modularity.
  */
-import { defineQuery } from 'bitecs';
+import { query } from 'bitecs';
 import { Turret, Position } from '../ecs/components';
 import { GAME_CONFIG } from '../types';
 import { UI_CONFIG } from '../config';
@@ -11,9 +11,6 @@ import { GameWorld } from '../ecs';
 import type { GameState } from '../game';
 import type { PlacementManager, UpgradeManager } from '../game';
 import type { HUDManager } from '../ui';
-
-// Query for turret entities
-const turretQuery = defineQuery([Turret]);
 
 // Use centralized config for click radius
 const TURRET_CLICK_RADIUS = UI_CONFIG.INTERACTION.TURRET_CLICK_RADIUS;
@@ -153,7 +150,7 @@ export class GameInputHandler {
      * @returns The turret entity ID, or -1 if none found
      */
     private findTurretAtPosition(x: number, y: number): number {
-        const turretEntities = turretQuery(this.context.world);
+        const turretEntities = query(this.context.world, [Turret]);
 
         for (const eid of turretEntities) {
             const turretX = Position.x[eid];

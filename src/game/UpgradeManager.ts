@@ -70,8 +70,8 @@ export class UpgradeManager {
    * @returns Upgrade info or null if not a turret
    */
   getTurretInfo(entityId: number): TurretUpgradeInfo | null {
-    if (!hasComponent(this.world, Turret, entityId) ||
-      !hasComponent(this.world, TurretUpgrade, entityId)) {
+    if (!hasComponent(this.world, entityId, Turret) ||
+      !hasComponent(this.world, entityId, TurretUpgrade)) {
       return null;
     }
 
@@ -146,7 +146,7 @@ export class UpgradeManager {
    * @returns True if upgrade is available
    */
   canUpgrade(entityId: number, upgradePath: number): boolean {
-    if (!hasComponent(this.world, TurretUpgrade, entityId)) {
+    if (!hasComponent(this.world, entityId, TurretUpgrade)) {
       return false;
     }
 
@@ -209,8 +209,8 @@ export class UpgradeManager {
    * @returns Result of upgrade attempt
    */
   applyUpgrade(entityId: number, upgradePath: number): UpgradeResult {
-    if (!hasComponent(this.world, Turret, entityId) ||
-      !hasComponent(this.world, TurretUpgrade, entityId)) {
+    if (!hasComponent(this.world, entityId, Turret) ||
+      !hasComponent(this.world, entityId, TurretUpgrade)) {
       return { success: false, reason: 'Invalid turret' };
     }
 

@@ -3,11 +3,8 @@
  * Renders shield visual effects with glow
  */
 import { Application, Graphics, Container } from 'pixi.js';
-import { defineQuery, IWorld } from 'bitecs';
+import { query, World } from 'bitecs';
 import { Position, Shield, Health } from '../ecs/components';
-
-// Query for entities with shields
-const shieldQuery = defineQuery([Position, Shield, Health]);
 
 /**
  * Shield rendering configuration constants
@@ -61,7 +58,7 @@ export class ShieldRenderer {
 
     this.glowContainer = glowContainer || null;
     this.container.addChild(this.graphics);
-    
+
     // Add to glow container if provided, otherwise add to stage
     if (this.glowContainer) {
       this.glowContainer.addChild(this.container);
@@ -78,7 +75,7 @@ export class ShieldRenderer {
    * @param world The ECS world
    * @param deltaTime Time since last frame in seconds
    */
-  update(world: IWorld, deltaTime: number): void {
+  update(world: World, deltaTime: number): void {
     if (!this.initialized) {
       return;
     }
@@ -89,7 +86,7 @@ export class ShieldRenderer {
     // Clear previous frame's graphics
     this.graphics.clear();
 
-    const entities = shieldQuery(world);
+    const entities = query(world, [Position, Shield, Health]);
 
     for (const eid of entities) {
       const shieldCurrent = Shield.current[eid];
@@ -120,7 +117,7 @@ export class ShieldRenderer {
       const pulseSpeed = SHIELD_CONFIG.BASE_PULSE_SPEED + (1.0 - shieldPercent) * SHIELD_CONFIG.DAMAGE_PULSE_MULTIPLIER;
       const baseAlpha = SHIELD_CONFIG.BASE_ALPHA + (1.0 - shieldPercent) * SHIELD_CONFIG.DAMAGE_ALPHA_INCREASE;
       const pulseAmount = SHIELD_CONFIG.PULSE_AMOUNT * shieldPercent;
-      
+
       alpha = baseAlpha + Math.sin(this.animationTime * pulseSpeed) * pulseAmount;
       this.shieldAlphaMap.set(eid, alpha);
 
@@ -139,18 +136,18 @@ export class ShieldRenderer {
 
       // Outer glow ring (wider, more transparent)
       this.graphics.circle(x, y, radius + SHIELD_CONFIG.OUTER_RING_OFFSET);
-      this.graphics.stroke({ 
-        width: SHIELD_CONFIG.OUTER_RING_WIDTH, 
-        color: shieldColor, 
-        alpha: alpha * SHIELD_CONFIG.OUTER_RING_ALPHA 
+      this.graphics.stroke({
+        width: SHIELD_CONFIG.OUTER_RING_WIDTH,
+        color: shieldColor,
+        alpha: alpha * SHIELD_CONFIG.OUTER_RING_ALPHA
       });
 
       // Middle ring
       this.graphics.circle(x, y, radius + SHIELD_CONFIG.MIDDLE_RING_OFFSET);
-      this.graphics.stroke({ 
-        width: SHIELD_CONFIG.MIDDLE_RING_WIDTH, 
-        color: shieldColor, 
-        alpha: alpha * SHIELD_CONFIG.MIDDLE_RING_ALPHA 
+      this.graphics.stroke({
+        width: SHIELD_CONFIG.MIDDLE_RING_WIDTH,
+        color: shieldColor,
+        alpha: alpha * SHIELD_CONFIG.MIDDLE_RING_ALPHA
       });
 
       // Inner shield bubble (main visual)

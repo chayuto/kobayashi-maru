@@ -2,12 +2,9 @@
  * Movement System for Kobayashi Maru
  * A bitECS system that applies velocity to position each frame
  */
-import { defineQuery, IWorld, hasComponent } from 'bitecs';
+import { query, hasComponent, World } from 'bitecs';
 import { Position, Velocity, Projectile, AIBehavior } from '../ecs/components';
 import { GAME_CONFIG } from '../types';
-
-// Query for entities with Position and Velocity components
-const movementQuery = defineQuery([Position, Velocity]);
 
 /**
  * Creates the movement system that updates entity positions based on velocity
@@ -15,15 +12,15 @@ const movementQuery = defineQuery([Position, Velocity]);
  * @returns A bitECS system function that takes world and delta time
  */
 export function createMovementSystem(getSpeedMultiplier?: () => number) {
-  return function movementSystem(world: IWorld, delta: number): IWorld {
-    const entities = movementQuery(world);
+  return function movementSystem(world: World, delta: number): World {
+    const entities = query(world, [Position, Velocity]);
 
     const worldWidth = GAME_CONFIG.WORLD_WIDTH;
     const worldHeight = GAME_CONFIG.WORLD_HEIGHT;
 
     for (const eid of entities) {
       // Check if this is an AI entity that should have slow mode applied
-      const isAIEntity = hasComponent(world, AIBehavior, eid);
+      const isAIEntity = hasComponent(world, eid, AIBehavior);
       const speedMultiplier = (isAIEntity && getSpeedMultiplier) ? getSpeedMultiplier() : 1.0;
 
       // Apply velocity to position (delta is in seconds)
@@ -31,7 +28,7 @@ export function createMovementSystem(getSpeedMultiplier?: () => number) {
       Position.y[eid] += Velocity.y[eid] * delta * speedMultiplier;
 
       // Skip wrapping for projectiles - they should fly off screen
-      if (hasComponent(world, Projectile, eid)) {
+      if (hasComponent(world, eid, Projectile)) {
         continue;
       }
 

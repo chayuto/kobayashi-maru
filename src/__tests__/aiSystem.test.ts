@@ -20,10 +20,10 @@ describe('AI System', () => {
 
     it('should update velocity for Direct behavior', () => {
         const eid = addEntity(world);
-        addComponent(world, Position, eid);
-        addComponent(world, Velocity, eid);
-        addComponent(world, AIBehavior, eid);
-        addComponent(world, Faction, eid);
+        addComponent(world, eid, Position);
+        addComponent(world, eid, Velocity);
+        addComponent(world, eid, AIBehavior);
+        addComponent(world, eid, Faction);
 
         Position.x[eid] = 0;
         Position.y[eid] = 0;
@@ -43,10 +43,10 @@ describe('AI System', () => {
 
     it('should update velocity for Strafe behavior', () => {
         const eid = addEntity(world);
-        addComponent(world, Position, eid);
-        addComponent(world, Velocity, eid);
-        addComponent(world, AIBehavior, eid);
-        addComponent(world, Faction, eid);
+        addComponent(world, eid, Position);
+        addComponent(world, eid, Velocity);
+        addComponent(world, eid, AIBehavior);
+        addComponent(world, eid, Faction);
 
         Position.x[eid] = 0;
         Position.y[eid] = 540; // Same Y as center
@@ -65,17 +65,17 @@ describe('AI System', () => {
     it('should target nearest turret for Hunter behavior', () => {
         // Create turret
         const turretId = addEntity(world);
-        addComponent(world, Position, turretId);
-        addComponent(world, Turret, turretId);
+        addComponent(world, turretId, Position);
+        addComponent(world, turretId, Turret);
         Position.x[turretId] = 100;
         Position.y[turretId] = 100;
 
         // Create hunter
         const hunterId = addEntity(world);
-        addComponent(world, Position, hunterId);
-        addComponent(world, Velocity, hunterId);
-        addComponent(world, AIBehavior, hunterId);
-        addComponent(world, Faction, hunterId);
+        addComponent(world, hunterId, Position);
+        addComponent(world, hunterId, Velocity);
+        addComponent(world, hunterId, AIBehavior);
+        addComponent(world, hunterId, Faction);
 
         Position.x[hunterId] = 0;
         Position.y[hunterId] = 0;
@@ -96,10 +96,10 @@ describe('AI System', () => {
 
     it('should approach target slowly for Orbit behavior when far away', () => {
         const eid = addEntity(world);
-        addComponent(world, Position, eid);
-        addComponent(world, Velocity, eid);
-        addComponent(world, AIBehavior, eid);
-        addComponent(world, Faction, eid);
+        addComponent(world, eid, Position);
+        addComponent(world, eid, Velocity);
+        addComponent(world, eid, AIBehavior);
+        addComponent(world, eid, Faction);
 
         // Position far from center (outside orbit radius)
         Position.x[eid] = 100;
@@ -122,10 +122,10 @@ describe('AI System', () => {
 
     it('should orbit around target for Orbit behavior when at orbit distance', () => {
         const eid = addEntity(world);
-        addComponent(world, Position, eid);
-        addComponent(world, Velocity, eid);
-        addComponent(world, AIBehavior, eid);
-        addComponent(world, Faction, eid);
+        addComponent(world, eid, Position);
+        addComponent(world, eid, Velocity);
+        addComponent(world, eid, AIBehavior);
+        addComponent(world, eid, Faction);
 
         // Position at orbit distance from center
         const centerX = GAME_CONFIG.WORLD_WIDTH / 2;

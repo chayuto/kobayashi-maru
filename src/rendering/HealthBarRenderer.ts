@@ -1,11 +1,10 @@
 import { Application, Container, Graphics } from 'pixi.js';
-import { IWorld, defineQuery } from 'bitecs';
+import { World, query } from 'bitecs';
 import { Health, Position } from '../ecs/components';
 
 export class HealthBarRenderer {
     private container: Container;
     private bars: Map<number, Graphics> = new Map();
-    private healthQuery = defineQuery([Health, Position]);
     private app: Application | null = null;
 
     constructor() {
@@ -17,8 +16,8 @@ export class HealthBarRenderer {
         this.app.stage.addChild(this.container);
     }
 
-    update(world: IWorld): void {
-        const entities = this.healthQuery(world);
+    update(world: World): void {
+        const entities = query(world, [Health, Position]);
         const activeEntities = new Set(entities);
 
         // Remove bars for entities that no longer exist or don't match query

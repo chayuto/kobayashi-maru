@@ -3,19 +3,16 @@
  * 
  * Rotates enemies to face their movement direction.
  */
-import { defineQuery, defineSystem, IWorld } from 'bitecs';
+import { query, World } from 'bitecs';
 import { Velocity, Rotation, AIBehavior } from '../ecs/components';
-
-// Query for entities with AI behavior (enemies) that move and rotate
-const enemyQuery = defineQuery([Velocity, Rotation, AIBehavior]);
 
 /**
  * Creates the enemy rotation system
- * @returns A bitECS system function
+ * @returns A system function
  */
 export function createEnemyRotationSystem() {
-    return defineSystem((world: IWorld) => {
-        const enemies = enemyQuery(world);
+    return function enemyRotationSystem(world: World): World {
+        const enemies = query(world, [Velocity, Rotation, AIBehavior]);
 
         for (const eid of enemies) {
             const vx = Velocity.x[eid];
@@ -32,5 +29,5 @@ export function createEnemyRotationSystem() {
         }
 
         return world;
-    });
+    };
 }

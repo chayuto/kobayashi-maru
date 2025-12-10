@@ -1,22 +1,14 @@
 /**
  * Render System for Kobayashi Maru
  * A bitECS system that syncs entity positions to sprites using SpriteManager
+ * 
+ * Migrated to bitECS 0.4.0: Uses observe/onAdd/onRemove instead of enterQuery/exitQuery
  */
-import { defineQuery, defineSystem, IWorld, enterQuery, exitQuery, hasComponent } from 'bitecs';
+import { query, hasComponent, observe, onAdd, onRemove, World } from 'bitecs';
 import { Position, Faction, SpriteRef, Turret, Projectile, Rotation, CompositeSpriteRef, Health } from '../ecs/components';
 import { TurretType, SpriteType } from '../types/constants';
 import { RENDERING_CONFIG } from '../config';
 import type { SpriteManager } from '../rendering/spriteManager';
-
-// Query for entities with Position, Faction, and SpriteRef components
-const renderQuery = defineQuery([Position, Faction, SpriteRef]);
-const renderEnterQuery = enterQuery(renderQuery);
-const renderExitQuery = exitQuery(renderQuery);
-
-// Query for composite sprites (Position, Faction, CompositeSpriteRef)
-const compositeQuery = defineQuery([Position, Faction, CompositeSpriteRef]);
-const compositeEnterQuery = enterQuery(compositeQuery);
-const compositeExitQuery = exitQuery(compositeQuery);
 
 // Use centralized config for unset sprite index
 const SPRITE_INDEX_UNSET = RENDERING_CONFIG.SPRITES.INDEX_UNSET;
@@ -27,10 +19,41 @@ const SPRITE_INDEX_UNSET = RENDERING_CONFIG.SPRITES.INDEX_UNSET;
  * @returns A bitECS system function
  */
 export function createRenderSystem(spriteManager: SpriteManager) {
-  return defineSystem((world: IWorld) => {
+  // Track entities to add/remove via queues (processed during update)
+  const entitiesToAdd: number[] = [];
+  const entitiesToRemove: number[] = [];
+  const compositeToAdd: number[] = [];
+  const compositeToRemove: number[] = [];
+
+  let observersInitialized = false;
+
+  return (world: World) => {
+    // Initialize observers on first call (when world is available)
+    if (!observersInitialized) {
+      // Set up observers for simple sprite entities
+      observe(world, onAdd(Position, Faction, SpriteRef), (eid: number) => {
+        entitiesToAdd.push(eid);
+      });
+
+      observe(world, onRemove(Position, Faction, SpriteRef), (eid: number) => {
+        entitiesToRemove.push(eid);
+      });
+
+      // Set up observers for composite sprite entities
+      observe(world, onAdd(Position, Faction, CompositeSpriteRef), (eid: number) => {
+        compositeToAdd.push(eid);
+      });
+
+      observe(world, onRemove(Position, Faction, CompositeSpriteRef), (eid: number) => {
+        compositeToRemove.push(eid);
+      });
+
+      observersInitialized = true;
+    }
+
     // Handle new entities - create sprites for them
-    const enteredEntities = renderEnterQuery(world);
-    for (const eid of enteredEntities) {
+    while (entitiesToAdd.length > 0) {
+      const eid = entitiesToAdd.pop()!;
       // Check if sprite needs to be created (index is unset/placeholder)
       if (SpriteRef.index[eid] === SPRITE_INDEX_UNSET) {
         let spriteType = Faction.id[eid]; // Default to faction ID
@@ -38,16 +61,16 @@ export function createRenderSystem(spriteManager: SpriteManager) {
         // Check if this is the Kobayashi Maru (Federation entity with Health and Turret, not a placed turret)
         // Placed turrets use CompositeSpriteRef, so we check for that to avoid false matches
         const isFederation = Faction.id[eid] === 0; // FactionId.FEDERATION = 0
-        const hasTurret = hasComponent(world, Turret, eid);
-        const hasHealth = hasComponent(world, Health, eid);
-        const hasComposite = hasComponent(world, CompositeSpriteRef, eid);
+        const hasTurret = hasComponent(world, eid, Turret);
+        const hasHealth = hasComponent(world, eid, Health);
+        const hasComposite = hasComponent(world, eid, CompositeSpriteRef);
 
         if (isFederation && hasHealth && hasTurret && !hasComposite) {
           // This is the Kobayashi Maru - use the special flagship texture
           spriteType = SpriteType.KOBAYASHI_MARU;
         }
         // Override for Turrets (placed turrets without Health)
-        else if (hasComponent(world, Turret, eid)) {
+        else if (hasComponent(world, eid, Turret)) {
           const turretType = Turret.turretType[eid];
           switch (turretType) {
             case TurretType.PHASER_ARRAY:
@@ -71,7 +94,7 @@ export function createRenderSystem(spriteManager: SpriteManager) {
           }
         }
         // Override for Projectiles
-        else if (hasComponent(world, Projectile, eid)) {
+        else if (hasComponent(world, eid, Projectile)) {
           spriteType = SpriteType.PROJECTILE;
         }
 
@@ -83,8 +106,8 @@ export function createRenderSystem(spriteManager: SpriteManager) {
     }
 
     // Handle removed entities - remove their sprites
-    const exitedEntities = renderExitQuery(world);
-    for (const eid of exitedEntities) {
+    while (entitiesToRemove.length > 0) {
+      const eid = entitiesToRemove.pop()!;
       const spriteIndex = SpriteRef.index[eid];
       if (spriteIndex !== SPRITE_INDEX_UNSET) {
         spriteManager.removeSprite(spriteIndex);
@@ -93,7 +116,7 @@ export function createRenderSystem(spriteManager: SpriteManager) {
     }
 
     // Update positions and rotation for all existing entities
-    const entities = renderQuery(world);
+    const entities = query(world, [Position, Faction, SpriteRef]);
     for (const eid of entities) {
       const spriteIndex = SpriteRef.index[eid];
       if (spriteIndex !== SPRITE_INDEX_UNSET) {
@@ -103,10 +126,10 @@ export function createRenderSystem(spriteManager: SpriteManager) {
 
         // Update rotation if entity has Rotation component
         // Skip rotation for Kobayashi Maru (it's a stationary base)
-        if (hasComponent(world, Rotation, eid)) {
-          const isFedWithHealth = Faction.id[eid] === 0 && hasComponent(world, Health, eid);
-          const hasNoComposite = !hasComponent(world, CompositeSpriteRef, eid);
-          const isKobayashiMaru = isFedWithHealth && hasComponent(world, Turret, eid) && hasNoComposite;
+        if (hasComponent(world, eid, Rotation)) {
+          const isFedWithHealth = Faction.id[eid] === 0 && hasComponent(world, eid, Health);
+          const hasNoComposite = !hasComponent(world, eid, CompositeSpriteRef);
+          const isKobayashiMaru = isFedWithHealth && hasComponent(world, eid, Turret) && hasNoComposite;
 
           if (!isKobayashiMaru) {
             spriteManager.updateSpriteRotation(spriteIndex, Rotation.angle[eid]);
@@ -118,13 +141,13 @@ export function createRenderSystem(spriteManager: SpriteManager) {
     // --- Composite Sprite Handling ---
 
     // Handle new composite entities
-    const enteredComposite = compositeEnterQuery(world);
-    for (const eid of enteredComposite) {
+    while (compositeToAdd.length > 0) {
+      const eid = compositeToAdd.pop()!;
       if (CompositeSpriteRef.baseIndex[eid] === SPRITE_INDEX_UNSET) {
         let baseType = 0;
         let barrelType = 0;
 
-        if (hasComponent(world, Turret, eid)) {
+        if (hasComponent(world, eid, Turret)) {
           switch (Turret.turretType[eid]) {
             case TurretType.PHASER_ARRAY:
               baseType = SpriteType.TURRET_BASE_PHASER;
@@ -163,8 +186,8 @@ export function createRenderSystem(spriteManager: SpriteManager) {
     }
 
     // Handle removed composite entities
-    const exitedComposite = compositeExitQuery(world);
-    for (const eid of exitedComposite) {
+    while (compositeToRemove.length > 0) {
+      const eid = compositeToRemove.pop()!;
       const baseIndex = CompositeSpriteRef.baseIndex[eid];
       const barrelIndex = CompositeSpriteRef.barrelIndex[eid];
       if (baseIndex !== SPRITE_INDEX_UNSET) {
@@ -176,7 +199,7 @@ export function createRenderSystem(spriteManager: SpriteManager) {
     }
 
     // Update composite entities
-    const compositeEntities = compositeQuery(world);
+    const compositeEntities = query(world, [Position, Faction, CompositeSpriteRef]);
     for (const eid of compositeEntities) {
       const baseIndex = CompositeSpriteRef.baseIndex[eid];
       const barrelIndex = CompositeSpriteRef.barrelIndex[eid];
@@ -189,12 +212,12 @@ export function createRenderSystem(spriteManager: SpriteManager) {
         spriteManager.updateSprite(barrelIndex, x, y);
 
         // Update rotation (Barrel only)
-        if (hasComponent(world, Rotation, eid)) {
+        if (hasComponent(world, eid, Rotation)) {
           spriteManager.updateSpriteRotation(barrelIndex, Rotation.angle[eid]);
         }
       }
     }
 
     return world;
-  });
+  };
 }

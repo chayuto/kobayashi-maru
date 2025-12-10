@@ -68,18 +68,18 @@ export class PoolManager {
         decrementEntityCount();
 
         // Clean up components
-        removeComponent(this.world!, Position, eid);
-        removeComponent(this.world!, Velocity, eid);
-        removeComponent(this.world!, Health, eid);
-        removeComponent(this.world!, Shield, eid);
-        removeComponent(this.world!, Faction, eid);
-        removeComponent(this.world!, SpriteRef, eid);
-        removeComponent(this.world!, AIBehavior, eid);
-        removeComponent(this.world!, EnemyWeapon, eid);
-        removeComponent(this.world!, Collider, eid);
-        removeComponent(this.world!, EnemyVariant, eid);
-        removeComponent(this.world!, SpecialAbility, eid);
-        removeComponent(this.world!, Target, eid);
+        removeComponent(this.world!, eid, Position);
+        removeComponent(this.world!, eid, Velocity);
+        removeComponent(this.world!, eid, Health);
+        removeComponent(this.world!, eid, Shield);
+        removeComponent(this.world!, eid, Faction);
+        removeComponent(this.world!, eid, SpriteRef);
+        removeComponent(this.world!, eid, AIBehavior);
+        removeComponent(this.world!, eid, EnemyWeapon);
+        removeComponent(this.world!, eid, Collider);
+        removeComponent(this.world!, eid, EnemyVariant);
+        removeComponent(this.world!, eid, SpecialAbility);
+        removeComponent(this.world!, eid, Target);
     }
 
     /**
@@ -90,12 +90,12 @@ export class PoolManager {
         decrementEntityCount();
 
         // Clean up components
-        removeComponent(this.world!, Position, eid);
-        removeComponent(this.world!, Velocity, eid);
-        removeComponent(this.world!, Projectile, eid);
-        removeComponent(this.world!, Collider, eid);
-        removeComponent(this.world!, Faction, eid);
-        removeComponent(this.world!, SpriteRef, eid);
+        removeComponent(this.world!, eid, Position);
+        removeComponent(this.world!, eid, Velocity);
+        removeComponent(this.world!, eid, Projectile);
+        removeComponent(this.world!, eid, Collider);
+        removeComponent(this.world!, eid, Faction);
+        removeComponent(this.world!, eid, SpriteRef);
     }
 
     /**

@@ -3,19 +3,16 @@
  * 
  * Rotates turrets to face their targets.
  */
-import { defineQuery, defineSystem, IWorld } from 'bitecs';
+import { query, World } from 'bitecs';
 import { Position, Rotation, Target, Turret } from '../ecs/components';
-
-// Query for turrets that have rotation component
-const turretQuery = defineQuery([Position, Rotation, Turret, Target]);
 
 /**
  * Creates the turret rotation system
- * @returns A bitECS system function
+ * @returns A system function
  */
 export function createTurretRotationSystem() {
-    return defineSystem((world: IWorld) => {
-        const turrets = turretQuery(world);
+    return function turretRotationSystem(world: World): World {
+        const turrets = query(world, [Position, Rotation, Turret, Target]);
 
         for (const eid of turrets) {
             // Check if turret has a valid target
@@ -36,5 +33,5 @@ export function createTurretRotationSystem() {
         }
 
         return world;
-    });
+    };
 }

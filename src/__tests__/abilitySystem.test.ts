@@ -2,13 +2,13 @@
  * Tests for ability system
  */
 import { describe, it, expect, beforeEach } from 'vitest';
-import { createWorld, addComponent, addEntity, IWorld } from 'bitecs';
+import { createWorld, addComponent, addEntity, World } from 'bitecs';
 import { Position, Health, Shield, SpecialAbility, Velocity, Faction } from '../ecs/components';
 import { AbilityType, ABILITY_CONFIG, FactionId } from '../types/constants';
 import { createAbilitySystem } from '../systems/abilitySystem';
 
 describe('Ability System', () => {
-  let world: IWorld;
+  let world: World;
   let abilitySystem: ReturnType<typeof createAbilitySystem>;
 
   beforeEach(() => {
@@ -21,9 +21,9 @@ describe('Ability System', () => {
       const entity = addEntity(world);
       
       // Add required components
-      addComponent(world, Position, entity);
-      addComponent(world, Health, entity);
-      addComponent(world, SpecialAbility, entity);
+      addComponent(world, entity, Position);
+      addComponent(world, entity, Health);
+      addComponent(world, entity, SpecialAbility);
       
       Position.x[entity] = 100;
       Position.y[entity] = 100;
@@ -49,9 +49,9 @@ describe('Ability System', () => {
     it('should teleport when health is low and cooldown has elapsed', () => {
       const entity = addEntity(world);
       
-      addComponent(world, Position, entity);
-      addComponent(world, Health, entity);
-      addComponent(world, SpecialAbility, entity);
+      addComponent(world, entity, Position);
+      addComponent(world, entity, Health);
+      addComponent(world, entity, SpecialAbility);
       
       Position.x[entity] = 100;
       Position.y[entity] = 100;
@@ -79,9 +79,9 @@ describe('Ability System', () => {
     it('should activate cloak when health drops below 50%', () => {
       const entity = addEntity(world);
       
-      addComponent(world, Position, entity);
-      addComponent(world, Health, entity);
-      addComponent(world, SpecialAbility, entity);
+      addComponent(world, entity, Position);
+      addComponent(world, entity, Health);
+      addComponent(world, entity, SpecialAbility);
       
       Position.x[entity] = 500;
       Position.y[entity] = 500;
@@ -103,9 +103,9 @@ describe('Ability System', () => {
     it('should deactivate cloak after duration expires', () => {
       const entity = addEntity(world);
       
-      addComponent(world, Position, entity);
-      addComponent(world, Health, entity);
-      addComponent(world, SpecialAbility, entity);
+      addComponent(world, entity, Position);
+      addComponent(world, entity, Health);
+      addComponent(world, entity, SpecialAbility);
       
       Position.x[entity] = 500;
       Position.y[entity] = 500;
@@ -134,10 +134,10 @@ describe('Ability System', () => {
     it('should regenerate shields over time', () => {
       const entity = addEntity(world);
       
-      addComponent(world, Position, entity);
-      addComponent(world, Health, entity);
-      addComponent(world, Shield, entity);
-      addComponent(world, SpecialAbility, entity);
+      addComponent(world, entity, Position);
+      addComponent(world, entity, Health);
+      addComponent(world, entity, Shield);
+      addComponent(world, entity, SpecialAbility);
       
       Position.x[entity] = 500;
       Position.y[entity] = 500;
@@ -164,10 +164,10 @@ describe('Ability System', () => {
     it('should not regenerate shields beyond maximum', () => {
       const entity = addEntity(world);
       
-      addComponent(world, Position, entity);
-      addComponent(world, Health, entity);
-      addComponent(world, Shield, entity);
-      addComponent(world, SpecialAbility, entity);
+      addComponent(world, entity, Position);
+      addComponent(world, entity, Health);
+      addComponent(world, entity, Shield);
+      addComponent(world, entity, SpecialAbility);
       
       Position.x[entity] = 500;
       Position.y[entity] = 500;
@@ -193,10 +193,10 @@ describe('Ability System', () => {
     it('should activate when close to target', () => {
       const entity = addEntity(world);
       
-      addComponent(world, Position, entity);
-      addComponent(world, Health, entity);
-      addComponent(world, Velocity, entity);
-      addComponent(world, SpecialAbility, entity);
+      addComponent(world, entity, Position);
+      addComponent(world, entity, Health);
+      addComponent(world, entity, Velocity);
+      addComponent(world, entity, SpecialAbility);
       
       Position.x[entity] = 960; // Near center (960, 540)
       Position.y[entity] = 540;
@@ -225,10 +225,10 @@ describe('Ability System', () => {
     it('should deactivate after duration and restore velocity', () => {
       const entity = addEntity(world);
       
-      addComponent(world, Position, entity);
-      addComponent(world, Health, entity);
-      addComponent(world, Velocity, entity);
-      addComponent(world, SpecialAbility, entity);
+      addComponent(world, entity, Position);
+      addComponent(world, entity, Health);
+      addComponent(world, entity, Velocity);
+      addComponent(world, entity, SpecialAbility);
       
       Position.x[entity] = 960;
       Position.y[entity] = 540;
@@ -264,10 +264,10 @@ describe('Ability System', () => {
     it('should respect cooldown', () => {
       const entity = addEntity(world);
       
-      addComponent(world, Position, entity);
-      addComponent(world, Health, entity);
-      addComponent(world, Faction, entity);
-      addComponent(world, SpecialAbility, entity);
+      addComponent(world, entity, Position);
+      addComponent(world, entity, Health);
+      addComponent(world, entity, Faction);
+      addComponent(world, entity, SpecialAbility);
       
       Position.x[entity] = 500;
       Position.y[entity] = 500;

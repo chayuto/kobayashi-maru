@@ -2,7 +2,7 @@
  * Damage System for Kobayashi Maru
  * Handles entity destruction when health reaches 0 and returns entities to pool
  */
-import { defineQuery, removeEntity, IWorld } from 'bitecs';
+import { query, removeEntity, World } from 'bitecs';
 import { Health, Faction, Position, SpriteRef, CompositeSpriteRef } from '../ecs/components';
 import { FactionId } from '../types/constants';
 import { GameEventType } from '../types/events';
@@ -13,9 +13,6 @@ import { EventBus } from '../core/EventBus';
 import { PoolManager } from '../ecs/PoolManager';
 import { RENDERING_CONFIG } from '../config';
 import type { SpriteManager } from '../rendering/spriteManager';
-
-// Query for entities with Health component
-const healthQuery = defineQuery([Health, Faction, Position]);
 
 // Use centralized config for unset sprite index
 const SPRITE_INDEX_UNSET = RENDERING_CONFIG.SPRITES.INDEX_UNSET;
@@ -35,11 +32,11 @@ export function createDamageSystem(particleSystem?: ParticleSystem, spriteManage
   // Get the PoolManager instance
   const poolManager = PoolManager.getInstance();
 
-  function damageSystem(world: IWorld): IWorld {
+  function damageSystem(world: World): World {
     // Clear destroyed list from last frame
     destroyedThisFrame.length = 0;
 
-    const entities = healthQuery(world);
+    const entities = query(world, [Health, Faction, Position]);
 
     for (const eid of entities) {
       const currentHealth = Health.current[eid];

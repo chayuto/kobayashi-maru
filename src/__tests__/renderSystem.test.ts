@@ -48,6 +48,8 @@ describe('Render System', () => {
     PoolManager.getInstance().init(world);
     mockSpriteManager = createMockSpriteManager();
     renderSystem = createRenderSystem(mockSpriteManager);
+    // Initialize observers by calling the system once before creating entities
+    renderSystem(world);
   });
 
   afterEach(() => {

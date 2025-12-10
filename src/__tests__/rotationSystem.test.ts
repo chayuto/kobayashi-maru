@@ -27,16 +27,16 @@ describe('Rotation Systems', () => {
 
             // Create turret
             const turretId = addEntity(world);
-            addComponent(world, Position, turretId);
+            addComponent(world, turretId, Position);
             Position.x[turretId] = 0;
             Position.y[turretId] = 0;
-            addComponent(world, Rotation, turretId);
-            addComponent(world, Turret, turretId);
-            addComponent(world, Target, turretId);
+            addComponent(world, turretId, Rotation);
+            addComponent(world, turretId, Turret);
+            addComponent(world, turretId, Target);
 
             // Create target
             const targetId = addEntity(world);
-            addComponent(world, Position, targetId);
+            addComponent(world, targetId, Position);
             Position.x[targetId] = 100;
             Position.y[targetId] = 100;
 
@@ -59,10 +59,10 @@ describe('Rotation Systems', () => {
             const system = createTurretRotationSystem();
 
             const turretId = addEntity(world);
-            addComponent(world, Position, turretId);
+            addComponent(world, turretId, Position);
             Rotation.angle[turretId] = 0;
-            addComponent(world, Turret, turretId);
-            addComponent(world, Target, turretId);
+            addComponent(world, turretId, Turret);
+            addComponent(world, turretId, Target);
 
             Target.hasTarget[turretId] = 0;
 
@@ -77,11 +77,11 @@ describe('Rotation Systems', () => {
             const system = createEnemyRotationSystem();
 
             const enemyId = addEntity(world);
-            addComponent(world, Velocity, enemyId);
+            addComponent(world, enemyId, Velocity);
             Velocity.x[enemyId] = 10;
             Velocity.y[enemyId] = 0; // Moving right
-            addComponent(world, Rotation, enemyId);
-            addComponent(world, AIBehavior, enemyId); // Mark as enemy
+            addComponent(world, enemyId, Rotation);
+            addComponent(world, enemyId, AIBehavior); // Mark as enemy
 
             system(world);
 
@@ -93,9 +93,9 @@ describe('Rotation Systems', () => {
         it('should update facing when direction changes', () => {
             const system = createEnemyRotationSystem();
             const enemyId = addEntity(world);
-            addComponent(world, Velocity, enemyId);
-            addComponent(world, Rotation, enemyId);
-            addComponent(world, AIBehavior, enemyId);
+            addComponent(world, enemyId, Velocity);
+            addComponent(world, enemyId, Rotation);
+            addComponent(world, enemyId, AIBehavior);
 
             // Move down
             Velocity.x[enemyId] = 0;
@@ -120,12 +120,12 @@ describe('Rotation Systems', () => {
         it('should not rotate if stationary', () => {
             const system = createEnemyRotationSystem();
             const enemyId = addEntity(world);
-            addComponent(world, Velocity, enemyId);
+            addComponent(world, enemyId, Velocity);
             Velocity.x[enemyId] = 0;
             Velocity.y[enemyId] = 0;
-            addComponent(world, Rotation, enemyId);
+            addComponent(world, enemyId, Rotation);
             Rotation.angle[enemyId] = 1.23; // Arbitrary existing rotation
-            addComponent(world, AIBehavior, enemyId);
+            addComponent(world, enemyId, AIBehavior);
 
             system(world);
 

@@ -9,10 +9,7 @@ import { createTurret } from '../ecs/entityFactory';
 import { AudioManager, SoundType } from '../audio';
 import { ResourceManager } from './resourceManager';
 import type { GameWorld } from '../ecs/world';
-import { defineQuery } from 'bitecs';
-
-// Query for all turrets
-const turretQuery = defineQuery([Position, Turret]);
+import { query } from 'bitecs';
 
 /**
  * Placement state
@@ -123,7 +120,7 @@ export class PlacementManager {
 
     // Check minimum distance from other turrets
     const minDist = GAME_CONFIG.MIN_TURRET_DISTANCE;
-    const turretEntities = turretQuery(this.world);
+    const turretEntities = query(this.world, [Position, Turret]);
 
     for (const eid of turretEntities) {
       const dx = Position.x[eid] - x;

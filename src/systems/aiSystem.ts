@@ -23,16 +23,10 @@
  * @see AIBehaviorType in constants.ts for behavior type values
  * @see AIBehavior component for entity AI data
  */
-import { defineQuery } from 'bitecs';
+import { query } from 'bitecs';
 import { GameWorld } from '../ecs/world';
 import { Position, Velocity, AIBehavior, Faction, Turret } from '../ecs/components';
 import { AIBehaviorType, GAME_CONFIG } from '../types/constants';
-
-/** Query for entities with AI behavior (all enemies) */
-const aiQuery = defineQuery([Position, Velocity, AIBehavior, Faction]);
-
-/** Query for turrets (used by Hunter behavior to find targets) */
-const turretQuery = defineQuery([Position, Turret]);
 
 /**
  * Creates the AI system that controls enemy movement.
@@ -68,8 +62,8 @@ export function createAISystem() {
      * @param gameTime - Total elapsed game time (for oscillation effects)
      */
     return function aiSystem(world: GameWorld, _deltaTime: number, gameTime: number) {
-        const entities = aiQuery(world);
-        const turrets = turretQuery(world);
+        const entities = query(world, [Position, Velocity, AIBehavior, Faction]);
+        const turrets = query(world, [Position, Turret]);
 
         for (let i = 0; i < entities.length; i++) {
             const eid = entities[i];
@@ -278,12 +272,11 @@ function updateSwarmBehavior(eid: number, posX: number, posY: number, targetX: n
 /**
  * Finds the nearest turret to the given position
  */
-function findNearestTurret(x: number, y: number, turrets: number[]): number {
+function findNearestTurret(x: number, y: number, turrets: Iterable<number>): number {
     let nearestDistSq = Infinity;
     let nearestEid = -1;
 
-    for (let i = 0; i < turrets.length; i++) {
-        const eid = turrets[i];
+    for (const eid of turrets) {
         const tx = Position.x[eid];
         const ty = Position.y[eid];
         const dx = x - tx;

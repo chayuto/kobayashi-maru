@@ -3,14 +3,11 @@
  * Handles enemy collision with the Kobayashi Maru (main ship)
  * When enemies reach the ship, they explode and deal damage
  */
-import { defineQuery, IWorld, hasComponent } from 'bitecs';
+import { query, World, hasComponent } from 'bitecs';
 import { Position, Health, Faction, AIBehavior, Shield } from '../ecs/components';
 import { FactionId, GAME_CONFIG } from '../types/constants';
 import { ParticleSystem, EFFECTS } from '../rendering';
 import { AudioManager, SoundType } from '../audio';
-
-// Query for enemy entities (have AIBehavior component, non-Federation faction)
-const enemyQuery = defineQuery([Position, Health, Faction, AIBehavior]);
 
 /**
  * Creates the enemy collision system that handles enemy-ship collisions
@@ -25,7 +22,7 @@ export function createEnemyCollisionSystem(
   // Track entities that should be destroyed this frame
   const entitiesToDestroy: number[] = [];
 
-  function enemyCollisionSystem(world: IWorld): IWorld {
+  function enemyCollisionSystem(world: World): World {
     // Clear destruction list from last frame
     entitiesToDestroy.length = 0;
 
@@ -36,7 +33,7 @@ export function createEnemyCollisionSystem(
     }
 
     // Check if Kobayashi Maru exists and has health
-    if (!hasComponent(world, Position, kmId) || !hasComponent(world, Health, kmId)) {
+    if (!hasComponent(world, kmId, Position) || !hasComponent(world, kmId, Health)) {
       return world;
     }
 
@@ -44,7 +41,7 @@ export function createEnemyCollisionSystem(
     const kmY = Position.y[kmId];
 
     // Get all enemies
-    const enemies = enemyQuery(world);
+    const enemies = query(world, [Position, Health, Faction, AIBehavior]);
 
     for (const eid of enemies) {
       // Skip Federation entities (should not be in enemyQuery, but double-check)
