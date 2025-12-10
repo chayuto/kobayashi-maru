@@ -225,3 +225,7 @@ Before completing any task:
 - [ ] `npm run test` passes (all 48 tests)
 - [ ] `npm run build` succeeds
 - [ ] New code has tests where applicable
+
+
+## IDE Specifc
+- IF YOU ARE KIRO, dont edit code or run command, you can only read files, searches files and update docs
