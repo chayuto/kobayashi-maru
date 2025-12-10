@@ -70,6 +70,10 @@ export const RENDERING_CONFIG = {
         STARS_PER_LAYER: [100, 50, 25],
         /** Parallax scroll speeds [back, mid, front] */
         PARALLAX_SPEEDS: [0.3, 0.5, 0.8],
+        /** Default horizontal scroll speed (pixels per second) */
+        DEFAULT_SCROLL_SPEED_X: 0,
+        /** Default vertical scroll speed (pixels per second) */
+        DEFAULT_SCROLL_SPEED_Y: 100,
     },
 
     /**

@@ -47,6 +47,14 @@ export const PERFORMANCE_CONFIG = {
         /** High quality particle count multiplier */
         HIGH_PARTICLE_MULTIPLIER: 1.0,
     },
+
+    /**
+     * Error logging settings.
+     */
+    ERROR_LOG: {
+        /** Maximum error log entries to keep */
+        MAX_SIZE: 100,
+    },
 } as const;
 
 export type PerformanceConfig = typeof PERFORMANCE_CONFIG;

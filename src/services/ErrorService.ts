@@ -21,6 +21,8 @@
  * ```
  */
 
+import { PERFORMANCE_CONFIG } from '../config';
+
 /**
  * Error codes for game-specific errors.
  */
@@ -78,7 +80,7 @@ interface ErrorLogEntry {
  */
 export class ErrorService {
     private static errorLog: ErrorLogEntry[] = [];
-    private static maxLogSize = 100;
+    private static maxLogSize = PERFORMANCE_CONFIG.ERROR_LOG.MAX_SIZE;
     private static onErrorCallbacks: ((entry: ErrorLogEntry) => void)[] = [];
 
     /**

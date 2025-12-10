@@ -1,5 +1,6 @@
 import { Application, Container, Graphics, TilingSprite, Texture } from 'pixi.js';
 import { GAME_CONFIG } from '../types';
+import { RENDERING_CONFIG } from '../config';
 
 export class Starfield {
     private app: Application;
@@ -60,7 +61,7 @@ export class Starfield {
         return this.app.renderer.generateTexture(graphics);
     }
 
-    public update(deltaTime: number, speedX: number = 0, speedY: number = 100): void {
+    public update(deltaTime: number, speedX: number = RENDERING_CONFIG.STARFIELD.DEFAULT_SCROLL_SPEED_X, speedY: number = RENDERING_CONFIG.STARFIELD.DEFAULT_SCROLL_SPEED_Y): void {
         // Scroll textures based on speed and layer depth
         for (const layer of this.layers) {
             layer.sprite.tilePosition.x -= speedX * layer.speed * deltaTime;

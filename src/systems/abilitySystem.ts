@@ -5,6 +5,7 @@
 import { query, hasComponent, World } from 'bitecs';
 import { Position, Velocity, Health, Shield, SpecialAbility, Faction } from '../ecs/components';
 import { AbilityType, ABILITY_CONFIG, GAME_CONFIG, FactionId } from '../types/constants';
+import { AI_CONFIG } from '../config';
 import { createEnemy } from '../ecs/entityFactory';
 import type { GameWorld } from '../ecs/world';
 import { ParticleSystem } from '../rendering';
@@ -459,7 +460,7 @@ function processRammingSpeedAbility(
  * Finds a safe position away from turrets and center
  */
 function findSafePosition(spatialHash?: SpatialHash): { x: number; y: number } {
-  const margin = 200;
+  const margin = AI_CONFIG.TELEPORT.EDGE_MARGIN;
   const safeDistance = ABILITY_CONFIG[AbilityType.TELEPORT].range ?? 300;
   let attempts = 0;
 

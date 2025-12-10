@@ -45,6 +45,16 @@ export const WAVE_CONFIG = {
         /** Maximum high scores to store */
         MAX_HIGH_SCORES: 10,
     },
+
+    /**
+     * Spawn formation settings.
+     */
+    FORMATION: {
+        /** Default cluster radius for grouped spawns */
+        DEFAULT_CLUSTER_RADIUS: 100,
+        /** V-formation spacing */
+        V_FORMATION_SPACING: 50,
+    },
 } as const;
 
 export type WaveConfig = typeof WAVE_CONFIG;

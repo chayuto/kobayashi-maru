@@ -29,3 +29,4 @@ export * from './ui.config';
 export * from './wave.config';
 export * from './performance.config';
 export * from './score.config';
+export * from './ai.config';

@@ -27,6 +27,7 @@ import { query } from 'bitecs';
 import { GameWorld } from '../ecs/world';
 import { Position, Velocity, AIBehavior, Faction, Turret } from '../ecs/components';
 import { AIBehaviorType, GAME_CONFIG } from '../types/constants';
+import { AI_CONFIG } from '../config';
 
 /**
  * Creates the AI system that controls enemy movement.
@@ -141,7 +142,7 @@ function updateDirectBehavior(eid: number, posX: number, posY: number, targetX: 
         // Get current speed magnitude to preserve it
         const currentVx = Velocity.x[eid];
         const currentVy = Velocity.y[eid];
-        const speed = Math.sqrt(currentVx * currentVx + currentVy * currentVy) || 100; // Default speed if 0
+        const speed = Math.sqrt(currentVx * currentVx + currentVy * currentVy) || AI_CONFIG.SPEED.DEFAULT;
 
         Velocity.x[eid] = (dx / dist) * speed;
         Velocity.y[eid] = (dy / dist) * speed;
@@ -208,7 +209,7 @@ function updateFlankBehavior(eid: number, posX: number, posY: number, targetX: n
     if (dist > 0) {
         const currentVx = Velocity.x[eid];
         const currentVy = Velocity.y[eid];
-        const speed = Math.sqrt(currentVx * currentVx + currentVy * currentVy) || 120;
+        const speed = Math.sqrt(currentVx * currentVx + currentVy * currentVy) || AI_CONFIG.SPEED.FLANK;
 
         // Determine flank direction based on entity ID (some left, some right)
         const flankSide = (eid % 2 === 0) ? 1 : -1;
@@ -216,7 +217,7 @@ function updateFlankBehavior(eid: number, posX: number, posY: number, targetX: n
         // Flank angle changes based on distance (spiral in)
         // Far away: approach at 45 degrees
         // Close: approach directly
-        const flankFactor = Math.min(1, dist / 500);
+        const flankFactor = Math.min(1, dist / AI_CONFIG.BEHAVIOR.FLANK_DISTANCE_THRESHOLD);
         const angle = (Math.PI / 4) * flankFactor * flankSide;
 
         // Rotate vector

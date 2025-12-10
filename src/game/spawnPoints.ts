@@ -69,7 +69,7 @@ export function getRandomEdgePosition(): SpawnPosition {
  * @param clusterRadius - Radius of the cluster
  * @returns Array of spawn positions
  */
-export function getClusterPositions(count: number, clusterRadius: number = 100): SpawnPosition[] {
+export function getClusterPositions(count: number, clusterRadius: number = WAVE_CONFIG.FORMATION.DEFAULT_CLUSTER_RADIUS): SpawnPosition[] {
   const positions: SpawnPosition[] = [];
 
   // Get a center point along a random edge
