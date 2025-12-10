@@ -11,6 +11,7 @@ import { Application } from 'pixi.js';
 import { defineQuery } from 'bitecs';
 import { Position, Turret } from '../../ecs/components';
 import { GAME_CONFIG } from '../../types';
+import { UI_CONFIG } from '../../config';
 import { getServices } from '../services';
 import type { GameWorld } from '../../ecs/world';
 
@@ -99,9 +100,9 @@ const DEFAULT_KEY_BINDINGS: KeyBinding[] = [
 ];
 
 /**
- * Click detection radius for selecting turrets (in pixels)
+ * Use centralized config for click radius
  */
-const TURRET_CLICK_RADIUS = 32;
+const TURRET_CLICK_RADIUS = UI_CONFIG.INTERACTION.TURRET_CLICK_RADIUS;
 
 /**
  * Centralizes all input handling.

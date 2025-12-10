@@ -6,6 +6,7 @@
 import { defineQuery } from 'bitecs';
 import { Turret, Position } from '../ecs/components';
 import { GAME_CONFIG } from '../types';
+import { UI_CONFIG } from '../config';
 import { GameWorld } from '../ecs';
 import type { GameState } from '../game';
 import type { PlacementManager, UpgradeManager } from '../game';
@@ -14,8 +15,8 @@ import type { HUDManager } from '../ui';
 // Query for turret entities
 const turretQuery = defineQuery([Turret]);
 
-// Click detection radius for selecting turrets (in pixels)
-const TURRET_CLICK_RADIUS = 32;
+// Use centralized config for click radius
+const TURRET_CLICK_RADIUS = UI_CONFIG.INTERACTION.TURRET_CLICK_RADIUS;
 
 /**
  * Interface for Game methods that GameInputHandler needs access to.
