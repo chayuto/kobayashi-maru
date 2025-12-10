@@ -4,18 +4,13 @@
  */
 import { EventBus } from '../core/EventBus';
 import { GameEventType, EnemyKilledPayload, WaveCompletedPayload } from '../types/events';
+import { SCORE_CONFIG } from '../config';
 
-/** Combo multiplier thresholds */
-const COMBO_TIERS = [
-  { threshold: 0, multiplier: 1 },
-  { threshold: 3, multiplier: 2 },
-  { threshold: 6, multiplier: 3 },
-  { threshold: 10, multiplier: 5 },
-  { threshold: 20, multiplier: 10 }
-];
+/** Combo multiplier thresholds (from centralized config) */
+const COMBO_TIERS = SCORE_CONFIG.COMBO.TIERS;
 
-/** Time window to maintain combo (seconds) */
-const COMBO_TIMEOUT = 3.0;
+/** Time window to maintain combo in seconds (from centralized config) */
+const COMBO_TIMEOUT = SCORE_CONFIG.COMBO.TIMEOUT;
 
 /**
  * Score data interface

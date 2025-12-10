@@ -10,6 +10,7 @@
  * - `UI_CONFIG` - User interface dimensions and colors
  * - `WAVE_CONFIG` - Wave spawning and timing
  * - `PERFORMANCE_CONFIG` - Performance monitoring settings
+ * - `SCORE_CONFIG` - Score and combo multiplier settings
  * 
  * @example
  * ```typescript
@@ -27,3 +28,4 @@ export * from './rendering.config';
 export * from './ui.config';
 export * from './wave.config';
 export * from './performance.config';
+export * from './score.config';
