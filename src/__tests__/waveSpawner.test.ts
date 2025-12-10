@@ -347,4 +347,17 @@ describe('Wave Manager', () => {
     waveManager.startWave(2);
     expect(waveManager.getCurrentWave()).toBe(2);
   });
+
+  it('should accept rendering dependencies', () => {
+    // Mock dependencies with necessary methods
+    const mockParticleSystem = {
+      spawn: () => { }
+    } as any;
+
+    const mockSpriteManager = {
+      setScale: () => { }
+    } as any;
+
+    expect(() => waveManager.setRenderingDependencies(mockParticleSystem, mockSpriteManager)).not.toThrow();
+  });
 });

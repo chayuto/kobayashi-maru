@@ -7,6 +7,7 @@ Deep search into code base. Give me a report and also instructions to implement 
 Before start the task DEEP research into all the code base. Methodically. Do not rush. Create intermedate document in .md if need to. Spend as much token and thinking time as you can. 
 
 BEFORE COMPLETE:
+- make sure all test and
 - generate task completion report in /docs/change_notes/
 
 - follow document format convention

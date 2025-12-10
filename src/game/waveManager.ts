@@ -2,6 +2,8 @@
  * Wave Manager for Kobayashi Maru
  * Manages wave spawning, progression, and completion detection
  */
+import { ParticleSystem } from '../rendering/ParticleSystem';
+import { SpriteManager } from '../rendering/spriteManager';
 import { GAME_CONFIG, EnemyRank, RANK_MULTIPLIERS, ABILITY_CONFIG } from '../types/constants';
 import { WAVE_CONFIG } from '../config';
 import { GameEventType } from '../types/events';
@@ -59,10 +61,8 @@ export class WaveManager {
   private nextWaveTimer: number = 0;
   private autoStartNextWave: boolean = true;
   private eventBus: EventBus;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private particleSystem: any = null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private spriteManager: any = null;
+  private particleSystem: ParticleSystem | null = null;
+  private spriteManager: SpriteManager | null = null;
 
   constructor() {
     this.eventBus = EventBus.getInstance();
@@ -71,8 +71,7 @@ export class WaveManager {
   /**
    * Sets rendering dependencies for visual effects
    */
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  setRenderingDependencies(particleSystem: any, spriteManager: any): void {
+  setRenderingDependencies(particleSystem: ParticleSystem, spriteManager: SpriteManager): void {
     this.particleSystem = particleSystem;
     this.spriteManager = spriteManager;
   }

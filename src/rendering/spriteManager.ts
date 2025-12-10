@@ -254,6 +254,19 @@ export class SpriteManager {
   }
 
   /**
+   * Update particle scale
+   * @param index - The particle index
+   * @param scale - New scale factor
+   */
+  setScale(index: number, scale: number): void {
+    const entry = this.particles.get(index);
+    if (entry) {
+      entry.particle.scaleX = scale;
+      entry.particle.scaleY = scale;
+    }
+  }
+
+  /**
    * Remove a particle and return it to the pool
    * @param index - The particle index to remove
    */
