@@ -11,7 +11,9 @@ import { Application } from 'pixi.js';
 import { getServices } from '../services';
 import { getEntityCount } from '../../ecs';
 import { PoolManager } from '../../ecs/PoolManager';
+
 import type { GameplaySnapshot } from './GameplayManager';
+import type { GameInterface } from '../../ui/HUDManager';
 import type { CombatSystem } from '../../systems/combatSystem';
 import type { ScoreData } from '../../game/scoreManager';
 import type { WaveState } from '../../game/waveManager';
@@ -61,7 +63,7 @@ export class UIController {
     private initialized: boolean = false;
 
     // Reference to game for HUD init (temporary - will be removed in final refactor)
-    private gameRef: unknown = null;
+    private gameRef: GameInterface | null = null;
 
     constructor(app: Application) {
         this.app = app;
@@ -78,7 +80,11 @@ export class UIController {
      * Set game reference for HUD initialization.
      * This is a temporary bridge until HUD is fully decoupled.
      */
-    setGameRef(game: unknown): void {
+    /**
+     * Set game reference for HUD initialization.
+     * This is a temporary bridge until HUD is fully decoupled.
+     */
+    setGameRef(game: GameInterface): void {
         this.gameRef = game;
     }
 
@@ -91,10 +97,14 @@ export class UIController {
         const services = getServices();
 
         // Initialize HUD
+        // Initialize HUD
         const hudManager = services.get('hudManager');
-        // Cast gameRef to any as GameInterface is local to HUDManager
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        hudManager.init(this.app, this.gameRef as any);
+        if (this.gameRef) {
+            hudManager.init(this.app, this.gameRef);
+        } else {
+            // Fallback for initialization without game ref (though it should be set)
+            hudManager.init(this.app);
+        }
 
         // Connect turret menu
         const turretMenu = hudManager.getTurretMenu();

@@ -17,7 +17,8 @@ import { WavePanel, ResourcePanel, StatusPanel, CombatStatsPanel, ScorePanel, Tu
 import { ToggleButton } from './components';
 
 // Forward declaration for Game type to avoid circular imports
-interface GameInterface {
+// Forward declaration for Game type to avoid circular imports
+export interface GameInterface {
   toggleGodMode(): boolean;
   toggleSlowMode(): boolean;
   isGodModeEnabled(): boolean;
