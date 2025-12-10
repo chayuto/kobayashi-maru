@@ -13,10 +13,13 @@ Refactored `HUDManager` and `UIController` to improve type safety by removing `a
     - Imported `GameInterface`.
     - Typed `gameRef` as `GameInterface | null`.
     - Removed `eslint-disable` and `as any` casts.
+- **src/__tests__/waveSpawner.test.ts**:
+    - Fixed pre-existing lint errors by replacing `any` casts with proper `ParticleSystem` and `SpriteManager` types for mocks.
 
 ## Verification
-- Run `npm test src/__tests__/HUDManager.test.ts`: PASSED
-- TypeScript compilation check (implied by safe edits): PASSED
+- Run `npm test`: PASSED (All 632 tests)
+- Run `npm run lint`: PASSED (Clean)
+- TypeScript compilation check: PASSED
 
 ## Impact
 - Improved code maintainability.

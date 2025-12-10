@@ -15,6 +15,7 @@ import { calculateScore } from '../../ui';
 import { GAME_CONFIG, GameEventType, EnemyKilledPayload, WaveStartedPayload, WaveCompletedPayload } from '../../types';
 import type { GameWorld } from '../../ecs/world';
 import type { ScoreData } from '../../game/scoreManager';
+import type { WaveState } from '../../game/waveManager';
 
 /**
  * Gameplay state snapshot for UI
@@ -26,7 +27,7 @@ export interface GameplaySnapshot {
 
     // Wave info
     waveNumber: number;
-    waveState: string;
+    waveState: WaveState;
     activeEnemies: number;
 
     // Resources

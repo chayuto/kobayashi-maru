@@ -161,12 +161,7 @@ export class UIController {
 
         const hudData: HUDData = {
             waveNumber: snapshot.waveNumber,
-            // Cast string to WaveState if needed, but GameplaySnapshot defines it as string in plan
-            // Wait, GameplaySnapshot in GameplayManager defines waveState as string.
-            // But WaveManager.getState() returns WaveState.
-            // So GameplaySnapshot should have been WaveState, but it was string in the plan.
-            // Let's cast it here.
-            waveState: snapshot.activeEnemies > 0 ? 'active' : 'idle', // Approximate or cast
+            waveState: snapshot.waveState,
             activeEnemies: snapshot.activeEnemies,
             resources: snapshot.resources,
             timeSurvived: snapshot.timeSurvived,
@@ -182,8 +177,7 @@ export class UIController {
             dps: combatStats?.dps ?? 0,
         };
 
-        // Fix waveState
-        hudData.waveState = snapshot.waveState as WaveState;
+
 
         hudManager.update(hudData);
     }

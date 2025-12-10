@@ -15,6 +15,7 @@ import {
   getFormationPositions,
   getEdgePosition
 } from '../game';
+import { ParticleSystem, SpriteManager } from '../rendering';
 import { createGameWorld, getEntityCount } from '../ecs';
 import { FactionId, GAME_CONFIG } from '../types/constants';
 import { EventBus } from '../core/EventBus';
@@ -352,11 +353,11 @@ describe('Wave Manager', () => {
     // Mock dependencies with necessary methods
     const mockParticleSystem = {
       spawn: () => { }
-    } as any;
+    } as unknown as ParticleSystem;
 
     const mockSpriteManager = {
       setScale: () => { }
-    } as any;
+    } as unknown as SpriteManager;
 
     expect(() => waveManager.setRenderingDependencies(mockParticleSystem, mockSpriteManager)).not.toThrow();
   });
