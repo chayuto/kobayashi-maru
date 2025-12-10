@@ -5,6 +5,7 @@
 import { hasComponent, removeEntity } from 'bitecs';
 import { Turret, TurretUpgrade, CompositeSpriteRef } from '../ecs/components';
 import { TURRET_CONFIG, UPGRADE_CONFIG, UpgradePath, TURRET_SELL_REFUND_PERCENT } from '../types/constants';
+import { RENDERING_CONFIG } from '../config';
 import { ResourceManager } from './resourceManager';
 import { GameWorld, decrementEntityCount } from '../ecs/world';
 import { AudioManager, SoundType } from '../audio';
@@ -44,12 +45,8 @@ export interface TurretUpgradeInfo {
 /**
  * Manages turret upgrades and sell functionality
  */
-// Special value for unset sprite index (matches renderSystem)
-const SPRITE_INDEX_UNSET = 0;
-
-/**
- * Manages turret upgrades and sell functionality
- */
+// Use centralized config for unset sprite index
+const SPRITE_INDEX_UNSET = RENDERING_CONFIG.SPRITES.INDEX_UNSET;
 export class UpgradeManager {
   private world: GameWorld;
   private resourceManager: ResourceManager;

@@ -11,13 +11,14 @@ import { decrementEntityCount } from '../ecs/world';
 import { ParticleSystem, EFFECTS } from '../rendering';
 import { EventBus } from '../core/EventBus';
 import { PoolManager } from '../ecs/PoolManager';
+import { RENDERING_CONFIG } from '../config';
 import type { SpriteManager } from '../rendering/spriteManager';
 
 // Query for entities with Health component
 const healthQuery = defineQuery([Health, Faction, Position]);
 
-// Special value for unset sprite index (matches renderSystem)
-const SPRITE_INDEX_UNSET = 0;
+// Use centralized config for unset sprite index
+const SPRITE_INDEX_UNSET = RENDERING_CONFIG.SPRITES.INDEX_UNSET;
 
 
 /**

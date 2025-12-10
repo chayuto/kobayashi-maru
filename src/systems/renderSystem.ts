@@ -5,6 +5,7 @@
 import { defineQuery, defineSystem, IWorld, enterQuery, exitQuery, hasComponent } from 'bitecs';
 import { Position, Faction, SpriteRef, Turret, Projectile, Rotation, CompositeSpriteRef, Health } from '../ecs/components';
 import { TurretType, SpriteType } from '../types/constants';
+import { RENDERING_CONFIG } from '../config';
 import type { SpriteManager } from '../rendering/spriteManager';
 
 // Query for entities with Position, Faction, and SpriteRef components
@@ -17,8 +18,8 @@ const compositeQuery = defineQuery([Position, Faction, CompositeSpriteRef]);
 const compositeEnterQuery = enterQuery(compositeQuery);
 const compositeExitQuery = exitQuery(compositeQuery);
 
-// Special value to indicate unset sprite index
-const SPRITE_INDEX_UNSET = 0;
+// Use centralized config for unset sprite index
+const SPRITE_INDEX_UNSET = RENDERING_CONFIG.SPRITES.INDEX_UNSET;
 
 /**
  * Creates the render system that syncs ECS entities with sprites
