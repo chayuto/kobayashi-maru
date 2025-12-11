@@ -49,6 +49,27 @@ export function createRenderSystem(spriteManager: SpriteManager) {
       });
 
       observersInitialized = true;
+
+      // IMPORTANT: Catch up on entities that were created BEFORE observers were registered.
+      // This handles the case where Kobayashi Maru (and other entities) are spawned 
+      // during game initialization, before the first render system call.
+      const existingSimpleEntities = query(world, [Position, Faction, SpriteRef]);
+      for (const eid of existingSimpleEntities) {
+        // Only add if sprite hasn't been created yet
+        if (SpriteRef.index[eid] === SPRITE_INDEX_UNSET) {
+          entitiesToAdd.push(eid);
+        }
+      }
+
+      const existingCompositeEntities = query(world, [Position, Faction, CompositeSpriteRef]);
+      for (const eid of existingCompositeEntities) {
+        // Only add if sprite hasn't been created yet
+        if (CompositeSpriteRef.baseIndex[eid] === SPRITE_INDEX_UNSET) {
+          compositeToAdd.push(eid);
+        }
+      }
+
+      console.log(`[RenderSystem] Initialized with ${existingSimpleEntities.length} simple and ${existingCompositeEntities.length} composite entities`);
     }
 
     // Handle new entities - create sprites for them
