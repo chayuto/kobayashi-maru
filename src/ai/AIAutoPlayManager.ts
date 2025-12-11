@@ -57,7 +57,8 @@ export class AIAutoPlayManager {
         this.planner = new ActionPlanner(
             this.threatAnalyzer,
             this.coverageAnalyzer,
-            resourceManager
+            resourceManager,
+            world
         );
 
         // Executor uses ONLY manager APIs - enforces all game rules

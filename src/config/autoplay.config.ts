@@ -91,6 +91,30 @@ export const AUTOPLAY_CONFIG = {
     } as Record<number, number>,
 
     // =========================================================================
+    // TURRET-FACTION EFFECTIVENESS
+    // =========================================================================
+
+    /**
+     * Effectiveness multipliers for each turret type against each faction.
+     * Values > 1.0 = effective counter, < 1.0 = less effective
+     * TurretType -> FactionId -> effectiveness
+     */
+    TURRET_FACTION_EFFECTIVENESS: {
+        // Phaser Array (0): High fire rate, good for swarms
+        0: { 1: 1.5, 2: 0.8, 3: 0.7, 4: 1.0, 5: 0.6 },
+        // Torpedo Launcher (1): High damage, long range - good for bosses/tough targets
+        1: { 1: 0.8, 2: 1.0, 3: 1.2, 4: 1.4, 5: 1.5 },
+        // Disruptor Bank (2): Balanced all-rounder
+        2: { 1: 1.0, 2: 1.0, 3: 0.9, 4: 1.0, 5: 0.9 },
+        // Tetryon Beam (3): Shield stripper - excellent vs Borg/Romulan shields
+        3: { 1: 0.8, 2: 1.4, 3: 1.6, 4: 1.0, 5: 0.5 },
+        // Plasma Cannon (4): DOT damage - good for clustered enemies
+        4: { 1: 1.3, 2: 1.0, 3: 1.3, 4: 0.8, 5: 1.2 },
+        // Polaron Beam (5): Slowing effect - good vs fast enemies
+        5: { 1: 1.0, 2: 1.3, 3: 0.8, 4: 1.1, 5: 1.4 },
+    } as Record<number, Record<number, number>>,
+
+    // =========================================================================
     // PERSONALITIES
     // =========================================================================
 
