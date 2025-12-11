@@ -47,7 +47,7 @@ function createFederationTexture(app: Application, color: number): RenderTexture
  * Generate Kobayashi Maru (Constitution-class refit style) texture
  * Premium detailed Federation flagship with glowing effects
  */
-function createKobayashiMaruTexture(app: Application, _color: number): RenderTexture {
+function createKobayashiMaruTexture(app: Application): RenderTexture {
   const graphics = new Graphics();
   const size = KOBAYASHI_MARU_SIZE;
   const centerX = size / 2;
@@ -805,7 +805,7 @@ export function createFactionTextures(app: Application): FactionTextures {
 
   // Create and cache textures
   const federation = createFederationTexture(app, FACTION_COLORS.FEDERATION);
-  const kobayashiMaru = createKobayashiMaruTexture(app, FACTION_COLORS.FEDERATION);
+  const kobayashiMaru = createKobayashiMaruTexture(app);
   const klingon = createKlingonTexture(app, FACTION_COLORS.KLINGON);
   const romulan = createRomulanTexture(app, FACTION_COLORS.ROMULAN);
   const borg = createBorgTexture(app, FACTION_COLORS.BORG);

@@ -2,39 +2,43 @@
 import { describe, it, expect, vi } from 'vitest';
 import { AIAutoPlayManager } from '../ai/AIAutoPlayManager';
 import { createGameWorld } from '../ecs/world';
+import type { PlacementManager } from '../game/PlacementManager';
+import type { UpgradeManager } from '../game/UpgradeManager';
+import type { ResourceManager } from '../game/resourceManager';
+import type { GameState } from '../game/gameState';
 
 // Mock dependencies
-const mockPlacementManager = {
+const mockPlacementManager: Partial<PlacementManager> = {
     isPlacing: () => false,
     placeTurret: vi.fn(),
     startPlacing: vi.fn(),
     cancelPlacement: vi.fn(),
-} as any;
+};
 
-const mockUpgradeManager = {
+const mockUpgradeManager: Partial<UpgradeManager> = {
     applyUpgrade: vi.fn(),
     sellTurret: vi.fn(),
-} as any;
+};
 
-const mockResourceManager = {
-    getResource: () => 1000,
-} as any;
+const mockResourceManager: Partial<ResourceManager> = {
+    getResources: () => 1000,
+};
 
-const mockGameState = {
+const mockGameState: Partial<GameState> = {
     isPlaying: () => true,
     isPaused: () => false,
     isGameOver: () => false,
-} as any;
+};
 
 describe('AIAutoPlayManager', () => {
     it('should be enabled by default based on config', () => {
         const world = createGameWorld();
         const manager = new AIAutoPlayManager(
             world,
-            mockPlacementManager,
-            mockUpgradeManager,
-            mockResourceManager,
-            mockGameState,
+            mockPlacementManager as unknown as PlacementManager,
+            mockUpgradeManager as unknown as UpgradeManager,
+            mockResourceManager as unknown as ResourceManager,
+            mockGameState as unknown as GameState,
             () => 0 // getKobayashiMaruId
         );
 
@@ -45,10 +49,10 @@ describe('AIAutoPlayManager', () => {
         const world = createGameWorld();
         const manager = new AIAutoPlayManager(
             world,
-            mockPlacementManager,
-            mockUpgradeManager,
-            mockResourceManager,
-            mockGameState,
+            mockPlacementManager as unknown as PlacementManager,
+            mockUpgradeManager as unknown as UpgradeManager,
+            mockResourceManager as unknown as ResourceManager,
+            mockGameState as unknown as GameState,
             () => 0
         );
 
