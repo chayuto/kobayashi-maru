@@ -29,7 +29,7 @@ import { AIPersonality } from './types';
  * Main AI Auto-Play controller.
  */
 export class AIAutoPlayManager {
-    private enabled: boolean = false;
+    private enabled: boolean = AUTOPLAY_CONFIG.ENABLED_BY_DEFAULT;
     private personality: AIPersonality = AIPersonality.BALANCED;
     private threatAnalyzer: ThreatAnalyzer;
     private coverageAnalyzer: CoverageAnalyzer;

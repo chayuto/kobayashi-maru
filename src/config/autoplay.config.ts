@@ -12,6 +12,9 @@ export const AUTOPLAY_CONFIG = {
     // TIMING
     // =========================================================================
 
+    /** Whether AI is enabled by default on game start */
+    ENABLED_BY_DEFAULT: true,
+
     /** Time between AI decisions (ms) */
     DECISION_INTERVAL_MS: 500,
 
