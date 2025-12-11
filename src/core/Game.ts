@@ -26,6 +26,7 @@ import { GameLoopManager } from './loop';
 import { RenderManager, GameplayManager, UIController, InputRouter, InputAction } from './managers';
 import { PoolManager } from '../ecs/PoolManager';
 import { getWaveStoryText } from '../game/waveConfig';
+import { AIAutoPlayManager, AIStatus, AIPersonality } from '../ai';
 
 /**
  * Main game class - orchestrates all game systems.
@@ -47,6 +48,9 @@ export class Game {
   // Key Systems (stored for backward compatibility / access)
   private collisionSystem: CollisionSystem | undefined;
   private combatSystem: CombatSystem | undefined;
+
+  // AI Auto-Play
+  private aiManager: AIAutoPlayManager | undefined;
 
   // Resize handler
   private boundResizeHandler: (() => void) | null = null;
@@ -140,6 +144,7 @@ export class Game {
       },
       onToggleGodMode: () => this.toggleGodMode(),
       onToggleSlowMode: () => this.toggleSlowMode(),
+      onToggleAI: () => this.toggleAI(),
     });
     this.uiController.init();
 
@@ -164,6 +169,16 @@ export class Game {
           }
         }
       }
+    );
+
+    // AI manager
+    this.aiManager = new AIAutoPlayManager(
+      this.world,
+      services.get('placementManager'),
+      services.get('upgradeManager'),
+      services.get('resourceManager'),
+      services.get('gameState'),
+      () => this.gameplayManager.getKobayashiMaruId()
     );
 
     // Input router
@@ -251,6 +266,11 @@ export class Game {
     // Gameplay: game logic
     this.loopManager.onGameplay((dt) => {
       this.gameplayManager.update(dt);
+
+      // Update AI auto-play if enabled
+      if (this.aiManager?.isEnabled()) {
+        this.aiManager.update(dt, this.gameplayManager.getGameTime());
+      }
     });
 
     // Physics: ECS systems
@@ -455,6 +475,36 @@ export class Game {
   getSystemManager() { return getServices().get('systemManager'); }
   getHapticManager() { return getServices().get('hapticManager'); }
   getInputManager() { return getServices().get('inputManager'); }
+
+  // AI Auto-Play methods
+  /**
+   * Toggle AI auto-play on/off.
+   */
+  toggleAI(): boolean {
+    if (!this.aiManager) return false;
+    return this.aiManager.toggle();
+  }
+
+  /**
+   * Check if AI auto-play is enabled.
+   */
+  isAIEnabled(): boolean {
+    return this.aiManager?.isEnabled() ?? false;
+  }
+
+  /**
+   * Get current AI status for UI display.
+   */
+  getAIStatus(): AIStatus | null {
+    return this.aiManager?.getStatus() ?? null;
+  }
+
+  /**
+   * Set AI personality.
+   */
+  setAIPersonality(personality: AIPersonality): void {
+    this.aiManager?.setPersonality(personality);
+  }
 
   /**
    * Clean up resources.

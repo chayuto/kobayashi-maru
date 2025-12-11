@@ -21,6 +21,7 @@ import { ToggleButton } from './components';
 export interface HUDCallbacks {
   onToggleGodMode: () => void;
   onToggleSlowMode: () => void;
+  onToggleAI?: () => void;
 }
 
 /**
@@ -59,6 +60,10 @@ export class HUDManager {
   // Toggle buttons
   private godModeButton: ToggleButton | null = null;
   private slowModeButton: ToggleButton | null = null;
+  private aiButton: ToggleButton | null = null;
+
+  // AI state
+  private aiEnabled: boolean = false;
 
   // Bound event handler for cleanup
   private boundResizeHandler: (() => void) | null = null;
@@ -90,6 +95,7 @@ export class HUDManager {
     this.createStatsPanel();
     this.createGodModeButton();
     this.createSlowModeButton();
+    this.createAIButton();
 
     // Create Turret Menu
     this.turretMenu = new TurretMenu();
@@ -217,6 +223,12 @@ export class HUDManager {
     if (this.slowModeButton) {
       this.slowModeButton.setScale(scale);
       this.slowModeButton.setPosition(padding, padding + (100 * scale) + padding + (40 * scale) + padding + (90 * scale) + padding + (toggleBtnHeight * scale) + padding);
+    }
+
+    // Update AI Button
+    if (this.aiButton) {
+      this.aiButton.setScale(scale);
+      this.aiButton.setPosition(padding, padding + (100 * scale) + padding + (40 * scale) + padding + (90 * scale) + padding + (toggleBtnHeight * scale) * 2 + padding * 2);
     }
   }
 
@@ -424,6 +436,25 @@ export class HUDManager {
   }
 
   /**
+   * Create AI auto-play toggle button using ToggleButton component
+   */
+  private createAIButton(): void {
+    const padding = UI_STYLES.PADDING;
+    const toggleBtnHeight = ToggleButton.getDimensions().height;
+    const x = padding;
+    const y = padding + 100 + padding + 40 + padding + 90 + padding + toggleBtnHeight * 2 + padding * 2;
+
+    this.aiButton = new ToggleButton({
+      label: '🤖 AI AUTO',
+      enabledColor: 0x00FF88,
+      onClick: () => this.callbacks?.onToggleAI?.(),
+      isEnabled: () => this.aiEnabled
+    });
+    this.aiButton.init(this.container);
+    this.aiButton.setPosition(x, y);
+  }
+
+  /**
    * Update all HUD elements with new data
    * @param data - HUD data to display
    */
@@ -487,6 +518,11 @@ export class HUDManager {
       this.slowModeEnabled = data.slowModeEnabled;
     }
 
+    // Update AI enabled state
+    if (data.aiEnabled !== undefined) {
+      this.aiEnabled = data.aiEnabled;
+    }
+
     // Update message log fade effect
     if (this.messageLog) {
       this.messageLog.update();
@@ -532,6 +568,7 @@ export class HUDManager {
     if (this.turretUpgradePanel) this.turretUpgradePanel.destroy();
     if (this.godModeButton) this.godModeButton.destroy();
     if (this.slowModeButton) this.slowModeButton.destroy();
+    if (this.aiButton) this.aiButton.destroy();
 
     // Remove resize listener
     if (this.boundResizeHandler) {

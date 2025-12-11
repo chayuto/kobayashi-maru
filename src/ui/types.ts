@@ -27,4 +27,6 @@ export interface HUDData {
   // Cheat modes
   godModeEnabled?: boolean;
   slowModeEnabled?: boolean;
+  // AI Auto-Play
+  aiEnabled?: boolean;
 }

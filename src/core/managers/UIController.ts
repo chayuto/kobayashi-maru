@@ -30,6 +30,8 @@ export interface UICallbacks {
     // Cheat modes
     onToggleGodMode?: () => void;
     onToggleSlowMode?: () => void;
+    // AI Auto-Play
+    onToggleAI?: () => void;
 }
 
 // HUDData imported from ui/types
@@ -68,6 +70,7 @@ export class UIController {
         hudManager.init(this.app, {
             onToggleGodMode: () => this.callbacks.onToggleGodMode?.(),
             onToggleSlowMode: () => this.callbacks.onToggleSlowMode?.(),
+            onToggleAI: () => this.callbacks.onToggleAI?.(),
         });
 
         // Connect turret menu
