@@ -2,6 +2,16 @@ import { Application, Container, Graphics, TilingSprite, Texture } from 'pixi.js
 import { GAME_CONFIG } from '../types';
 import { RENDERING_CONFIG } from '../config';
 
+// Star color palettes for depth
+const STAR_COLORS = {
+    BACKGROUND: [0x8888CC, 0x9999DD, 0xAAAAEE, 0x7777BB], // Distant blue/purple stars
+    MIDGROUND: [0xFFFFFF, 0xFFEEDD, 0xDDEEFF, 0xEEFFFF],  // White variations
+    FOREGROUND: [0xFFFFFF, 0xFFFFAA, 0xAAFFFF, 0xFFAAFF]  // Bright whites with color hints
+};
+
+// Nebula colors for cosmic depth
+const NEBULA_COLORS = [0x442266, 0x224466, 0x443355, 0x335544, 0x553344];
+
 export class Starfield {
     private app: Application;
     private container: Container;
@@ -20,14 +30,53 @@ export class Starfield {
     }
 
     public init(starCountMultiplier: number = 1.0): void {
-        // Create 3 layers of stars, scaled by multiplier
-        this.createLayer(Math.floor(50 * starCountMultiplier), 0.05, 0.5);   // Background
-        this.createLayer(Math.floor(100 * starCountMultiplier), 0.1, 0.8);   // Midground
-        this.createLayer(Math.floor(150 * starCountMultiplier), 0.2, 1.0);   // Foreground
+        // Create nebula layer first (behind stars)
+        this.createNebulaLayer();
+
+        // Create 3 layers of stars with different colors, scaled by multiplier
+        this.createStarLayer(Math.floor(50 * starCountMultiplier), 0.05, 0.5, STAR_COLORS.BACKGROUND);
+        this.createStarLayer(Math.floor(100 * starCountMultiplier), 0.1, 0.8, STAR_COLORS.MIDGROUND);
+        this.createStarLayer(Math.floor(150 * starCountMultiplier), 0.2, 1.0, STAR_COLORS.FOREGROUND);
     }
 
-    private createLayer(starCount: number, speed: number, baseScale: number): void {
-        const texture = this.generateStarTexture(baseScale, starCount);
+    private createNebulaLayer(): void {
+        const graphics = new Graphics();
+        const width = 1024;
+        const height = 1024;
+
+        // Draw soft nebula patches
+        for (let i = 0; i < 8; i++) {
+            const x = Math.random() * width;
+            const y = Math.random() * height;
+            const radiusX = 80 + Math.random() * 120;
+            const radiusY = 60 + Math.random() * 100;
+            const color = NEBULA_COLORS[Math.floor(Math.random() * NEBULA_COLORS.length)];
+
+            // Soft outer glow
+            graphics.ellipse(x, y, radiusX, radiusY);
+            graphics.fill({ color, alpha: 0.08 });
+            graphics.ellipse(x, y, radiusX * 0.7, radiusY * 0.7);
+            graphics.fill({ color, alpha: 0.06 });
+            graphics.ellipse(x, y, radiusX * 0.4, radiusY * 0.4);
+            graphics.fill({ color, alpha: 0.04 });
+        }
+
+        const texture = this.app.renderer.generateTexture(graphics);
+        const tilingSprite = new TilingSprite({
+            texture,
+            width: GAME_CONFIG.WORLD_WIDTH,
+            height: GAME_CONFIG.WORLD_HEIGHT,
+        });
+
+        tilingSprite.tilePosition.x = Math.random() * GAME_CONFIG.WORLD_WIDTH;
+        tilingSprite.tilePosition.y = Math.random() * GAME_CONFIG.WORLD_HEIGHT;
+
+        this.container.addChild(tilingSprite);
+        this.layers.push({ sprite: tilingSprite, speed: 0.02 }); // Very slow parallax
+    }
+
+    private createStarLayer(starCount: number, speed: number, baseScale: number, colorPalette: number[]): void {
+        const texture = this.generateStarTexture(baseScale, starCount, colorPalette);
         const tilingSprite = new TilingSprite({
             texture,
             width: GAME_CONFIG.WORLD_WIDTH,
@@ -42,20 +91,30 @@ export class Starfield {
         this.layers.push({ sprite: tilingSprite, speed });
     }
 
-    private generateStarTexture(baseScale: number, starCount: number): Texture {
+    private generateStarTexture(baseScale: number, starCount: number, colorPalette: number[]): Texture {
         const graphics = new Graphics();
         const width = 1024;
         const height = 1024;
 
-        // Draw random stars on a 1024x1024 texture
         for (let i = 0; i < starCount; i++) {
             const x = Math.random() * width;
             const y = Math.random() * height;
             const radius = (Math.random() * 1.5 + 0.5) * baseScale;
             const alpha = Math.random() * 0.5 + 0.5;
+            const color = colorPalette[Math.floor(Math.random() * colorPalette.length)];
 
+            // Add occasional brighter "highlight" stars with glow halo
+            if (Math.random() < 0.08 && baseScale >= 0.8) {
+                // Glow halo
+                graphics.circle(x, y, radius * 3);
+                graphics.fill({ color, alpha: alpha * 0.15 });
+                graphics.circle(x, y, radius * 2);
+                graphics.fill({ color, alpha: alpha * 0.3 });
+            }
+
+            // Star core
             graphics.circle(x, y, radius);
-            graphics.fill({ color: 0xFFFFFF, alpha });
+            graphics.fill({ color, alpha });
         }
 
         return this.app.renderer.generateTexture(graphics);
@@ -73,3 +132,4 @@ export class Starfield {
         this.container.destroy({ children: true });
     }
 }
+

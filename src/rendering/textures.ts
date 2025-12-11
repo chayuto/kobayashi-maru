@@ -45,119 +45,164 @@ function createFederationTexture(app: Application, color: number): RenderTexture
 
 /**
  * Generate Kobayashi Maru (Constitution-class refit style) texture
- * A detailed, impressive looking Federation flagship
+ * Premium detailed Federation flagship with glowing effects
  */
-function createKobayashiMaruTexture(app: Application, color: number): RenderTexture {
+function createKobayashiMaruTexture(app: Application, _color: number): RenderTexture {
   const graphics = new Graphics();
   const size = KOBAYASHI_MARU_SIZE;
   const centerX = size / 2;
   const centerY = size / 2;
 
-  // === SAUCER SECTION (top) ===
+  // === OUTER SHIELD GLOW (draw first, behind everything) ===
+  // Triple-layer shield effect for depth
+  graphics.ellipse(centerX, centerY, 39, 33);
+  graphics.stroke({ color: 0x00FFFF, width: 4, alpha: 0.15 });
+  graphics.ellipse(centerX, centerY, 37, 31);
+  graphics.stroke({ color: 0x44FFFF, width: 2, alpha: 0.25 });
+  graphics.ellipse(centerX, centerY, 35, 29);
+  graphics.stroke({ color: 0x88FFFF, width: 1, alpha: 0.35 });
+
+  // === WARP NACELLES (pylons and pods) - Draw before hull for layering ===
   const saucerY = centerY - 12;
-  const saucerRadiusX = 28;
-  const saucerRadiusY = 22;
-
-  // Main saucer hull - elliptical for perspective
-  graphics.ellipse(centerX, saucerY, saucerRadiusX, saucerRadiusY);
-  graphics.fill({ color });
-
-  // Saucer rim glow
-  graphics.ellipse(centerX, saucerY, saucerRadiusX - 2, saucerRadiusY - 2);
-  graphics.stroke({ color: 0x66DDBB, width: 2, alpha: 0.6 });
-
-  // Bridge dome (center top)
-  graphics.circle(centerX, saucerY - 4, 6);
-  graphics.fill({ color: 0xFFFFFF, alpha: 0.9 });
-  graphics.circle(centerX, saucerY - 4, 4);
-  graphics.fill({ color: 0x99EEFF, alpha: 0.8 });
-
-  // Bridge windows ring
-  for (let i = 0; i < 8; i++) {
-    const angle = (i * Math.PI * 2) / 8;
-    const wx = centerX + Math.cos(angle) * 10;
-    const wy = saucerY - 4 + Math.sin(angle) * 8;
-    graphics.circle(wx, wy, 1.5);
-  }
-  graphics.fill({ color: 0xFFDD88, alpha: 0.9 });
-
-  // === ENGINEERING HULL (neck and body) ===
-  const neckWidth = 6;
   const hullY = centerY + 8;
-
-  // Neck connecting saucer to engineering
-  graphics.rect(centerX - neckWidth / 2, saucerY + saucerRadiusY - 4, neckWidth, 14);
-  graphics.fill({ color: 0x228866 });
-
-  // Engineering hull (main body)
-  graphics.ellipse(centerX, hullY + 8, 10, 14);
-  graphics.fill({ color });
-
-  // Deflector dish (glowing blue)
-  graphics.ellipse(centerX, hullY + 20, 6, 4);
-  graphics.fill({ color: 0x0088FF, alpha: 0.9 });
-  graphics.ellipse(centerX, hullY + 20, 4, 2.5);
-  graphics.fill({ color: 0x66CCFF, alpha: 1.0 });
-
-  // Engineering hull detail lines
-  graphics.moveTo(centerX - 8, hullY + 2);
-  graphics.lineTo(centerX + 8, hullY + 2);
-  graphics.moveTo(centerX - 6, hullY + 10);
-  graphics.lineTo(centerX + 6, hullY + 10);
-  graphics.stroke({ color: 0x44AA88, width: 1, alpha: 0.5 });
-
-  // === WARP NACELLES (pylons and pods) ===
   const pylonStartY = hullY;
   const pylonEndY = saucerY - 8;
   const nacelleX = 32;
 
-  // Left pylon
+  // Left nacelle body with glow halo
+  const leftNacelleX = centerX - nacelleX;
+  graphics.roundRect(leftNacelleX - 5, pylonEndY - 19, 10, 28, 4);
+  graphics.fill({ color: 0x006666, alpha: 0.5 }); // Glow halo
+  graphics.roundRect(leftNacelleX - 4, pylonEndY - 18, 8, 26, 3);
+  graphics.fill({ color: 0x008877 }); // Darker, richer teal body
+
+  // Left nacelle bussard collector (VIBRANT red-orange glow)
+  graphics.circle(leftNacelleX, pylonEndY - 16, 7);
+  graphics.fill({ color: 0xFF2200, alpha: 0.4 }); // Outer glow
+  graphics.circle(leftNacelleX, pylonEndY - 16, 5);
+  graphics.fill({ color: 0xFF4400, alpha: 0.9 });
+  graphics.circle(leftNacelleX, pylonEndY - 16, 3);
+  graphics.fill({ color: 0xFFAA66, alpha: 1.0 }); // Hot core
+
+  // Left nacelle warp glow (BRILLIANT blue plasma)
+  graphics.rect(leftNacelleX - 3, pylonEndY - 10, 6, 18);
+  graphics.fill({ color: 0x0066FF, alpha: 0.5 }); // Outer glow
+  graphics.rect(leftNacelleX - 2, pylonEndY - 10, 4, 16);
+  graphics.fill({ color: 0x00AAFF, alpha: 0.9 });
+  graphics.rect(leftNacelleX - 1, pylonEndY - 8, 2, 12);
+  graphics.fill({ color: 0x88EEFF, alpha: 1.0 }); // Hot plasma core
+
+  // Right nacelle body with glow halo
+  const rightNacelleX = centerX + nacelleX;
+  graphics.roundRect(rightNacelleX - 5, pylonEndY - 19, 10, 28, 4);
+  graphics.fill({ color: 0x006666, alpha: 0.5 }); // Glow halo
+  graphics.roundRect(rightNacelleX - 4, pylonEndY - 18, 8, 26, 3);
+  graphics.fill({ color: 0x008877 });
+
+  // Right nacelle bussard collector (VIBRANT red-orange glow)
+  graphics.circle(rightNacelleX, pylonEndY - 16, 7);
+  graphics.fill({ color: 0xFF2200, alpha: 0.4 }); // Outer glow
+  graphics.circle(rightNacelleX, pylonEndY - 16, 5);
+  graphics.fill({ color: 0xFF4400, alpha: 0.9 });
+  graphics.circle(rightNacelleX, pylonEndY - 16, 3);
+  graphics.fill({ color: 0xFFAA66, alpha: 1.0 }); // Hot core
+
+  // Right nacelle warp glow (BRILLIANT blue plasma)
+  graphics.rect(rightNacelleX - 3, pylonEndY - 10, 6, 18);
+  graphics.fill({ color: 0x0066FF, alpha: 0.5 }); // Outer glow
+  graphics.rect(rightNacelleX - 2, pylonEndY - 10, 4, 16);
+  graphics.fill({ color: 0x00AAFF, alpha: 0.9 });
+  graphics.rect(rightNacelleX - 1, pylonEndY - 8, 2, 12);
+  graphics.fill({ color: 0x88EEFF, alpha: 1.0 }); // Hot plasma core
+
+  // Pylons with gradient effect
   graphics.moveTo(centerX - 4, pylonStartY);
   graphics.lineTo(centerX - nacelleX + 4, pylonEndY);
-  graphics.stroke({ color: 0x44AA77, width: 3 });
+  graphics.stroke({ color: 0x00AA88, width: 4 });
+  graphics.moveTo(centerX - 4, pylonStartY);
+  graphics.lineTo(centerX - nacelleX + 4, pylonEndY);
+  graphics.stroke({ color: 0x00DDBB, width: 2 });
 
-  // Right pylon  
   graphics.moveTo(centerX + 4, pylonStartY);
   graphics.lineTo(centerX + nacelleX - 4, pylonEndY);
-  graphics.stroke({ color: 0x44AA77, width: 3 });
+  graphics.stroke({ color: 0x00AA88, width: 4 });
+  graphics.moveTo(centerX + 4, pylonStartY);
+  graphics.lineTo(centerX + nacelleX - 4, pylonEndY);
+  graphics.stroke({ color: 0x00DDBB, width: 2 });
 
-  // Left nacelle
-  const leftNacelleX = centerX - nacelleX;
-  graphics.roundRect(leftNacelleX - 4, pylonEndY - 18, 8, 26, 3);
-  graphics.fill({ color: 0x336655 });
+  // === SAUCER SECTION ===
+  const saucerRadiusX = 28;
+  const saucerRadiusY = 22;
 
-  // Left nacelle bussard collector (front glow)
-  graphics.circle(leftNacelleX, pylonEndY - 16, 5);
-  graphics.fill({ color: 0xFF4422, alpha: 0.9 });
-  graphics.circle(leftNacelleX, pylonEndY - 16, 3);
-  graphics.fill({ color: 0xFF8866, alpha: 1.0 });
+  // Saucer outer glow
+  graphics.ellipse(centerX, saucerY, saucerRadiusX + 2, saucerRadiusY + 2);
+  graphics.fill({ color: 0x00DDCC, alpha: 0.2 });
 
-  // Left nacelle warp glow (blue plasma)
-  graphics.rect(leftNacelleX - 2, pylonEndY - 10, 4, 16);
-  graphics.fill({ color: 0x0099FF, alpha: 0.8 });
-  graphics.rect(leftNacelleX - 1, pylonEndY - 8, 2, 12);
-  graphics.fill({ color: 0x66DDFF, alpha: 1.0 });
+  // Main saucer hull
+  graphics.ellipse(centerX, saucerY, saucerRadiusX, saucerRadiusY);
+  graphics.fill({ color: 0x00BBAA }); // Richer teal
 
-  // Right nacelle
-  const rightNacelleX = centerX + nacelleX;
-  graphics.roundRect(rightNacelleX - 4, pylonEndY - 18, 8, 26, 3);
-  graphics.fill({ color: 0x336655 });
+  // Saucer rim highlight (metallic sheen)
+  graphics.ellipse(centerX, saucerY, saucerRadiusX - 1, saucerRadiusY - 1);
+  graphics.stroke({ color: 0x00FFDD, width: 1.5, alpha: 0.7 });
+  graphics.ellipse(centerX, saucerY - 2, saucerRadiusX - 4, saucerRadiusY - 4);
+  graphics.stroke({ color: 0x44FFEE, width: 1, alpha: 0.5 });
 
-  // Right nacelle bussard collector (front glow)
-  graphics.circle(rightNacelleX, pylonEndY - 16, 5);
-  graphics.fill({ color: 0xFF4422, alpha: 0.9 });
-  graphics.circle(rightNacelleX, pylonEndY - 16, 3);
-  graphics.fill({ color: 0xFF8866, alpha: 1.0 });
+  // Bridge dome (center top) with glow
+  graphics.circle(centerX, saucerY - 4, 8);
+  graphics.fill({ color: 0x88FFFF, alpha: 0.3 }); // Glow
+  graphics.circle(centerX, saucerY - 4, 6);
+  graphics.fill({ color: 0xFFFFFF, alpha: 0.95 });
+  graphics.circle(centerX, saucerY - 4, 4);
+  graphics.fill({ color: 0xAAFFFF, alpha: 0.9 });
 
-  // Right nacelle warp glow (blue plasma)
-  graphics.rect(rightNacelleX - 2, pylonEndY - 10, 4, 16);
-  graphics.fill({ color: 0x0099FF, alpha: 0.8 });
-  graphics.rect(rightNacelleX - 1, pylonEndY - 8, 2, 12);
-  graphics.fill({ color: 0x66DDFF, alpha: 1.0 });
+  // Bridge windows ring (BRIGHT running lights)
+  for (let i = 0; i < 12; i++) {
+    const angle = (i * Math.PI * 2) / 12;
+    const wx = centerX + Math.cos(angle) * 12;
+    const wy = saucerY - 4 + Math.sin(angle) * 10;
+    // Glow halo
+    graphics.circle(wx, wy, 2.5);
+    graphics.fill({ color: 0xFFEE66, alpha: 0.4 });
+    // Light core
+    graphics.circle(wx, wy, 1.5);
+    graphics.fill({ color: 0xFFFFAA, alpha: 1.0 });
+  }
 
-  // === SHIELD EFFECT (subtle outer glow) ===
-  graphics.ellipse(centerX, centerY, 38, 32);
-  graphics.stroke({ color: 0x44FFFF, width: 2, alpha: 0.3 });
+  // Saucer edge running lights (evenly spaced)
+  for (let i = 0; i < 16; i++) {
+    const angle = (i * Math.PI * 2) / 16;
+    const lx = centerX + Math.cos(angle) * (saucerRadiusX - 3);
+    const ly = saucerY + Math.sin(angle) * (saucerRadiusY - 3);
+    graphics.circle(lx, ly, 1);
+    graphics.fill({ color: 0xFFFFFF, alpha: 0.8 });
+  }
+
+  // === ENGINEERING HULL ===
+  const neckWidth = 7;
+
+  // Neck connecting saucer to engineering
+  graphics.rect(centerX - neckWidth / 2, saucerY + saucerRadiusY - 4, neckWidth, 14);
+  graphics.fill({ color: 0x009988 });
+
+  // Engineering hull (main body)
+  graphics.ellipse(centerX, hullY + 8, 11, 15);
+  graphics.fill({ color: 0x00BBAA });
+
+  // Deflector dish (BRILLIANT glowing blue)
+  graphics.ellipse(centerX, hullY + 20, 8, 5);
+  graphics.fill({ color: 0x0066FF, alpha: 0.5 }); // Outer glow
+  graphics.ellipse(centerX, hullY + 20, 6, 4);
+  graphics.fill({ color: 0x0099FF, alpha: 0.9 });
+  graphics.ellipse(centerX, hullY + 20, 4, 2.5);
+  graphics.fill({ color: 0x66DDFF, alpha: 1.0 }); // Core
+
+  // Engineering hull detail lines
+  graphics.moveTo(centerX - 9, hullY + 2);
+  graphics.lineTo(centerX + 9, hullY + 2);
+  graphics.moveTo(centerX - 7, hullY + 10);
+  graphics.lineTo(centerX + 7, hullY + 10);
+  graphics.stroke({ color: 0x00FFCC, width: 1, alpha: 0.4 });
 
   return renderToTexture(app, graphics, size, size);
 }

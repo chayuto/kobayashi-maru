@@ -1,6 +1,6 @@
 /**
  * UI Styling Constants for Kobayashi Maru HUD System
- * LCARS-inspired color scheme and layout values
+ * LCARS-inspired color scheme and layout values - Enhanced for premium look
  */
 
 export const UI_STYLES = {
@@ -12,12 +12,15 @@ export const UI_STYLES = {
   BAR_HEIGHT: 20,
   BAR_WIDTH: 300,
   COLORS: {
-    PRIMARY: 0xFF9900,    // LCARS Golden Orange
-    SECONDARY: 0x99CCFF,  // LCARS Galaxy Blue
-    HEALTH: 0x33CC99,     // Federation Teal
-    SHIELD: 0x66AAFF,     // Shield Blue
-    DANGER: 0xDD4444,     // Red for low health
-    BACKGROUND: 0x000000,
-    TEXT: 0xFFFFFF        // White text
+    PRIMARY: 0xFF9922,      // Warmer LCARS orange
+    SECONDARY: 0x66DDFF,    // Brighter galaxy blue
+    ACCENT: 0xFF66AA,       // Pink accent for highlights
+    HEALTH: 0x00FFAA,       // Vibrant health green
+    SHIELD: 0x44BBFF,       // Electric shield blue
+    DANGER: 0xFF4455,       // Brighter warning red
+    BACKGROUND: 0x0A0A1A,   // Deep space blue-black
+    TEXT: 0xEEFFFF,         // Slight cyan tint
+    GLOW: 0x00FFCC          // Glow effect color
   }
 } as const;
+
