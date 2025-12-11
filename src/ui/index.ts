@@ -11,7 +11,6 @@ export { GameOverScreen, calculateScore } from './GameOverScreen';
 export { PauseOverlay } from './PauseOverlay';
 export { ResponsiveUIManager } from './ResponsiveUIManager';
 export { MobileControlsOverlay } from './MobileControlsOverlay';
-export { OrientationOverlay } from './OrientationOverlay';
 export { MessageLog } from './MessageLog';
 export type { HUDData } from './types';
 

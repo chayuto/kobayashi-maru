@@ -4,7 +4,6 @@
  */
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { ResponsiveUIManager, DeviceType } from '../ui/ResponsiveUIManager';
-import { Application, Container } from 'pixi.js';
 
 // Mock PixiJS
 vi.mock('pixi.js', async () => {
@@ -41,19 +40,9 @@ vi.mock('pixi.js', async () => {
 
 describe('ResponsiveUIManager', () => {
     let responsiveUIManager: ResponsiveUIManager;
-    let mockApp: Application;
-    let mockStage: Container;
 
     beforeEach(() => {
-        mockStage = new Container();
-        mockApp = {
-            stage: mockStage,
-            renderer: {
-                resize: vi.fn()
-            }
-        } as unknown as Application;
-
-        responsiveUIManager = new ResponsiveUIManager(mockApp);
+        responsiveUIManager = new ResponsiveUIManager();
     });
 
     afterEach(() => {
@@ -89,31 +78,5 @@ describe('ResponsiveUIManager', () => {
 
         expect(responsiveUIManager.getDeviceType()).toBe(DeviceType.TABLET);
         expect(responsiveUIManager.getScaleFactor()).toBe(0.8);
-    });
-
-    it('should show orientation overlay on mobile portrait', () => {
-        // Mock mobile portrait
-        Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 375 });
-        Object.defineProperty(window, 'innerHeight', { writable: true, configurable: true, value: 667 });
-
-        // Trigger resize
-        window.dispatchEvent(new Event('resize'));
-
-        // Access private overlay property via any cast or check visible children
-        // The overlay container is added to stage
-        const overlayContainer = mockStage.children[0] as Container;
-        expect(overlayContainer.visible).toBe(true);
-    });
-
-    it('should hide orientation overlay on mobile landscape', () => {
-        // Mock mobile landscape
-        Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 667 });
-        Object.defineProperty(window, 'innerHeight', { writable: true, configurable: true, value: 375 });
-
-        // Trigger resize
-        window.dispatchEvent(new Event('resize'));
-
-        const overlayContainer = mockStage.children[0] as Container;
-        expect(overlayContainer.visible).toBe(false);
     });
 });

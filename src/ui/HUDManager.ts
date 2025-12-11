@@ -80,7 +80,7 @@ export class HUDManager {
   init(app: Application, callbacks?: HUDCallbacks): void {
     this.app = app;
     this.callbacks = callbacks ?? null;
-    this.responsiveUIManager = new ResponsiveUIManager(app);
+    this.responsiveUIManager = new ResponsiveUIManager();
 
     // Add HUD container to stage (on top of everything)
     this.app.stage.addChild(this.container);

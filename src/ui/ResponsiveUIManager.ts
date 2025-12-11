@@ -1,5 +1,3 @@
-import { Application } from 'pixi.js';
-import { OrientationOverlay } from './OrientationOverlay';
 
 export enum DeviceType {
     MOBILE = 'MOBILE',
@@ -8,16 +6,10 @@ export enum DeviceType {
 }
 
 export class ResponsiveUIManager {
-    private app: Application;
     private currentDeviceType: DeviceType = DeviceType.DESKTOP;
     private scaleFactor: number = 1;
-    private orientationOverlay: OrientationOverlay;
 
-    constructor(app: Application) {
-        this.app = app;
-        this.orientationOverlay = new OrientationOverlay();
-        this.app.stage.addChild(this.orientationOverlay.container);
-
+    constructor() {
         this.updateDimensions();
         window.addEventListener('resize', this.updateDimensions.bind(this));
     }
@@ -39,14 +31,6 @@ export class ResponsiveUIManager {
             this.currentDeviceType = DeviceType.DESKTOP;
             this.scaleFactor = 1.0;
         }
-
-        // Handle orientation overlay
-        if (isPortrait && width < 1024) { // Only show on mobile/tablet portrait
-            this.orientationOverlay.updateLayout(width, height);
-            this.orientationOverlay.show();
-        } else {
-            this.orientationOverlay.hide();
-        }
     }
 
     getScaleFactor(): number {
@@ -63,7 +47,6 @@ export class ResponsiveUIManager {
     }
 
     destroy(): void {
-        this.orientationOverlay.destroy();
         window.removeEventListener('resize', this.updateDimensions.bind(this));
     }
 }
