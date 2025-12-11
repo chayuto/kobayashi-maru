@@ -47,6 +47,15 @@ export const AUTOPLAY_CONFIG = {
     /** Penalty for overlapping turret coverage (0-1) */
     COVERAGE_OVERLAP_PENALTY: 0.3,
 
+    /** Weight for threat interception when scoring positions (0-1) */
+    THREAT_INTERCEPT_WEIGHT: 0.6,
+
+    /** Maximum distance from approach path to consider (pixels) */
+    APPROACH_PATH_TOLERANCE: 120,
+
+    /** Weight for preferring defensive positions closer to KM (0-1) */
+    DEFENSIVE_DISTANCE_WEIGHT: 0.4,
+
     // =========================================================================
     // RESOURCES
     // =========================================================================

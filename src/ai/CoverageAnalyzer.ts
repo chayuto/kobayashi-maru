@@ -13,7 +13,7 @@ import { FactionId } from '../types/config/factions';
 import { AUTOPLAY_CONFIG } from '../config/autoplay.config';
 import { GAME_CONFIG } from '../types/constants';
 import type { GameWorld } from '../ecs/world';
-import type { CoverageMap, SectorData } from './types';
+import type { CoverageMap, SectorData, ThreatVector } from './types';
 
 /**
  * Analyzes turret coverage for AI decision-making.
@@ -219,8 +219,9 @@ export class CoverageAnalyzer {
 
     /**
      * Find the best position for a new turret in a sector
+     * Uses threat data to prefer positions that intercept enemy approach paths
      */
-    findBestPositionInSector(sectorIndex: number): { x: number; y: number } {
+    findBestPositionInSector(sectorIndex: number, threats?: ThreatVector[]): { x: number; y: number } {
         if (sectorIndex < 0 || sectorIndex >= this.sectors.length) {
             // Default to center
             return {
@@ -230,27 +231,29 @@ export class CoverageAnalyzer {
         }
 
         const sector = this.sectors[sectorIndex];
+        const kmX = GAME_CONFIG.WORLD_WIDTH / 2;
+        const kmY = GAME_CONFIG.WORLD_HEIGHT / 2;
 
-        // Start at sector center
-        let bestX = sector.x;
-        let bestY = sector.y;
-        let lowestCoverage = this.getCoverageAtPosition(bestX, bestY);
-
-        // Sample grid within sector to find lowest coverage point
-        const samples = 4;
+        // Sample grid within sector
+        const samples = 5;
         const stepX = sector.width / samples;
         const stepY = sector.height / samples;
         const startX = sector.x - sector.width / 2 + stepX / 2;
         const startY = sector.y - sector.height / 2 + stepY / 2;
 
+        let bestX = sector.x;
+        let bestY = sector.y;
+        let bestScore = -Infinity;
+
         for (let i = 0; i < samples; i++) {
             for (let j = 0; j < samples; j++) {
                 const testX = startX + i * stepX;
                 const testY = startY + j * stepY;
-                const coverage = this.getCoverageAtPosition(testX, testY);
 
-                if (coverage < lowestCoverage) {
-                    lowestCoverage = coverage;
+                const score = this.scorePosition(testX, testY, kmX, kmY, threats);
+
+                if (score > bestScore) {
+                    bestScore = score;
                     bestX = testX;
                     bestY = testY;
                 }
@@ -258,5 +261,87 @@ export class CoverageAnalyzer {
         }
 
         return { x: bestX, y: bestY };
+    }
+
+    /**
+     * Score a position based on threat interception and coverage
+     */
+    private scorePosition(
+        x: number,
+        y: number,
+        kmX: number,
+        kmY: number,
+        threats?: ThreatVector[]
+    ): number {
+        let score = 0;
+        const interceptWeight = AUTOPLAY_CONFIG.THREAT_INTERCEPT_WEIGHT;
+        const defenseWeight = AUTOPLAY_CONFIG.DEFENSIVE_DISTANCE_WEIGHT;
+        const pathTolerance = AUTOPLAY_CONFIG.APPROACH_PATH_TOLERANCE;
+
+        // 1. Penalize existing coverage (prefer less covered areas)
+        const existingCoverage = this.getCoverageAtPosition(x, y);
+        score -= existingCoverage * 20;
+
+        // 2. Score based on distance from KM (prefer defensive ring)
+        const distFromKM = Math.sqrt((x - kmX) ** 2 + (y - kmY) ** 2);
+        const optimalDist = AUTOPLAY_CONFIG.OPTIMAL_KM_DISTANCE;
+        const distPenalty = Math.abs(distFromKM - optimalDist) / 100;
+        score += (1 - distPenalty) * 30 * defenseWeight;
+
+        // 3. Score based on threat interception
+        if (threats && threats.length > 0) {
+            let interceptScore = 0;
+            const maxThreatsToConsider = Math.min(10, threats.length);
+
+            for (let i = 0; i < maxThreatsToConsider; i++) {
+                const threat = threats[i];
+
+                // Calculate distance from position to the line between enemy and KM
+                const distToPath = this.distanceToLine(
+                    x, y,
+                    threat.position.x, threat.position.y,
+                    kmX, kmY
+                );
+
+                // Score based on how close position is to approach path
+                if (distToPath < pathTolerance) {
+                    const pathScore = 1 - (distToPath / pathTolerance);
+                    // Weight by threat level
+                    interceptScore += pathScore * (threat.threatLevel / 100);
+                }
+            }
+
+            // Normalize by number of threats considered
+            score += (interceptScore / maxThreatsToConsider) * 50 * interceptWeight;
+        }
+
+        return score;
+    }
+
+    /**
+     * Calculate distance from point to line segment
+     */
+    private distanceToLine(
+        px: number, py: number,
+        x1: number, y1: number,
+        x2: number, y2: number
+    ): number {
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        const lengthSq = dx * dx + dy * dy;
+
+        if (lengthSq === 0) {
+            // Line segment is a point
+            return Math.sqrt((px - x1) ** 2 + (py - y1) ** 2);
+        }
+
+        // Project point onto line, clamping to segment
+        let t = ((px - x1) * dx + (py - y1) * dy) / lengthSq;
+        t = Math.max(0, Math.min(1, t));
+
+        const projX = x1 + t * dx;
+        const projY = y1 + t * dy;
+
+        return Math.sqrt((px - projX) ** 2 + (py - projY) ** 2);
     }
 }

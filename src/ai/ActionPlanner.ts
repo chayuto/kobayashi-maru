@@ -77,8 +77,9 @@ export class ActionPlanner {
             return null;
         }
 
-        // Find best position in weakest sector
-        const position = this.coverageAnalyzer.findBestPositionInSector(weakestSector);
+        // Find best position in weakest sector, using threat data
+        const threats = this.threatAnalyzer.analyzeThreats();
+        const position = this.coverageAnalyzer.findBestPositionInSector(weakestSector, threats);
 
         // Calculate priority based on coverage gap
         const threatLevel = this.threatAnalyzer.getOverallThreatLevel();
