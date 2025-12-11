@@ -4,10 +4,11 @@
  * When enemies reach the ship, they explode and deal damage
  */
 import { query, World, hasComponent } from 'bitecs';
-import { Position, Health, Faction, AIBehavior, Shield } from '../ecs/components';
+import { Position, Health, Faction, AIBehavior } from '../ecs/components';
 import { FactionId, GAME_CONFIG } from '../types/constants';
 import { ParticleSystem, EFFECTS } from '../rendering';
 import { AudioManager, SoundType } from '../audio';
+import { applyDamage } from '../services';
 
 /**
  * Creates the enemy collision system that handles enemy-ship collisions
@@ -72,7 +73,7 @@ export function createEnemyCollisionSystem(
         entitiesToDestroy.push(eid);
 
         // Deal damage to Kobayashi Maru (shields first, then hull)
-        dealDamageToTarget(kmId, GAME_CONFIG.ENEMY_COLLISION_DAMAGE);
+        applyDamage(world, kmId, GAME_CONFIG.ENEMY_COLLISION_DAMAGE);
 
         // Spawn explosion effect at enemy position
         if (particleSystem) {
@@ -99,26 +100,6 @@ export function createEnemyCollisionSystem(
     return world;
   }
 
-  /**
-   * Deal damage to a target entity, applying to shields first then hull
-   */
-  function dealDamageToTarget(targetId: number, damage: number): void {
-    let remainingDamage = damage;
-
-    // Apply damage to shields first
-    const currentShield = Shield.current[targetId] ?? 0;
-    if (currentShield > 0) {
-      const shieldDamage = Math.min(currentShield, remainingDamage);
-      Shield.current[targetId] = currentShield - shieldDamage;
-      remainingDamage -= shieldDamage;
-    }
-
-    // Apply remaining damage to hull
-    if (remainingDamage > 0) {
-      const currentHealth = Health.current[targetId] ?? 0;
-      Health.current[targetId] = Math.max(0, currentHealth - remainingDamage);
-    }
-  }
 
   return {
     update: enemyCollisionSystem,
