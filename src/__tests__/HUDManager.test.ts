@@ -319,12 +319,12 @@ describe('HUDManager', () => {
 
 describe('UI_STYLES', () => {
   it('should have expected color constants', () => {
-    expect(UI_STYLES.COLORS.PRIMARY).toBe(0xFF9900);
-    expect(UI_STYLES.COLORS.SECONDARY).toBe(0x99CCFF);
-    expect(UI_STYLES.COLORS.HEALTH).toBe(0x33CC99);
-    expect(UI_STYLES.COLORS.SHIELD).toBe(0x66AAFF);
-    expect(UI_STYLES.COLORS.DANGER).toBe(0xDD4444);
-    expect(UI_STYLES.COLORS.BACKGROUND).toBe(0x000000);
+    expect(UI_STYLES.COLORS.PRIMARY).toBe(0xFF9922);
+    expect(UI_STYLES.COLORS.SECONDARY).toBe(0x66DDFF);
+    expect(UI_STYLES.COLORS.HEALTH).toBe(0x00FFAA);
+    expect(UI_STYLES.COLORS.SHIELD).toBe(0x44BBFF);
+    expect(UI_STYLES.COLORS.DANGER).toBe(0xFF4455);
+    expect(UI_STYLES.COLORS.BACKGROUND).toBe(0x0A0A1A);
   });
 
   it('should have expected sizing constants', () => {

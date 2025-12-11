@@ -29,11 +29,9 @@ export function createProjectileSystem(spatialHash: SpatialHash) {
             // 1. Update lifetime
             Projectile.lifetime[eid] -= deltaTime;
             if (Projectile.lifetime[eid] <= 0) {
-                if (Projectile.lifetime[eid] <= 0) {
-                    // Return to pool instead of destroying
-                    PoolManager.getInstance().releaseProjectile(eid);
-                    continue;
-                }
+                // Return to pool instead of destroying
+                PoolManager.getInstance().releaseProjectile(eid);
+                continue;
             }
 
             // 2. Movement is handled by movementSystem, but we might want homing logic here later
@@ -92,10 +90,8 @@ export function createProjectileSystem(spatialHash: SpatialHash) {
             }
 
             if (hit) {
-                if (hit) {
-                    // Return to pool instead of destroying
-                    PoolManager.getInstance().releaseProjectile(eid);
-                }
+                // Return to pool instead of destroying
+                PoolManager.getInstance().releaseProjectile(eid);
             }
         }
 
