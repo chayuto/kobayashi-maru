@@ -18,7 +18,9 @@ import {
 } from '../ecs/components';
 import { FactionId } from '../types/config/factions';
 import { AUTOPLAY_CONFIG } from '../config/autoplay.config';
-import { GAME_CONFIG } from '../types/constants';
+import { GAME_CONFIG, AIBehaviorType } from '../types/constants';
+import { BehaviorPredictor, BehaviorPrediction } from './behaviors/BehaviorPredictor';
+import { BehaviorCounterSelector, CounterRecommendation } from './behaviors/BehaviorCounterSelector';
 import type { GameWorld } from '../ecs/world';
 import type { ThreatVector } from './types';
 
@@ -31,6 +33,8 @@ export class ThreatAnalyzer {
     private kmX: number;
     private kmY: number;
     private getKobayashiMaruId: () => number;
+    private behaviorPredictor: BehaviorPredictor;
+    private counterSelector: BehaviorCounterSelector;
 
     constructor(world: GameWorld, getKobayashiMaruId: () => number) {
         this.world = world;
@@ -38,6 +42,8 @@ export class ThreatAnalyzer {
         // Default to center
         this.kmX = GAME_CONFIG.WORLD_WIDTH / 2;
         this.kmY = GAME_CONFIG.WORLD_HEIGHT / 2;
+        this.behaviorPredictor = new BehaviorPredictor();
+        this.counterSelector = new BehaviorCounterSelector();
     }
 
     /**
@@ -211,5 +217,60 @@ export class ThreatAnalyzer {
      */
     getHighestThreats(count: number = 5): ThreatVector[] {
         return this.analyzeThreats().slice(0, count);
+    }
+
+    /**
+     * Get predicted positions for a threat
+     */
+    getPredictedPositions(threat: ThreatVector, timeHorizon: number = 5.0): BehaviorPrediction {
+        return this.behaviorPredictor.predict(
+            threat.position.x,
+            threat.position.y,
+            threat.velocity.x,
+            threat.velocity.y,
+            threat.behaviorType,
+            threat.entityId,
+            timeHorizon
+        );
+    }
+
+    /**
+     * Get dominant behavior type among current threats
+     */
+    getDominantBehavior(): number {
+        const threats = this.analyzeThreats();
+        const behaviorCounts: Record<number, number> = {};
+
+        for (const threat of threats) {
+            behaviorCounts[threat.behaviorType] = (behaviorCounts[threat.behaviorType] || 0) + 1;
+        }
+
+        let dominant: number = AIBehaviorType.DIRECT;
+        let maxCount = 0;
+
+        for (const [behavior, count] of Object.entries(behaviorCounts)) {
+            if (count > maxCount) {
+                maxCount = count;
+                dominant = parseInt(behavior);
+            }
+        }
+
+        return dominant;
+    }
+
+    /**
+     * Get turret counter recommendations based on threat composition
+     */
+    getCounterRecommendations(availableResources: number): CounterRecommendation[] {
+        const threats = this.analyzeThreats();
+        return this.counterSelector.selectCounter(threats, availableResources);
+    }
+
+    /**
+     * Get placement strategy based on dominant behavior
+     */
+    getPlacementStrategy(): ReturnType<BehaviorCounterSelector['getPlacementStrategy']> {
+        const dominant = this.getDominantBehavior();
+        return this.counterSelector.getPlacementStrategy(dominant);
     }
 }

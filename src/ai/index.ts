@@ -23,3 +23,7 @@ export { ThreatInfluenceMap } from './spatial/ThreatInfluenceMap';
 export { CoverageInfluenceMap } from './spatial/CoverageInfluenceMap';
 export { PathInterceptor } from './spatial/PathInterceptor';
 export { ApproachCorridorAnalyzer } from './spatial/ApproachCorridorAnalyzer';
+
+// Behavior analysis
+export { BehaviorPredictor } from './behaviors/BehaviorPredictor';
+export { BehaviorCounterSelector } from './behaviors/BehaviorCounterSelector';
