@@ -238,18 +238,24 @@ export class HUDManager {
       this.aiButton.setPosition(padding, padding + (100 * scale) + padding + (40 * scale) + padding + (90 * scale) + padding + (toggleBtnHeight * scale) * 2 + padding * 2);
     }
 
-    // Update AI Panel (right side, below resource panel)
+    // Update AI Panel (left side, below toggle buttons)
     if (this.aiPanel) {
-      const aiPanelDims = AIPanel.getDimensions();
+      const toggleBtnHeight = ToggleButton.getDimensions().height;
       this.aiPanel.setScale(scale);
-      this.aiPanel.setPosition(width - (aiPanelDims.width * scale) - padding, padding + (70 * scale) + padding);
+      // Position below the AI toggle button (which is the 3rd toggle button)
+      const aiPanelY = padding + (100 * scale) + padding + (40 * scale) + padding + (90 * scale) + padding + (toggleBtnHeight * scale) * 3 + padding * 3 + padding;
+      this.aiPanel.setPosition(padding, aiPanelY);
     }
 
-    // Update AI Thought Feed (bottom center-left, above message log)
+    // Update AI Thought Feed (left side, below AI Panel)
     if (this.aiThoughtFeed) {
-      const feedDims = AIThoughtFeed.getDimensions();
+      const { height: aiPanelHeight } = AIPanel.getDimensions();
+      const toggleBtnHeight = ToggleButton.getDimensions().height;
       this.aiThoughtFeed.setScale(scale);
-      this.aiThoughtFeed.setPosition(padding + (200 * scale), height - (feedDims.height * scale) - (100 * scale) - padding);
+      // Position below AI Panel
+      const aiPanelY = padding + (100 * scale) + padding + (40 * scale) + padding + (90 * scale) + padding + (toggleBtnHeight * scale) * 3 + padding * 3 + padding;
+      const feedY = aiPanelY + (aiPanelHeight * scale) + padding;
+      this.aiThoughtFeed.setPosition(padding, feedY);
     }
   }
 
@@ -482,18 +488,22 @@ export class HUDManager {
     const padding = UI_STYLES.PADDING;
 
     // AI Panel - shows commander status, mood, phase
+    // Positioned on left side, below the toggle buttons
+    const toggleBtnHeight = ToggleButton.getDimensions().height;
     this.aiPanel = new AIPanel();
     this.aiPanel.init();
     const aiPanelDims = AIPanel.getDimensions();
-    this.aiPanel.setPosition(GAME_CONFIG.WORLD_WIDTH - aiPanelDims.width - padding, padding + 70 + padding);
+    const aiPanelY = padding + 100 + padding + 40 + padding + 90 + padding + toggleBtnHeight * 3 + padding * 3 + padding;
+    this.aiPanel.setPosition(padding, aiPanelY);
     this.aiPanel.hide(); // Hide until AI is enabled
     this.container.addChild(this.aiPanel.getContainer());
 
     // AI Thought Feed - scrolling message log
+    // Positioned below AI Panel on left side
     this.aiThoughtFeed = new AIThoughtFeed();
     this.aiThoughtFeed.init();
-    const feedDims = AIThoughtFeed.getDimensions();
-    this.aiThoughtFeed.setPosition(padding + 200, GAME_CONFIG.WORLD_HEIGHT - feedDims.height - 100 - padding);
+    const feedY = aiPanelY + aiPanelDims.height + padding;
+    this.aiThoughtFeed.setPosition(padding, feedY);
     this.aiThoughtFeed.hide(); // Hide until AI is enabled
     this.container.addChild(this.aiThoughtFeed.getContainer());
   }

@@ -198,25 +198,43 @@ const MOOD_MESSAGES: Record<AIMood, Record<AIPersonality, string[]>> = {
 export class AIMoodEngine {
     private lastMood: AIMood = AIMood.CALM;
     private moodStability: number = 0; // Prevents rapid mood swings
+    private lastMessage: string = 'Standing by.';
+    private lastMessageTime: number = 0;
+    private static readonly MIN_MESSAGE_CHANGE_INTERVAL = 5000; // 5 seconds between message changes
 
     /**
      * Calculate current AI mood based on game situation
      */
     calculateMood(context: MoodContext): MoodResult {
         const newMood = this.determineMood(context);
+        const now = Date.now();
 
         // Apply mood stability (prevent rapid changes)
         if (newMood !== this.lastMood) {
             this.moodStability++;
             if (this.moodStability < 3) {
-                // Keep old mood for stability
-                return this.createMoodResult(this.lastMood, context.personality);
+                // Keep old mood and message for stability
+                return { mood: this.lastMood, message: this.lastMessage };
             }
         }
 
+        // Mood changed - reset stability and pick new message
+        if (newMood !== this.lastMood) {
+            this.moodStability = 0;
+            this.lastMood = newMood;
+            this.lastMessage = this.pickMessage(newMood, context.personality);
+            this.lastMessageTime = now;
+            return { mood: newMood, message: this.lastMessage };
+        }
+
+        // Same mood - only change message if enough time has passed
         this.moodStability = 0;
-        this.lastMood = newMood;
-        return this.createMoodResult(newMood, context.personality);
+        if (now - this.lastMessageTime > AIMoodEngine.MIN_MESSAGE_CHANGE_INTERVAL) {
+            this.lastMessage = this.pickMessage(newMood, context.personality);
+            this.lastMessageTime = now;
+        }
+
+        return { mood: newMood, message: this.lastMessage };
     }
 
     /**
@@ -263,12 +281,11 @@ export class AIMoodEngine {
     }
 
     /**
-     * Create mood result with personality-flavored message
+     * Pick a random message for the given mood and personality
      */
-    private createMoodResult(mood: AIMood, personality: AIPersonality): MoodResult {
+    private pickMessage(mood: AIMood, personality: AIPersonality): string {
         const messages = MOOD_MESSAGES[mood]?.[personality] ?? MOOD_MESSAGES[mood]?.[AIPersonality.BALANCED] ?? ['...'];
-        const message = messages[Math.floor(Math.random() * messages.length)];
-        return { mood, message };
+        return messages[Math.floor(Math.random() * messages.length)];
     }
 
     /**
@@ -323,5 +340,7 @@ export class AIMoodEngine {
     reset(): void {
         this.lastMood = AIMood.CALM;
         this.moodStability = 0;
+        this.lastMessage = 'Standing by.';
+        this.lastMessageTime = 0;
     }
 }

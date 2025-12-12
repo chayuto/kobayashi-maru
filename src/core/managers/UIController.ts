@@ -16,6 +16,8 @@ import type { GameplaySnapshot } from './GameplayManager';
 import type { CombatSystem } from '../../systems/combatSystem';
 import type { ScoreData } from '../../game/scoreManager';
 import type { HUDData } from '../../ui/types';
+import type { AIStatusExtended } from '../../ai/types';
+import type { AIMessage } from '../../ai/humanization/AIMessageGenerator';
 
 /**
  * UI action callbacks
@@ -156,6 +158,20 @@ export class UIController {
      */
     addLogMessage(message: string, type: 'kill' | 'wave' | 'warning' | 'info' = 'info'): void {
         getServices().get('hudManager').addLogMessage(message, type);
+    }
+
+    /**
+     * Update AI HUD with extended AI status.
+     */
+    updateAI(status: AIStatusExtended): void {
+        getServices().get('hudManager').updateAI(status);
+    }
+
+    /**
+     * Add a message to the AI thought feed.
+     */
+    addAIMessage(message: AIMessage): void {
+        getServices().get('hudManager').addAIMessage(message);
     }
 
     // ==========================================================================

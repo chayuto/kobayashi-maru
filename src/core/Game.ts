@@ -297,6 +297,21 @@ export class Game {
       const turretCount = query(this.world, [Turret]).length;
 
       this.uiController.updateHUD(snapshot, this.combatSystem, turretCount);
+
+      // Update AI HUD (shows AI panel when enabled)
+      if (this.aiManager) {
+        // Update HUD context for mood calculation
+        this.aiManager.updateHUDContext({
+          waveNumber: snapshot.waveNumber,
+          isBossWave: snapshot.waveNumber % 5 === 0, // Boss every 5 waves
+          kmHealthPercent: (snapshot.kmHealth / snapshot.kmMaxHealth) * 100,
+          resources: snapshot.resources,
+        });
+
+        // Update AI panel with extended status
+        this.uiController.updateAI(this.aiManager.getExtendedStatus());
+      }
+
       this.uiController.updateDebug(snapshot);
       this.uiController.updateEntityCount();
     });
