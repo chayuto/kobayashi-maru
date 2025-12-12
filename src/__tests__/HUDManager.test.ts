@@ -32,6 +32,10 @@ vi.mock('pixi.js', async () => {
     fill = vi.fn().mockReturnThis();
     stroke = vi.fn().mockReturnThis();
     circle = vi.fn().mockReturnThis();
+    poly = vi.fn().mockReturnThis();
+    rect = vi.fn().mockReturnThis();
+    moveTo = vi.fn().mockReturnThis();
+    lineTo = vi.fn().mockReturnThis();
     destroy = vi.fn();
     children: unknown[] = [];
     addChild = vi.fn((child) => {

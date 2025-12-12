@@ -135,69 +135,171 @@ export class TurretMenu {
     }
 
     /**
-     * Create a simple icon representation for each turret type
+     * Create a turret icon showing the actual turret shape (base + barrel)
      * @param turretType - Type of turret
      * @returns Container with turret icon
      */
     private createTurretIcon(turretType: number): Container {
         const icon = new Container();
         const graphics = new Graphics();
+        const size = 28; // Icon size
+        const center = size / 2;
+        const radius = size / 2 - 2;
 
-        // Use simple circles/rectangles for maximum compatibility
-        // Different colors distinguish turret types
         switch (turretType) {
             case TurretType.PHASER_ARRAY:
-                // Phaser: Yellow double circle (fast firing)
-                graphics.circle(0, 0, 12);
+                // Phaser: Hexagon base with barrel
+                this.drawPolygon(graphics, 6, center, center, radius, 0, 0x3366AA);
+                graphics.stroke({ color: 0xFFFFFF, width: 1, alpha: 0.5 });
+                // Barrel
+                graphics.rect(center - 2, 0, 4, center);
                 graphics.fill({ color: 0xFFCC00 });
-                graphics.circle(0, 0, 6);
-                graphics.fill({ color: 0xFFFFAA });
+                // Cap
+                graphics.circle(center, center, 4);
+                graphics.fill({ color: 0xFFFFFF });
                 break;
+
             case TurretType.TORPEDO_LAUNCHER:
-                // Torpedo: Orange circle with center (long range)
-                graphics.circle(0, 0, 12);
+                // Torpedo: Octagon base with dual barrels
+                this.drawPolygon(graphics, 8, center, center, radius, 0, 0x444444);
+                graphics.stroke({ color: 0xFFFFFF, width: 1, alpha: 0.5 });
+                // Dual barrels
+                graphics.rect(center - 5, 0, 3, center);
+                graphics.rect(center + 2, 0, 3, center);
                 graphics.fill({ color: 0xFF6600 });
-                graphics.circle(0, 0, 4);
-                graphics.fill({ color: 0xFFAA44 });
+                // Cap
+                graphics.circle(center, center, 3);
+                graphics.fill({ color: 0xAAAAAA });
                 break;
+
             case TurretType.DISRUPTOR_BANK:
-                // Disruptor: Green circle (balanced)
-                graphics.circle(0, 0, 12);
-                graphics.fill({ color: 0x00FF00 });
-                graphics.circle(0, 0, 8);
-                graphics.fill({ color: 0x88FF88 });
+                // Disruptor: Pentagon base with triangular barrel
+                this.drawPolygon(graphics, 5, center, center, radius, -Math.PI / 2, 0x228822);
+                graphics.stroke({ color: 0xFFFFFF, width: 1, alpha: 0.5 });
+                // Barrel (triangle)
+                graphics.poly([
+                    center, 2,
+                    center - 4, center,
+                    center + 4, center
+                ]);
+                graphics.fill({ color: 0x66FF66 });
                 break;
+
             case TurretType.TETRYON_BEAM:
-                // Tetryon: Cyan circle (shield damage)
-                graphics.circle(0, 0, 12);
-                graphics.fill({ color: 0x00CCFF });
-                graphics.circle(0, 0, 6);
-                graphics.fill({ color: 0x66EEFF });
+                // Tetryon: Diamond base with V-barrel
+                graphics.poly([
+                    center, 2,           // Top
+                    size - 2, center,    // Right
+                    center, size - 2,    // Bottom
+                    2, center            // Left
+                ]);
+                graphics.fill({ color: 0x00AAAA });
+                graphics.stroke({ color: 0x66FFFF, width: 1.5, alpha: 0.7 });
+                // V-shaped emitters
+                graphics.moveTo(center - 3, center);
+                graphics.lineTo(center, 3);
+                graphics.lineTo(center + 3, center);
+                graphics.stroke({ color: 0x00FFFF, width: 2 });
+                // Core
+                graphics.circle(center, center, 3);
+                graphics.fill({ color: 0x44DDDD });
                 break;
+
             case TurretType.PLASMA_CANNON:
-                // Plasma: Red/orange layered circles (burning)
-                graphics.circle(0, 0, 12);
+                // Plasma: 6-pointed star base with flame barrel
+                this.drawStar(graphics, center, center, radius, radius / 2, 6, 0xCC4400);
+                graphics.stroke({ color: 0xFF8800, width: 1, alpha: 0.8 });
+                // Flame barrel
+                graphics.poly([
+                    center - 4, center,
+                    center, 0,
+                    center + 4, center
+                ]);
                 graphics.fill({ color: 0xFF4400 });
-                graphics.circle(-3, -3, 7);
-                graphics.fill({ color: 0xFF8800 });
-                graphics.circle(3, 2, 5);
-                graphics.fill({ color: 0xFFCC00 });
+                // Flame tip
+                graphics.circle(center, 3, 2);
+                graphics.fill({ color: 0xFFAA00, alpha: 0.9 });
+                // Core
+                graphics.circle(center, center, 3);
+                graphics.fill({ color: 0xAA3300 });
                 break;
+
             case TurretType.POLARON_BEAM:
-                // Polaron: Purple circle (draining)
-                graphics.circle(0, 0, 12);
-                graphics.fill({ color: 0x9933FF });
-                graphics.circle(0, 0, 7);
-                graphics.fill({ color: 0xCC99FF });
+                // Polaron: Triangle base with beam emitter
+                graphics.poly([
+                    center, 2,                                    // Top
+                    center + radius * 0.866, center + radius / 2, // Bottom right
+                    center - radius * 0.866, center + radius / 2  // Bottom left
+                ]);
+                graphics.fill({ color: 0x6633AA });
+                graphics.stroke({ color: 0xAA66FF, width: 1.5, alpha: 0.6 });
+                // Emitter
+                graphics.rect(center - 2, 0, 4, center - 2);
+                graphics.fill({ color: 0x8844CC });
+                // Energy rings
+                graphics.circle(center, center, 4);
+                graphics.stroke({ color: 0xAA66FF, width: 1.5, alpha: 0.7 });
+                graphics.circle(center, center, 2);
+                graphics.fill({ color: 0xCC88FF });
                 break;
+
             default:
                 // Default: Simple circle
-                graphics.circle(0, 0, 10);
+                graphics.circle(center, center, radius);
                 graphics.fill({ color: UI_STYLES.COLORS.SECONDARY });
         }
 
         icon.addChild(graphics);
+        // Center the icon by offsetting for the container position
+        graphics.position.set(-center, -center);
         return icon;
+    }
+
+    /**
+     * Draw a regular polygon
+     */
+    private drawPolygon(
+        graphics: Graphics,
+        sides: number,
+        cx: number,
+        cy: number,
+        radius: number,
+        startAngle: number,
+        fillColor: number
+    ): void {
+        const points: number[] = [];
+        for (let i = 0; i < sides; i++) {
+            const angle = startAngle + (i * 2 * Math.PI) / sides;
+            points.push(cx + radius * Math.cos(angle));
+            points.push(cy + radius * Math.sin(angle));
+        }
+        graphics.poly(points);
+        graphics.fill({ color: fillColor });
+    }
+
+    /**
+     * Draw a star shape
+     */
+    private drawStar(
+        graphics: Graphics,
+        cx: number,
+        cy: number,
+        outerRadius: number,
+        innerRadius: number,
+        points: number,
+        fillColor: number
+    ): void {
+        const starPoints: number[] = [];
+        for (let i = 0; i < points; i++) {
+            const outerAngle = (i * Math.PI * 2) / points - Math.PI / 2;
+            const innerAngle = outerAngle + Math.PI / points;
+            starPoints.push(cx + outerRadius * Math.cos(outerAngle));
+            starPoints.push(cy + outerRadius * Math.sin(outerAngle));
+            starPoints.push(cx + innerRadius * Math.cos(innerAngle));
+            starPoints.push(cy + innerRadius * Math.sin(innerAngle));
+        }
+        graphics.poly(starPoints);
+        graphics.fill({ color: fillColor });
     }
 
     /**
