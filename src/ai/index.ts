@@ -32,3 +32,13 @@ export { BehaviorCounterSelector } from './behaviors/BehaviorCounterSelector';
 export { ScoringCurves } from './utility/ScoringCurves';
 export { ActionBucketing } from './utility/ActionBucketing';
 export { DecisionInertia } from './utility/DecisionInertia';
+
+// Humanization
+export { AIHumanizer } from './humanization/AIHumanizer';
+export { DynamicDifficultyAdjuster } from './humanization/DynamicDifficultyAdjuster';
+
+// Synergy
+export { SynergyDetector } from './behaviors/SynergyDetector';
+
+// Prediction
+export { WavePredictor } from './prediction/WavePredictor';
