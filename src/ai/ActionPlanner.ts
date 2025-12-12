@@ -10,7 +10,9 @@
 import { query, hasComponent } from 'bitecs';
 import { TURRET_CONFIG, TurretType, UpgradePath, UPGRADE_CONFIG } from '../types/constants';
 import { AUTOPLAY_CONFIG } from '../config/autoplay.config';
-import { Turret, TurretUpgrade, Position } from '../ecs/components';
+import { Turret, TurretUpgrade, Position, Faction } from '../ecs/components';
+import { FactionId } from '../types/config/factions';
+import { PathInterceptor, InterceptionConfig } from './spatial/PathInterceptor';
 import type { GameWorld } from '../ecs/world';
 import type { ResourceManager } from '../game/resourceManager';
 import type { ThreatAnalyzer } from './ThreatAnalyzer';
@@ -27,6 +29,7 @@ export class ActionPlanner {
     private coverageAnalyzer: CoverageAnalyzer;
     private resourceManager: ResourceManager;
     private world: GameWorld;
+    private pathInterceptor: PathInterceptor;
 
     constructor(
         threatAnalyzer: ThreatAnalyzer,
@@ -38,6 +41,7 @@ export class ActionPlanner {
         this.coverageAnalyzer = coverageAnalyzer;
         this.resourceManager = resourceManager;
         this.world = world;
+        this.pathInterceptor = new PathInterceptor(coverageAnalyzer.getFlowAnalyzer());
     }
 
     /**
@@ -75,15 +79,37 @@ export class ActionPlanner {
     }
 
     /**
-     * Plan a turret placement action
+     * Plan a turret placement action (interception-aware)
      */
     private planPlacement(
         availableResources: number,
         weakestSector: number,
         threats: ThreatVector[]
     ): AIAction | null {
-        // Find best position in weakest sector first - this determines traffic
-        const position = this.coverageAnalyzer.findBestPositionInSector(weakestSector, threats);
+        // Get existing turret positions first  
+        const existingPositions = this.getExistingTurretPositions();
+
+        // Try interception-based placement first
+        const interceptionConfig: InterceptionConfig = {
+            turretRange: 200, // Use average range for initial search
+            minDwellTime: 1.5,
+            maxDistanceFromKM: 400,
+            minDistanceFromKM: 100,
+        };
+
+        const interceptionPoints = this.pathInterceptor.findInterceptionPoints(
+            interceptionConfig,
+            threats,
+            existingPositions
+        );
+
+        // Use best interception point, or fall back to sector-based
+        let position: { x: number; y: number };
+        if (interceptionPoints.length > 0) {
+            position = interceptionPoints[0];
+        } else {
+            position = this.coverageAnalyzer.findBestPositionInSector(weakestSector, threats);
+        }
 
         // Select turret type based on traffic at this position
         const turretType = this.selectTurretTypeForPosition(
@@ -121,6 +147,25 @@ export class ActionPlanner {
             expectedValue: config.damage * config.fireRate * 10,
             params,
         };
+    }
+
+    /**
+     * Get positions of all existing Federation turrets
+     */
+    private getExistingTurretPositions(): { x: number; y: number }[] {
+        const turrets = query(this.world, [Position, Turret, Faction]);
+        const positions: { x: number; y: number }[] = [];
+
+        for (const eid of turrets) {
+            if (Faction.id[eid] === FactionId.FEDERATION) {
+                positions.push({
+                    x: Position.x[eid],
+                    y: Position.y[eid],
+                });
+            }
+        }
+
+        return positions;
     }
 
     /**

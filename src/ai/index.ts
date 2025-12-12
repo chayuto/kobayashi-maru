@@ -21,3 +21,5 @@ export { FlowFieldAnalyzer } from './spatial/FlowFieldAnalyzer';
 export { InfluenceMap } from './spatial/InfluenceMap';
 export { ThreatInfluenceMap } from './spatial/ThreatInfluenceMap';
 export { CoverageInfluenceMap } from './spatial/CoverageInfluenceMap';
+export { PathInterceptor } from './spatial/PathInterceptor';
+export { ApproachCorridorAnalyzer } from './spatial/ApproachCorridorAnalyzer';
