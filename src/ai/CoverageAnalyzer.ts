@@ -13,6 +13,8 @@ import { FactionId } from '../types/config/factions';
 import { AUTOPLAY_CONFIG } from '../config/autoplay.config';
 import { GAME_CONFIG } from '../types/constants';
 import { FlowFieldAnalyzer } from './spatial/FlowFieldAnalyzer';
+import { ThreatInfluenceMap } from './spatial/ThreatInfluenceMap';
+import { CoverageInfluenceMap } from './spatial/CoverageInfluenceMap';
 import type { GameWorld } from '../ecs/world';
 import type { CoverageMap, SectorData, ThreatVector } from './types';
 
@@ -27,6 +29,8 @@ export class CoverageAnalyzer {
     private sectorHeight: number;
     private sectors: SectorData[];
     private flowAnalyzer: FlowFieldAnalyzer;
+    private threatMap: ThreatInfluenceMap;
+    private coverageMap: CoverageInfluenceMap;
 
     constructor(
         world: GameWorld,
@@ -41,6 +45,8 @@ export class CoverageAnalyzer {
         this.sectors = this.initializeSectors();
         this.flowAnalyzer = new FlowFieldAnalyzer();
         this.flowAnalyzer.analyze();
+        this.threatMap = new ThreatInfluenceMap(world);
+        this.coverageMap = new CoverageInfluenceMap(world);
     }
 
     /**
@@ -48,6 +54,28 @@ export class CoverageAnalyzer {
      */
     getFlowAnalyzer(): FlowFieldAnalyzer {
         return this.flowAnalyzer;
+    }
+
+    /**
+     * Get the threat influence map
+     */
+    getThreatMap(): ThreatInfluenceMap {
+        return this.threatMap;
+    }
+
+    /**
+     * Get the coverage influence map
+     */
+    getCoverageMap(): CoverageInfluenceMap {
+        return this.coverageMap;
+    }
+
+    /**
+     * Update influence maps with current game state
+     */
+    updateInfluenceMaps(): void {
+        this.threatMap.update();
+        this.coverageMap.update();
     }
 
     /**
