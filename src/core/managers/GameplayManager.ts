@@ -7,9 +7,10 @@
  * @module core/managers/GameplayManager
  */
 
+import { query, removeEntity } from 'bitecs';
 import { getServices } from '../services';
 import { createKobayashiMaru, getEntityCount } from '../../ecs';
-import { Health, Shield } from '../../ecs/components';
+import { Health, Shield, Turret, Projectile, AIBehavior, Position } from '../../ecs/components';
 import { GameStateType } from '../../game/gameState';
 import { calculateScore } from '../../ui';
 import { GAME_CONFIG, GameEventType, EnemyKilledPayload, WaveStartedPayload, WaveCompletedPayload } from '../../types';
@@ -269,11 +270,46 @@ export class GameplayManager {
 
     /**
      * Clear all entities from the world.
+     * This properly removes enemies, turrets, and projectiles from the ECS world.
      */
     private clearAllEntities(): void {
-        // Note: Actual clearing handled by ECS reset in Game.ts or separate manager if implemented
-        // For now we just reset our reference
-        this.kobayashiMaruId = -1;
+        const services = getServices();
+        const spriteManager = services.get('spriteManager');
+
+        // Query and remove all entities with Position (all game entities have Position)
+        // We need to remove sprites and then the entities
+
+        // Remove all turrets (except Kobayashi Maru's built-in weapon is on KM itself)
+        const turrets = query(this.world, [Turret, Position]);
+        for (const eid of turrets) {
+            // Skip the Kobayashi Maru (it has Turret but is handled separately)
+            if (eid === this.kobayashiMaruId) continue;
+            spriteManager.removeSprite(eid);
+            removeEntity(this.world, eid);
+        }
+
+        // Remove all enemies (entities with AIBehavior)
+        const enemies = query(this.world, [AIBehavior]);
+        for (const eid of enemies) {
+            spriteManager.removeSprite(eid);
+            removeEntity(this.world, eid);
+        }
+
+        // Remove all projectiles
+        const projectiles = query(this.world, [Projectile]);
+        for (const eid of projectiles) {
+            spriteManager.removeSprite(eid);
+            removeEntity(this.world, eid);
+        }
+
+        // Remove the Kobayashi Maru itself
+        if (this.kobayashiMaruId !== -1) {
+            spriteManager.removeSprite(this.kobayashiMaruId);
+            removeEntity(this.world, this.kobayashiMaruId);
+            this.kobayashiMaruId = -1;
+        }
+
+        console.log('All entities cleared for restart');
     }
 
     /**
