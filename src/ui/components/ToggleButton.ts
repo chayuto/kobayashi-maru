@@ -46,9 +46,11 @@ export class ToggleButton {
     private label: Text;
     /** Configuration */
     private config: ToggleButtonConfig;
-    /** Button dimensions from config */
-    private static readonly WIDTH = UI_CONFIG.BUTTONS.TOGGLE_WIDTH;
+    /** Button dimensions from config - wide enough for emoji + text labels */
+    private static readonly WIDTH = 130;
     private static readonly HEIGHT = UI_CONFIG.BUTTONS.TOGGLE_HEIGHT;
+    /** Internal padding from edges */
+    private static readonly PADDING = 10;
 
     constructor(config: ToggleButtonConfig) {
         this.config = config;
@@ -74,12 +76,15 @@ export class ToggleButton {
         this.container.eventMode = 'static';
         this.container.cursor = 'pointer';
 
-        // Draw initial background
-        this.drawBackground(false);
+        // Draw initial background with actual enabled state
+        const initialEnabled = this.config.isEnabled();
+        this.drawBackground(initialEnabled);
         this.container.addChild(this.background);
 
-        // Position label
-        this.label.position.set(10, 8);
+        // Position label with internal padding (vertically centered)
+        // Also set initial color based on enabled state
+        this.label.style.fill = initialEnabled ? this.config.enabledColor : 0x888888;
+        this.label.position.set(ToggleButton.PADDING, (ToggleButton.HEIGHT - this.label.height) / 2);
         this.container.addChild(this.label);
 
         // Click handler
@@ -102,6 +107,9 @@ export class ToggleButton {
         });
 
         parent.addChild(this.container);
+
+        // Sync visual state with actual initial state
+        this.sync();
     }
 
     /**

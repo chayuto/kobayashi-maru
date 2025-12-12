@@ -2,7 +2,7 @@
  * HUD Manager for Kobayashi Maru
  * Manages all in-game HUD elements including wave info, resources, score, and Kobayashi Maru status
  */
-import { Application, Container, Graphics, Text, TextStyle } from 'pixi.js';
+import { Application, Container, Graphics } from 'pixi.js';
 import { UI_STYLES } from './styles';
 import { HUDData } from './types';
 
@@ -14,8 +14,9 @@ import { MessageLog } from './MessageLog';
 import { AudioManager } from '../audio';
 import { ResponsiveUIManager } from './ResponsiveUIManager';
 import { WavePanel, ResourcePanel, StatusPanel, CombatStatsPanel, ScorePanel, TurretCountPanel, AIPanel, AIThoughtFeed } from './panels';
-import { ToggleButton } from './components';
-import type { AIStatusExtended } from '../ai/types';
+import { ToggleButton, IconButton } from './components';
+import { AIBrainRenderer } from '../ai/visualization';
+import type { AIStatusExtended, ThreatVector, SectorData } from '../ai/types';
 import type { AIMessage } from '../ai/humanization/AIMessageGenerator';
 
 // Forward declaration for Game type to avoid circular imports
@@ -24,6 +25,7 @@ export interface HUDCallbacks {
   onToggleGodMode: () => void;
   onToggleSlowMode: () => void;
   onToggleAI?: () => void;
+  onToggleAIBrain?: () => void;
 }
 
 /**
@@ -58,15 +60,18 @@ export class HUDManager {
   private aiPanel: AIPanel | null = null;
   private aiThoughtFeed: AIThoughtFeed | null = null;
 
-  // Sound mute button
-  private muteButton: Container | null = null;
-  private muteIcon: Graphics | null = null;
-  private muteLabel: Text | null = null;
+  // Sound mute button (using IconButton component)
+  private muteButton: IconButton | null = null;
 
   // Toggle buttons
   private godModeButton: ToggleButton | null = null;
   private slowModeButton: ToggleButton | null = null;
   private aiButton: ToggleButton | null = null;
+  private aiBrainButton: ToggleButton | null = null;
+
+  // AI Brain visualization
+  private aiBrainRenderer: AIBrainRenderer | null = null;
+  private aiBrainEnabled: boolean = false;
 
   // AI state
   private aiEnabled: boolean = false;
@@ -102,6 +107,7 @@ export class HUDManager {
     this.createGodModeButton();
     this.createSlowModeButton();
     this.createAIButton();
+    this.createAIBrainButton();
     this.createAIPanel();
 
     // Create Turret Menu
@@ -179,8 +185,8 @@ export class HUDManager {
 
     // Update Mute Button
     if (this.muteButton) {
-      this.muteButton.scale.set(scale);
-      this.muteButton.position.set(padding, padding + (100 * scale) + padding);
+      this.muteButton.setScale(scale);
+      this.muteButton.setPosition(padding, padding + (100 * scale) + padding);
     }
 
     // Update Combat Stats Panel
@@ -238,12 +244,18 @@ export class HUDManager {
       this.aiButton.setPosition(padding, padding + (100 * scale) + padding + (40 * scale) + padding + (90 * scale) + padding + (toggleBtnHeight * scale) * 2 + padding * 2);
     }
 
+    // Update AI Brain Button (position below AI Button)
+    if (this.aiBrainButton) {
+      this.aiBrainButton.setScale(scale);
+      this.aiBrainButton.setPosition(padding, padding + (100 * scale) + padding + (40 * scale) + padding + (90 * scale) + padding + (toggleBtnHeight * scale) * 3 + padding * 3);
+    }
+
     // Update AI Panel (left side, below toggle buttons)
     if (this.aiPanel) {
       const toggleBtnHeight = ToggleButton.getDimensions().height;
       this.aiPanel.setScale(scale);
-      // Position below the AI toggle button (which is the 3rd toggle button)
-      const aiPanelY = padding + (100 * scale) + padding + (40 * scale) + padding + (90 * scale) + padding + (toggleBtnHeight * scale) * 3 + padding * 3 + padding;
+      // Position below the AI Brain toggle button (which is the 4th toggle button)
+      const aiPanelY = padding + (100 * scale) + padding + (40 * scale) + padding + (90 * scale) + padding + (toggleBtnHeight * scale) * 4 + padding * 4 + padding;
       this.aiPanel.setPosition(padding, aiPanelY);
     }
 
@@ -252,8 +264,8 @@ export class HUDManager {
       const { height: aiPanelHeight } = AIPanel.getDimensions();
       const toggleBtnHeight = ToggleButton.getDimensions().height;
       this.aiThoughtFeed.setScale(scale);
-      // Position below AI Panel
-      const aiPanelY = padding + (100 * scale) + padding + (40 * scale) + padding + (90 * scale) + padding + (toggleBtnHeight * scale) * 3 + padding * 3 + padding;
+      // Position below AI Panel (account for 4th toggle button)
+      const aiPanelY = padding + (100 * scale) + padding + (40 * scale) + padding + (90 * scale) + padding + (toggleBtnHeight * scale) * 4 + padding * 4 + padding;
       const feedY = aiPanelY + (aiPanelHeight * scale) + padding;
       this.aiThoughtFeed.setPosition(padding, feedY);
     }
@@ -324,92 +336,73 @@ export class HUDManager {
 
   /**
    * Create sound mute button in the top-left corner below the wave panel
+   * Uses IconButton component for consistent hover highlight behavior
    */
   private createMuteButton(): void {
     const padding = UI_STYLES.PADDING;
-    const buttonSize = 40;
     const x = padding;
     const y = padding + 100 + padding;
 
-    this.muteButton = new Container();
-    this.muteButton.position.set(x, y);
-    this.muteButton.eventMode = 'static';
-    this.muteButton.cursor = 'pointer';
+    // Icon drawing function that handles speaker + X or sound waves
+    const drawSpeakerIcon = (g: Graphics, active: boolean, colors: typeof UI_STYLES.COLORS) => {
+      const iconColor = active ? colors.PRIMARY : 0x888888;
 
-    const bg = new Graphics();
-    bg.roundRect(0, 0, buttonSize + 60, buttonSize, 8);
-    bg.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.7 });
-    bg.stroke({ color: UI_STYLES.COLORS.SECONDARY, width: 2 });
-    this.muteButton.addChild(bg);
+      // Speaker body (rectangle part)
+      g.rect(0, 6, 6, 8);
+      g.fill({ color: iconColor });
 
-    this.muteIcon = new Graphics();
-    this.updateMuteIcon();
-    this.muteIcon.position.set(8, 8);
-    this.muteButton.addChild(this.muteIcon);
+      // Speaker cone (triangle part)
+      g.moveTo(6, 6);
+      g.lineTo(12, 1);
+      g.lineTo(12, 19);
+      g.lineTo(6, 14);
+      g.closePath();
+      g.fill({ color: iconColor });
 
-    const labelStyle = new TextStyle({
-      fontFamily: UI_STYLES.FONT_FAMILY,
-      fontSize: UI_STYLES.FONT_SIZE_SMALL,
-      fill: UI_STYLES.COLORS.SECONDARY
+      if (active) {
+        // Sound waves when active (not muted)
+        g.arc(12, 10, 4, -0.7, 0.7, false);
+        g.stroke({ color: iconColor, width: 2 });
+        g.arc(12, 10, 7, -0.5, 0.5, false);
+        g.stroke({ color: iconColor, width: 2 });
+      } else {
+        // X mark when muted
+        g.moveTo(14, 4);
+        g.lineTo(20, 16);
+        g.stroke({ color: colors.DANGER, width: 2 });
+        g.moveTo(20, 4);
+        g.lineTo(14, 16);
+        g.stroke({ color: colors.DANGER, width: 2 });
+      }
+    };
+
+    this.muteButton = new IconButton({
+      label: 'SOUND',
+      activeColor: UI_STYLES.COLORS.PRIMARY,
+      inactiveColor: 0x888888,
+      onClick: () => {
+        const audioManager = AudioManager.getInstance();
+        audioManager.toggleMute();
+        // Update the label based on new state
+        const isMuted = audioManager.isMuted();
+        this.muteButton?.setLabel(isMuted ? 'MUTED' : 'SOUND');
+        this.muteButton?.updateVisualState();
+      },
+      isActive: () => {
+        const audioManager = AudioManager.getInstance();
+        return !audioManager.isMuted();
+      },
+      drawIcon: drawSpeakerIcon
     });
-    this.muteLabel = new Text({ text: 'MUTED', style: labelStyle });
-    this.muteLabel.position.set(buttonSize + 2, 12);
-    this.muteButton.addChild(this.muteLabel);
 
-    this.muteButton.on('pointerdown', () => {
-      const audioManager = AudioManager.getInstance();
-      audioManager.toggleMute();
-      this.updateMuteIcon();
-    });
+    this.muteButton.init(this.container);
+    this.muteButton.setPosition(x, y);
 
-    this.muteButton.on('pointerover', () => {
-      bg.stroke({ color: UI_STYLES.COLORS.PRIMARY, width: 3 });
-    });
-    this.muteButton.on('pointerout', () => {
-      bg.stroke({ color: UI_STYLES.COLORS.SECONDARY, width: 2 });
-    });
-
-    this.container.addChild(this.muteButton);
-  }
-
-  /**
-   * Update the mute icon based on current state
-   */
-  private updateMuteIcon(): void {
-    if (!this.muteIcon || !this.muteLabel) return;
-
+    // Set initial label based on current mute state
     const audioManager = AudioManager.getInstance();
     const isMuted = audioManager.isMuted();
-
-    this.muteIcon.clear();
-
-    this.muteIcon.rect(0, 8, 8, 10);
-    this.muteIcon.fill({ color: isMuted ? 0x888888 : UI_STYLES.COLORS.PRIMARY });
-
-    this.muteIcon.moveTo(8, 8);
-    this.muteIcon.lineTo(16, 2);
-    this.muteIcon.lineTo(16, 24);
-    this.muteIcon.lineTo(8, 18);
-    this.muteIcon.closePath();
-    this.muteIcon.fill({ color: isMuted ? 0x888888 : UI_STYLES.COLORS.PRIMARY });
-
-    if (isMuted) {
-      this.muteIcon.moveTo(18, 6);
-      this.muteIcon.lineTo(26, 20);
-      this.muteIcon.stroke({ color: UI_STYLES.COLORS.DANGER, width: 3 });
-      this.muteIcon.moveTo(26, 6);
-      this.muteIcon.lineTo(18, 20);
-      this.muteIcon.stroke({ color: UI_STYLES.COLORS.DANGER, width: 3 });
-      this.muteLabel.text = 'MUTED';
-      this.muteLabel.style.fill = 0x888888;
-    } else {
-      this.muteIcon.arc(16, 13, 6, -0.8, 0.8, false);
-      this.muteIcon.stroke({ color: UI_STYLES.COLORS.PRIMARY, width: 2 });
-      this.muteIcon.arc(16, 13, 10, -0.6, 0.6, false);
-      this.muteIcon.stroke({ color: UI_STYLES.COLORS.PRIMARY, width: 2 });
-      this.muteLabel.text = 'SOUND';
-      this.muteLabel.style.fill = UI_STYLES.COLORS.SECONDARY;
-    }
+    this.muteButton.setLabel(isMuted ? 'MUTED' : 'SOUND');
+    this.muteButton.updateVisualState();
   }
 
   /**
@@ -482,18 +475,54 @@ export class HUDManager {
   }
 
   /**
+   * Create AI Brain toggle button for visualization overlays
+   */
+  private createAIBrainButton(): void {
+    const padding = UI_STYLES.PADDING;
+    const toggleBtnHeight = ToggleButton.getDimensions().height;
+    const x = padding;
+    const y = padding + 100 + padding + 40 + padding + 90 + padding + toggleBtnHeight * 3 + padding * 3;
+
+    this.aiBrainButton = new ToggleButton({
+      label: '👁 SEE AI BRAIN',
+      enabledColor: 0x00FFFF, // Cyan for visibility
+      onClick: () => {
+        this.aiBrainEnabled = !this.aiBrainEnabled;
+
+        // Toggle renderer visibility
+        if (this.aiBrainRenderer) {
+          this.aiBrainRenderer.setEnabled(this.aiBrainEnabled);
+        }
+
+        // Toggle panel expanded mode
+        if (this.aiPanel) {
+          this.aiPanel.setExpandedMode(this.aiBrainEnabled);
+        }
+
+        // Notify callback
+        this.callbacks?.onToggleAIBrain?.();
+
+        return this.aiBrainEnabled;
+      },
+      isEnabled: () => this.aiBrainEnabled
+    });
+    this.aiBrainButton.init(this.container);
+    this.aiBrainButton.setPosition(x, y);
+  }
+
+  /**
    * Create AI Panel and Thought Feed for engagement display
    */
   private createAIPanel(): void {
     const padding = UI_STYLES.PADDING;
 
     // AI Panel - shows commander status, mood, phase
-    // Positioned on left side, below the toggle buttons
+    // Positioned on left side, below the toggle buttons (now 4th slot for AI Brain button)
     const toggleBtnHeight = ToggleButton.getDimensions().height;
     this.aiPanel = new AIPanel();
     this.aiPanel.init();
     const aiPanelDims = AIPanel.getDimensions();
-    const aiPanelY = padding + 100 + padding + 40 + padding + 90 + padding + toggleBtnHeight * 3 + padding * 3 + padding;
+    const aiPanelY = padding + 100 + padding + 40 + padding + 90 + padding + toggleBtnHeight * 4 + padding * 4 + padding;
     this.aiPanel.setPosition(padding, aiPanelY);
     this.aiPanel.hide(); // Hide until AI is enabled
     this.container.addChild(this.aiPanel.getContainer());
@@ -506,6 +535,9 @@ export class HUDManager {
     this.aiThoughtFeed.setPosition(padding, feedY);
     this.aiThoughtFeed.hide(); // Hide until AI is enabled
     this.container.addChild(this.aiThoughtFeed.getContainer());
+
+    // Initialize AI Brain Renderer
+    this.aiBrainRenderer = new AIBrainRenderer();
   }
 
   /**
@@ -525,6 +557,34 @@ export class HUDManager {
       this.aiPanel.hide();
       this.aiThoughtFeed.hide();
     }
+  }
+
+  /**
+   * Update AI Brain visualization with current data
+   * @param status - Extended AI status
+   * @param threats - Current threat vectors
+   * @param sectors - Coverage sector data
+   */
+  updateAIBrain(status: AIStatusExtended, threats: ThreatVector[], sectors: SectorData[]): void {
+    if (!this.aiBrainRenderer || !this.aiBrainEnabled) return;
+
+    this.aiBrainRenderer.setThreats(threats);
+    this.aiBrainRenderer.setSectors(sectors);
+    this.aiBrainRenderer.render(status);
+  }
+
+  /**
+   * Get the AI Brain renderer container for adding to game stage
+   */
+  getAIBrainRenderer(): AIBrainRenderer | null {
+    return this.aiBrainRenderer;
+  }
+
+  /**
+   * Check if AI Brain visualization is enabled
+   */
+  isAIBrainEnabled(): boolean {
+    return this.aiBrainEnabled;
   }
 
   /**
@@ -652,8 +712,10 @@ export class HUDManager {
     if (this.godModeButton) this.godModeButton.destroy();
     if (this.slowModeButton) this.slowModeButton.destroy();
     if (this.aiButton) this.aiButton.destroy();
+    if (this.aiBrainButton) this.aiBrainButton.destroy();
     if (this.aiPanel) this.aiPanel.destroy();
     if (this.aiThoughtFeed) this.aiThoughtFeed.destroy();
+    if (this.aiBrainRenderer) this.aiBrainRenderer.destroy();
 
     // Remove resize listener
     if (this.boundResizeHandler) {

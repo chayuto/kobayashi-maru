@@ -68,9 +68,15 @@ export class AIPanel {
     private coverageBar: Graphics;
     private statsText: Text;
     private initialized: boolean = false;
+    private expandedMode: boolean = false;
+
+    // Expanded mode elements
+    private actionText: Text | null = null;
+    private entityText: Text | null = null;
 
     private static readonly WIDTH = 260;
     private static readonly HEIGHT = 160;
+    private static readonly EXPANDED_HEIGHT = 220;
     private static readonly BAR_WIDTH = 180;
     private static readonly BAR_HEIGHT = 8;
 
@@ -146,6 +152,23 @@ export class AIPanel {
         this.coverageBar.position.set(10, 142);
         this.container.addChild(this.coverageBar);
 
+        // Expanded mode text elements (hidden by default)
+        const expandedStyle = new TextStyle({
+            fontFamily: UI_STYLES.FONT_FAMILY,
+            fontSize: UI_STYLES.FONT_SIZE_SMALL - 1,
+            fill: 0x88CCFF,
+        });
+
+        this.actionText = new Text({ text: '', style: expandedStyle });
+        this.actionText.position.set(10, 158);
+        this.actionText.visible = false;
+        this.container.addChild(this.actionText);
+
+        this.entityText = new Text({ text: '', style: expandedStyle });
+        this.entityText.position.set(10, 178);
+        this.entityText.visible = false;
+        this.container.addChild(this.entityText);
+
         this.initialized = true;
     }
 
@@ -176,6 +199,22 @@ export class AIPanel {
 
         // Update coverage bar
         this.updateBar(this.coverageBar, status.coveragePercent / 100, UI_STYLES.COLORS.HEALTH);
+
+        // Update expanded mode info
+        if (this.expandedMode && this.actionText && this.entityText) {
+            // Action info
+            if (status.plannedAction && status.plannedPosition) {
+                const actionType = status.plannedAction.type.replace('_', ' ');
+                const pos = status.plannedPosition;
+                const score = Math.round(status.plannedAction.expectedValue);
+                this.actionText.text = `⚡ ${actionType} @ (${Math.round(pos.x)}, ${Math.round(pos.y)}) [${score}]`;
+            } else {
+                this.actionText.text = '⚡ Analyzing...';
+            }
+
+            // Entity counts
+            this.entityText.text = `📊 Decisions: ${status.decisionsThisWave} | Success: ${status.successfulActions}`;
+        }
     }
 
     private updateBar(bar: Graphics, percent: number, color: number): void {
@@ -207,6 +246,34 @@ export class AIPanel {
 
     static getDimensions(): { width: number; height: number } {
         return { width: AIPanel.WIDTH, height: AIPanel.HEIGHT };
+    }
+
+    /**
+     * Set expanded mode for showing detailed AI brain info
+     */
+    setExpandedMode(expanded: boolean): void {
+        this.expandedMode = expanded;
+
+        // Show/hide expanded elements
+        if (this.actionText) this.actionText.visible = expanded;
+        if (this.entityText) this.entityText.visible = expanded;
+
+        // Redraw background with new height
+        this.background.clear();
+        const height = expanded ? AIPanel.EXPANDED_HEIGHT : AIPanel.HEIGHT;
+        this.background.roundRect(0, 0, AIPanel.WIDTH, height, 8);
+        this.background.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.85 });
+        this.background.stroke({
+            color: expanded ? 0x00FFFF : UI_STYLES.COLORS.PRIMARY,
+            width: expanded ? 3 : 2,
+        });
+    }
+
+    /**
+     * Check if expanded mode is enabled
+     */
+    isExpandedMode(): boolean {
+        return this.expandedMode;
     }
 
     show(): void {
