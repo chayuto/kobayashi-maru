@@ -27,3 +27,8 @@ export { ApproachCorridorAnalyzer } from './spatial/ApproachCorridorAnalyzer';
 // Behavior analysis
 export { BehaviorPredictor } from './behaviors/BehaviorPredictor';
 export { BehaviorCounterSelector } from './behaviors/BehaviorCounterSelector';
+
+// Utility AI
+export { ScoringCurves } from './utility/ScoringCurves';
+export { ActionBucketing } from './utility/ActionBucketing';
+export { DecisionInertia } from './utility/DecisionInertia';

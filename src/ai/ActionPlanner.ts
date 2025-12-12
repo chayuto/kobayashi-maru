@@ -13,6 +13,9 @@ import { AUTOPLAY_CONFIG } from '../config/autoplay.config';
 import { Turret, TurretUpgrade, Position, Faction } from '../ecs/components';
 import { FactionId } from '../types/config/factions';
 import { PathInterceptor, InterceptionConfig } from './spatial/PathInterceptor';
+import { ScoringCurves } from './utility/ScoringCurves';
+import { ActionBucketing, GameContext } from './utility/ActionBucketing';
+import { DecisionInertia } from './utility/DecisionInertia';
 import type { GameWorld } from '../ecs/world';
 import type { ResourceManager } from '../game/resourceManager';
 import type { ThreatAnalyzer } from './ThreatAnalyzer';
@@ -30,6 +33,7 @@ export class ActionPlanner {
     private resourceManager: ResourceManager;
     private world: GameWorld;
     private pathInterceptor: PathInterceptor;
+    private inertia: DecisionInertia;
 
     constructor(
         threatAnalyzer: ThreatAnalyzer,
@@ -42,40 +46,92 @@ export class ActionPlanner {
         this.resourceManager = resourceManager;
         this.world = world;
         this.pathInterceptor = new PathInterceptor(coverageAnalyzer.getFlowAnalyzer());
+        this.inertia = new DecisionInertia();
     }
 
     /**
-     * Plan actions based on current game state
+     * Plan actions based on current game state (utility-enhanced)
+     * @param currentTime - Current game time in ms (for inertia tracking)
      * @returns Sorted array of actions (highest priority first)
      */
-    planActions(): AIAction[] {
-        const actions: AIAction[] = [];
+    planActions(currentTime: number = 0): AIAction[] {
         const resources = this.resourceManager.getResources();
         const reserve = AUTOPLAY_CONFIG.EMERGENCY_RESERVE;
         const availableResources = Math.max(0, resources - reserve);
 
-        // Analyze coverage and threats
+        // Build game context for bucketing
+        const context = this.buildGameContext();
+
+        // Generate candidate actions
+        const candidates: AIAction[] = [];
+
+        // Coverage analysis
         const coverage = this.coverageAnalyzer.analyze();
         const threats = this.threatAnalyzer.analyzeThreats();
 
-        // Plan placement if coverage is low
-        if (coverage.totalCoverage < AUTOPLAY_CONFIG.UPGRADE_THRESHOLD) {
-            const placement = this.planPlacement(availableResources, coverage.weakestSector, threats);
-            if (placement) {
-                actions.push(placement);
-            }
-        } else {
-            // Coverage is good, consider upgrading existing turrets
-            const upgrade = this.planUpgrade(availableResources, threats);
-            if (upgrade) {
-                actions.push(upgrade);
-            }
+        // Plan placement action with scoring curves
+        const placement = this.planPlacement(availableResources, coverage.weakestSector, threats);
+        if (placement) {
+            // Apply scoring curves to priority
+            const coverageGapScore = ScoringCurves.PRESETS.coverageGap(
+                (1 - coverage.totalCoverage) * 100
+            );
+            const threatScore = ScoringCurves.PRESETS.threatResponse(
+                this.threatAnalyzer.getOverallThreatLevel()
+            );
+
+            placement.priority = 50 + coverageGapScore * 30 + threatScore * 20;
+            candidates.push(placement);
         }
 
-        // Sort by priority (highest first)
-        actions.sort((a, b) => b.priority - a.priority);
+        // Plan upgrade action
+        const upgrade = this.planUpgrade(availableResources, threats);
+        if (upgrade) {
+            candidates.push(upgrade);
+        }
 
-        return actions;
+        // Apply bucketing to filter by context
+        const bucketedActions = ActionBucketing.prioritizeActions(candidates, context);
+
+        // Apply inertia to prevent thrashing
+        const withInertia = this.inertia.applyInertia(bucketedActions, currentTime);
+
+        // Sort by final priority
+        withInertia.sort((a, b) => b.priority - a.priority);
+
+        // Record action if we're going to execute it
+        if (withInertia.length > 0 && this.inertia.shouldSwitch(withInertia[0], currentTime)) {
+            this.inertia.recordAction(withInertia[0], currentTime);
+        }
+
+        return withInertia;
+    }
+
+    /**
+     * Build game context for bucketing decisions
+     */
+    private buildGameContext(): GameContext {
+        const coverage = this.coverageAnalyzer.analyze();
+        const threatLevel = this.threatAnalyzer.getOverallThreatLevel();
+
+        // Estimate health based on threat level (would need KM entity access for real value)
+        const healthPercent = 100 - threatLevel * 0.5;
+
+        return {
+            healthPercent,
+            resources: this.resourceManager.getResources(),
+            threatLevel,
+            coveragePercent: coverage.totalCoverage * 100,
+            waveNumber: 1, // Would need wave manager access
+            isWaveActive: threatLevel > 0,
+        };
+    }
+
+    /**
+     * Reset planner state (e.g., on game restart)
+     */
+    reset(): void {
+        this.inertia.reset();
     }
 
     /**
