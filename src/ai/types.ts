@@ -150,3 +150,52 @@ export interface ExecutionResult {
     reason?: string;
     entityId?: number;
 }
+
+// =============================================================================
+// AI HUD ENGAGEMENT
+// =============================================================================
+
+/**
+ * AI mood states for visual feedback
+ */
+export enum AIMood {
+    CONFIDENT = 'CONFIDENT',
+    CALM = 'CALM',
+    FOCUSED = 'FOCUSED',
+    STRESSED = 'STRESSED',
+    DETERMINED = 'DETERMINED',
+    DESPERATE = 'DESPERATE',
+}
+
+/**
+ * AI strategic phases
+ */
+export enum AIPhase {
+    EARLY_EXPANSION = 'EARLY_EXPANSION',
+    DEFENSIVE_SETUP = 'DEFENSIVE_SETUP',
+    POWER_SCALING = 'POWER_SCALING',
+    BOSS_PREPARATION = 'BOSS_PREPARATION',
+    SURVIVAL_MODE = 'SURVIVAL_MODE',
+}
+
+/**
+ * Extended AI status for engaging HUD display
+ */
+export interface AIStatusExtended extends AIStatus {
+    // Mood system
+    mood: AIMood;
+    moodMessage: string;
+
+    // Strategic intent
+    currentPhase: AIPhase;
+    phaseFocus: 'economy' | 'defense' | 'dps';
+
+    // Planning visibility
+    plannedAction: AIAction | null;
+    plannedPosition: { x: number; y: number } | null;
+    upgradeTarget: number | null;  // turret entity ID
+
+    // Performance
+    decisionsThisWave: number;
+    successfulActions: number;
+}

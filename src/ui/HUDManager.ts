@@ -13,8 +13,10 @@ import { MobileControlsOverlay } from './MobileControlsOverlay';
 import { MessageLog } from './MessageLog';
 import { AudioManager } from '../audio';
 import { ResponsiveUIManager } from './ResponsiveUIManager';
-import { WavePanel, ResourcePanel, StatusPanel, CombatStatsPanel, ScorePanel, TurretCountPanel } from './panels';
+import { WavePanel, ResourcePanel, StatusPanel, CombatStatsPanel, ScorePanel, TurretCountPanel, AIPanel, AIThoughtFeed } from './panels';
 import { ToggleButton } from './components';
+import type { AIStatusExtended } from '../ai/types';
+import type { AIMessage } from '../ai/humanization/AIMessageGenerator';
 
 // Forward declaration for Game type to avoid circular imports
 // Forward declaration for Game type to avoid circular imports
@@ -51,6 +53,10 @@ export class HUDManager {
   private turretUpgradePanel: TurretUpgradePanel | null = null;
   private mobileControls: MobileControlsOverlay | null = null;
   private messageLog: MessageLog | null = null;
+
+  // AI HUD engagement components
+  private aiPanel: AIPanel | null = null;
+  private aiThoughtFeed: AIThoughtFeed | null = null;
 
   // Sound mute button
   private muteButton: Container | null = null;
@@ -96,6 +102,7 @@ export class HUDManager {
     this.createGodModeButton();
     this.createSlowModeButton();
     this.createAIButton();
+    this.createAIPanel();
 
     // Create Turret Menu
     this.turretMenu = new TurretMenu();
@@ -229,6 +236,20 @@ export class HUDManager {
     if (this.aiButton) {
       this.aiButton.setScale(scale);
       this.aiButton.setPosition(padding, padding + (100 * scale) + padding + (40 * scale) + padding + (90 * scale) + padding + (toggleBtnHeight * scale) * 2 + padding * 2);
+    }
+
+    // Update AI Panel (right side, below resource panel)
+    if (this.aiPanel) {
+      const aiPanelDims = AIPanel.getDimensions();
+      this.aiPanel.setScale(scale);
+      this.aiPanel.setPosition(width - (aiPanelDims.width * scale) - padding, padding + (70 * scale) + padding);
+    }
+
+    // Update AI Thought Feed (bottom center-left, above message log)
+    if (this.aiThoughtFeed) {
+      const feedDims = AIThoughtFeed.getDimensions();
+      this.aiThoughtFeed.setScale(scale);
+      this.aiThoughtFeed.setPosition(padding + (200 * scale), height - (feedDims.height * scale) - (100 * scale) - padding);
     }
   }
 
@@ -455,6 +476,58 @@ export class HUDManager {
   }
 
   /**
+   * Create AI Panel and Thought Feed for engagement display
+   */
+  private createAIPanel(): void {
+    const padding = UI_STYLES.PADDING;
+
+    // AI Panel - shows commander status, mood, phase
+    this.aiPanel = new AIPanel();
+    this.aiPanel.init();
+    const aiPanelDims = AIPanel.getDimensions();
+    this.aiPanel.setPosition(GAME_CONFIG.WORLD_WIDTH - aiPanelDims.width - padding, padding + 70 + padding);
+    this.aiPanel.hide(); // Hide until AI is enabled
+    this.container.addChild(this.aiPanel.getContainer());
+
+    // AI Thought Feed - scrolling message log
+    this.aiThoughtFeed = new AIThoughtFeed();
+    this.aiThoughtFeed.init();
+    const feedDims = AIThoughtFeed.getDimensions();
+    this.aiThoughtFeed.setPosition(padding + 200, GAME_CONFIG.WORLD_HEIGHT - feedDims.height - 100 - padding);
+    this.aiThoughtFeed.hide(); // Hide until AI is enabled
+    this.container.addChild(this.aiThoughtFeed.getContainer());
+  }
+
+  /**
+   * Update AI HUD with extended status
+   * @param status - Extended AI status from AIAutoPlayManager
+   */
+  updateAI(status: AIStatusExtended): void {
+    if (!this.aiPanel || !this.aiThoughtFeed) return;
+
+    // Show/hide AI panels based on enabled state
+    if (status.enabled) {
+      this.aiPanel.show();
+      this.aiThoughtFeed.show();
+      this.aiPanel.update(status);
+      this.aiThoughtFeed.update();
+    } else {
+      this.aiPanel.hide();
+      this.aiThoughtFeed.hide();
+    }
+  }
+
+  /**
+   * Add an AI message to the thought feed
+   * @param message - Message to display
+   */
+  addAIMessage(message: AIMessage): void {
+    if (this.aiThoughtFeed) {
+      this.aiThoughtFeed.addMessage(message);
+    }
+  }
+
+  /**
    * Update all HUD elements with new data
    * @param data - HUD data to display
    */
@@ -569,6 +642,8 @@ export class HUDManager {
     if (this.godModeButton) this.godModeButton.destroy();
     if (this.slowModeButton) this.slowModeButton.destroy();
     if (this.aiButton) this.aiButton.destroy();
+    if (this.aiPanel) this.aiPanel.destroy();
+    if (this.aiThoughtFeed) this.aiThoughtFeed.destroy();
 
     // Remove resize listener
     if (this.boundResizeHandler) {

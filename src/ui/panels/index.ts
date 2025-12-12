@@ -28,3 +28,7 @@ export type { TurretCountPanelData } from './TurretCountPanel';
 export { ComboPanel } from './ComboPanel';
 
 export { AchievementToast } from './AchievementToast';
+
+export { AIPanel } from './AIPanel';
+
+export { AIThoughtFeed } from './AIThoughtFeed';

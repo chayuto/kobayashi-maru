@@ -17,13 +17,25 @@ import { ThreatAnalyzer } from './ThreatAnalyzer';
 import { CoverageAnalyzer } from './CoverageAnalyzer';
 import { ActionPlanner } from './ActionPlanner';
 import { ActionExecutor } from './ActionExecutor';
+import { AIMoodEngine, MoodContext } from './humanization/AIMoodEngine';
+import { AIMessageGenerator, AIMessage } from './humanization/AIMessageGenerator';
 import type { PlacementManager } from '../game/PlacementManager';
 import type { UpgradeManager } from '../game/UpgradeManager';
 import type { ResourceManager } from '../game/resourceManager';
 import type { GameState } from '../game/gameState';
 import type { GameWorld } from '../ecs/world';
-import type { AIAction, AIStatus } from './types';
-import { AIPersonality } from './types';
+import type { AIAction, AIStatus, AIStatusExtended, PlacementParams } from './types';
+import { AIPersonality, AIMood, AIPhase } from './types';
+
+/**
+ * Context for HUD updates (provided by game)
+ */
+export interface AIHUDContext {
+    waveNumber: number;
+    isBossWave: boolean;
+    kmHealthPercent: number;
+    resources: number;
+}
 
 /**
  * Main AI Auto-Play controller.
@@ -38,6 +50,17 @@ export class AIAutoPlayManager {
     private gameState: GameState;
     private lastDecisionTime: number = 0;
     private currentAction: AIAction | null = null;
+
+    // HUD engagement components
+    private moodEngine: AIMoodEngine;
+    private messageGenerator: AIMessageGenerator;
+    private lastMood: AIMood = AIMood.CALM;
+    private lastMoodMessage: string = 'Awaiting orders.';
+    private lastPhase: AIPhase = AIPhase.EARLY_EXPANSION;
+    private plannedAction: AIAction | null = null;
+    private decisionsThisWave: number = 0;
+    private successfulActions: number = 0;
+    private currentWave: number = 0;
 
     constructor(
         world: GameWorld,
@@ -67,6 +90,11 @@ export class AIAutoPlayManager {
             upgradeManager,
             resourceManager
         );
+
+        // HUD engagement
+        this.moodEngine = new AIMoodEngine();
+        this.messageGenerator = new AIMessageGenerator();
+        this.messageGenerator.setPersonality(this.personality);
     }
 
     /**
@@ -76,6 +104,7 @@ export class AIAutoPlayManager {
         this.enabled = !this.enabled;
         if (!this.enabled) {
             this.currentAction = null;
+            this.plannedAction = null;
         }
         return this.enabled;
     }
@@ -92,6 +121,7 @@ export class AIAutoPlayManager {
      */
     setPersonality(personality: AIPersonality): void {
         this.personality = personality;
+        this.messageGenerator.setPersonality(personality);
     }
 
     /**
@@ -126,14 +156,22 @@ export class AIAutoPlayManager {
         // Plan actions
         const actions = this.planner.planActions();
 
+        // Store planned action for HUD ghost preview
+        this.plannedAction = actions.length > 0 ? actions[0] : null;
+
         if (actions.length > 0) {
             this.currentAction = actions[0];
+            this.decisionsThisWave++;
 
             // Validate action before execution
             if (this.executor.canExecute(this.currentAction)) {
                 // Execute through managers - they enforce all game rules
                 const result = this.executor.execute(this.currentAction);
-                if (!result.success) {
+                if (result.success) {
+                    this.successfulActions++;
+                    // Generate message for successful action
+                    this.messageGenerator.generateActionMessage(this.currentAction);
+                } else {
                     // Action failed validation - clear it
                     this.currentAction = null;
                 }
@@ -143,6 +181,40 @@ export class AIAutoPlayManager {
         } else {
             this.currentAction = null;
         }
+    }
+
+    /**
+     * Update HUD context (call from game loop)
+     */
+    updateHUDContext(context: AIHUDContext): void {
+        // Reset wave stats on new wave
+        if (context.waveNumber !== this.currentWave) {
+            this.currentWave = context.waveNumber;
+            this.decisionsThisWave = 0;
+        }
+
+        // Update mood
+        const coveragePercent = this.coverageAnalyzer.analyze().totalCoverage * 100;
+        const moodContext: MoodContext = {
+            threatLevel: this.threatAnalyzer.getOverallThreatLevel(),
+            coveragePercent,
+            kmHealthPercent: context.kmHealthPercent,
+            resources: context.resources,
+            waveNumber: context.waveNumber,
+            isBossWave: context.isBossWave,
+            personality: this.personality,
+        };
+
+        const moodResult = this.moodEngine.calculateMood(moodContext);
+        this.lastMood = moodResult.mood;
+        this.lastMoodMessage = moodResult.message;
+
+        // Update phase
+        this.lastPhase = this.moodEngine.calculatePhase(
+            context.waveNumber,
+            context.isBossWave,
+            context.kmHealthPercent
+        );
     }
 
     /**
@@ -160,11 +232,69 @@ export class AIAutoPlayManager {
     }
 
     /**
+     * Get extended AI status for engaging HUD display
+     */
+    getExtendedStatus(): AIStatusExtended {
+        const baseStatus = this.getStatus();
+        const plannedPosition = this.getPlannedPosition();
+
+        return {
+            ...baseStatus,
+            mood: this.lastMood,
+            moodMessage: this.lastMoodMessage,
+            currentPhase: this.lastPhase,
+            phaseFocus: this.moodEngine.getPhaseFocus(this.lastPhase),
+            plannedAction: this.plannedAction,
+            plannedPosition,
+            upgradeTarget: null, // TODO: implement
+            decisionsThisWave: this.decisionsThisWave,
+            successfulActions: this.successfulActions,
+        };
+    }
+
+    /**
+     * Get planned placement position for ghost preview
+     */
+    private getPlannedPosition(): { x: number; y: number } | null {
+        if (!this.plannedAction) return null;
+
+        const params = this.plannedAction.params as PlacementParams;
+        if (typeof params.x === 'number' && typeof params.y === 'number') {
+            return { x: params.x, y: params.y };
+        }
+
+        return null;
+    }
+
+    /**
+     * Get message history for AI thought feed
+     */
+    getMessageHistory(): AIMessage[] {
+        return this.messageGenerator.getHistory();
+    }
+
+    /**
+     * Get the message generator for adding custom messages
+     */
+    getMessageGenerator(): AIMessageGenerator {
+        return this.messageGenerator;
+    }
+
+    /**
      * Reset AI state (for game restart)
      */
     reset(): void {
         this.lastDecisionTime = 0;
         this.currentAction = null;
+        this.plannedAction = null;
+        this.decisionsThisWave = 0;
+        this.successfulActions = 0;
+        this.currentWave = 0;
+        this.lastMood = AIMood.CALM;
+        this.lastMoodMessage = 'Awaiting orders.';
+        this.lastPhase = AIPhase.EARLY_EXPANSION;
+        this.moodEngine.reset();
+        this.messageGenerator.reset();
         // Keep enabled state and personality
     }
 }

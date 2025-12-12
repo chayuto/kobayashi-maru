@@ -36,6 +36,8 @@ export { DecisionInertia } from './utility/DecisionInertia';
 // Humanization
 export { AIHumanizer } from './humanization/AIHumanizer';
 export { DynamicDifficultyAdjuster } from './humanization/DynamicDifficultyAdjuster';
+export { AIMoodEngine } from './humanization/AIMoodEngine';
+export { AIMessageGenerator } from './humanization/AIMessageGenerator';
 
 // Synergy
 export { SynergyDetector } from './behaviors/SynergyDetector';
