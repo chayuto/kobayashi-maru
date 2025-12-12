@@ -15,3 +15,6 @@ export { CoverageAnalyzer } from './CoverageAnalyzer';
 export { ActionPlanner } from './ActionPlanner';
 export { ActionExecutor } from './ActionExecutor';
 export { AIAutoPlayManager } from './AIAutoPlayManager';
+
+// Spatial intelligence
+export { FlowFieldAnalyzer } from './spatial/FlowFieldAnalyzer';

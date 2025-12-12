@@ -82,8 +82,17 @@ export class ActionPlanner {
         weakestSector: number,
         threats: ThreatVector[]
     ): AIAction | null {
-        // Select turret type based on current threats
-        const turretType = this.selectTurretType(availableResources, threats);
+        // Find best position in weakest sector first - this determines traffic
+        const position = this.coverageAnalyzer.findBestPositionInSector(weakestSector, threats);
+
+        // Select turret type based on traffic at this position
+        const turretType = this.selectTurretTypeForPosition(
+            position.x,
+            position.y,
+            availableResources,
+            threats
+        );
+
         if (turretType === null) {
             return null;
         }
@@ -92,9 +101,6 @@ export class ActionPlanner {
         if (!config || config.cost > availableResources) {
             return null;
         }
-
-        // Find best position in weakest sector, using threat data
-        const position = this.coverageAnalyzer.findBestPositionInSector(weakestSector, threats);
 
         // Calculate priority based on coverage gap and threat
         const threatLevel = this.threatAnalyzer.getOverallThreatLevel();
@@ -247,6 +253,43 @@ export class ActionPlanner {
         }
 
         return value;
+    }
+
+    /**
+     * Select turret type based on traffic density at a specific position
+     * High traffic areas get fast-firing turrets, low traffic areas get long-range
+     */
+    private selectTurretTypeForPosition(
+        x: number,
+        y: number,
+        availableResources: number,
+        threats: ThreatVector[]
+    ): number | null {
+        const flowAnalyzer = this.coverageAnalyzer.getFlowAnalyzer();
+        const traffic = flowAnalyzer.getTrafficAt(x, y);
+
+        // High traffic areas need high fire rate turrets for swarms
+        if (traffic > 0.7) {
+            // Prefer Phaser Array for high-volume areas
+            if (TURRET_CONFIG[TurretType.PHASER_ARRAY].cost <= availableResources) {
+                return TurretType.PHASER_ARRAY;
+            }
+        }
+
+        // Medium traffic - balanced turrets
+        if (traffic > 0.4) {
+            if (TURRET_CONFIG[TurretType.DISRUPTOR_BANK].cost <= availableResources) {
+                return TurretType.DISRUPTOR_BANK;
+            }
+        }
+
+        // Low traffic (flanks) - long range turrets can cover more area
+        if (TURRET_CONFIG[TurretType.TORPEDO_LAUNCHER].cost <= availableResources) {
+            return TurretType.TORPEDO_LAUNCHER;
+        }
+
+        // Fallback to existing faction-based selection
+        return this.selectTurretType(availableResources, threats);
     }
 
     /**

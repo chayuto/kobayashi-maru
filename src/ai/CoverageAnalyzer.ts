@@ -12,6 +12,7 @@ import { Position, Turret, Faction } from '../ecs/components';
 import { FactionId } from '../types/config/factions';
 import { AUTOPLAY_CONFIG } from '../config/autoplay.config';
 import { GAME_CONFIG } from '../types/constants';
+import { FlowFieldAnalyzer } from './spatial/FlowFieldAnalyzer';
 import type { GameWorld } from '../ecs/world';
 import type { CoverageMap, SectorData, ThreatVector } from './types';
 
@@ -25,6 +26,7 @@ export class CoverageAnalyzer {
     private sectorWidth: number;
     private sectorHeight: number;
     private sectors: SectorData[];
+    private flowAnalyzer: FlowFieldAnalyzer;
 
     constructor(
         world: GameWorld,
@@ -37,6 +39,15 @@ export class CoverageAnalyzer {
         this.sectorWidth = GAME_CONFIG.WORLD_WIDTH / cols;
         this.sectorHeight = GAME_CONFIG.WORLD_HEIGHT / rows;
         this.sectors = this.initializeSectors();
+        this.flowAnalyzer = new FlowFieldAnalyzer();
+        this.flowAnalyzer.analyze();
+    }
+
+    /**
+     * Get the flow field analyzer for external access
+     */
+    getFlowAnalyzer(): FlowFieldAnalyzer {
+        return this.flowAnalyzer;
     }
 
     /**
@@ -264,7 +275,7 @@ export class CoverageAnalyzer {
     }
 
     /**
-     * Score a position based on threat interception and coverage
+     * Score a position based on threat interception, coverage, and flow field traffic
      */
     private scorePosition(
         x: number,
@@ -278,17 +289,22 @@ export class CoverageAnalyzer {
         const defenseWeight = AUTOPLAY_CONFIG.DEFENSIVE_DISTANCE_WEIGHT;
         const pathTolerance = AUTOPLAY_CONFIG.APPROACH_PATH_TOLERANCE;
 
-        // 1. Penalize existing coverage (prefer less covered areas)
+        // 1. Traffic density score (0-40 points)
+        // Higher traffic = more enemies will pass through this position
+        const traffic = this.flowAnalyzer.getTrafficAt(x, y);
+        score += traffic * 40;
+
+        // 2. Penalize existing coverage (prefer less covered areas)
         const existingCoverage = this.getCoverageAtPosition(x, y);
         score -= existingCoverage * 20;
 
-        // 2. Score based on distance from KM (prefer defensive ring)
+        // 3. Score based on distance from KM (prefer defensive ring)
         const distFromKM = Math.sqrt((x - kmX) ** 2 + (y - kmY) ** 2);
         const optimalDist = AUTOPLAY_CONFIG.OPTIMAL_KM_DISTANCE;
         const distPenalty = Math.abs(distFromKM - optimalDist) / 100;
-        score += (1 - distPenalty) * 30 * defenseWeight;
+        score += (1 - distPenalty) * 15 * defenseWeight;
 
-        // 3. Score based on threat interception
+        // 4. Score based on threat interception
         if (threats && threats.length > 0) {
             let interceptScore = 0;
             const maxThreatsToConsider = Math.min(10, threats.length);
@@ -312,7 +328,7 @@ export class CoverageAnalyzer {
             }
 
             // Normalize by number of threats considered
-            score += (interceptScore / maxThreatsToConsider) * 50 * interceptWeight;
+            score += (interceptScore / maxThreatsToConsider) * 25 * interceptWeight;
         }
 
         return score;
