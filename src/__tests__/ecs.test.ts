@@ -109,8 +109,8 @@ describe('Entity Factory - Enemy Ships', () => {
     const eid = createEnemy(world, FactionId.BORG, 500, 500);
 
     expect(Faction.id[eid]).toBe(FactionId.BORG);
-    expect(Health.current[eid]).toBe(150);
-    expect(Shield.current[eid]).toBe(100);
+    expect(Health.current[eid]).toBe(160);
+    expect(Shield.current[eid]).toBe(110);
   });
 
   it('should create a Tholian ship with correct faction', () => {
@@ -125,7 +125,7 @@ describe('Entity Factory - Enemy Ships', () => {
     const eid = createEnemy(world, FactionId.SPECIES_8472, 800, 900);
 
     expect(Faction.id[eid]).toBe(FactionId.SPECIES_8472);
-    expect(Health.current[eid]).toBe(200);
+    expect(Health.current[eid]).toBe(220);
     expect(Shield.current[eid]).toBe(0);
   });
 });

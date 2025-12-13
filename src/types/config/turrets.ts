@@ -39,17 +39,17 @@ export const TURRET_CONFIG: Record<number, {
     special?: string;
 }> = {
     [TurretType.PHASER_ARRAY]: {
-        range: 200, fireRate: 4, damage: 10, cost: 100, health: 50, shield: 25,
+        range: 200, fireRate: 3.5, damage: 10, cost: 110, health: 50, shield: 25,
         name: 'Phaser Array', description: 'Fast-firing energy weapon',
         special: 'High fire rate, good for swarms'
     },
     [TurretType.TORPEDO_LAUNCHER]: {
-        range: 350, fireRate: 0.5, damage: 50, cost: 200, health: 75, shield: 40,
+        range: 350, fireRate: 0.6, damage: 60, cost: 160, health: 75, shield: 40,
         name: 'Torpedo Launcher', description: 'Long-range heavy damage',
         special: 'Highest damage, longest range'
     },
     [TurretType.DISRUPTOR_BANK]: {
-        range: 250, fireRate: 2, damage: 15, cost: 150, health: 60, shield: 30,
+        range: 250, fireRate: 2, damage: 15, cost: 140, health: 60, shield: 30,
         name: 'Disruptor Bank', description: 'Balanced beam weapon',
         special: 'Good all-rounder'
     },
@@ -59,7 +59,7 @@ export const TURRET_CONFIG: Record<number, {
         special: '3x damage to shields, 0.5x to hull'
     },
     [TurretType.PLASMA_CANNON]: {
-        range: 200, fireRate: 1, damage: 8, cost: 180, health: 65, shield: 35,
+        range: 220, fireRate: 1.2, damage: 10, cost: 160, health: 65, shield: 35,
         name: 'Plasma Cannon', description: 'Burning projectile weapon',
         special: 'Applies burning (4 dmg/sec × 5s)'
     },

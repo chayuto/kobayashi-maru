@@ -27,7 +27,7 @@ export const SCORE_CONFIG = {
      */
     COMBO: {
         /** Time window in seconds to maintain combo before it resets */
-        TIMEOUT: 3.0,
+        TIMEOUT: 4.0,
         /**
          * Combo multiplier tiers - each threshold unlocks a higher multiplier.
          * Sorted by threshold ascending.
@@ -37,7 +37,9 @@ export const SCORE_CONFIG = {
             { threshold: 3, multiplier: 2 },
             { threshold: 6, multiplier: 3 },
             { threshold: 10, multiplier: 5 },
-            { threshold: 20, multiplier: 10 }
+            { threshold: 20, multiplier: 8 },
+            { threshold: 35, multiplier: 12 },
+            { threshold: 50, multiplier: 15 }
         ] as const,
     },
 } as const;

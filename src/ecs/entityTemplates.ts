@@ -74,8 +74,8 @@ export const ENEMY_TEMPLATES: Record<number, EnemyShipTemplate> = {
     [FactionId.BORG]: {
         name: 'Borg Cube',
         factionId: FactionId.BORG,
-        health: 150,
-        shield: 100,
+        health: 160,
+        shield: 110,
         ai: {
             behaviorType: AIBehaviorType.SWARM,
             aggression: 0.8,
@@ -102,7 +102,7 @@ export const ENEMY_TEMPLATES: Record<number, EnemyShipTemplate> = {
     [FactionId.SPECIES_8472]: {
         name: 'Species 8472 Bioship',
         factionId: FactionId.SPECIES_8472,
-        health: 200,
+        health: 220,
         shield: 0,
         ai: {
             behaviorType: AIBehaviorType.HUNTER,

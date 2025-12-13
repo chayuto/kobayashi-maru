@@ -50,12 +50,12 @@ export const WAVE_CONFIGS: WaveConfig[] = [
       { faction: FactionId.KLINGON, count: 10, spawnDelay: 350, formation: 'v-formation' }
     ]
   },
-  // Wave 4: Introduce Romulans
+  // Wave 4: Introduce Romulans - cluster swarm
   {
     waveNumber: 4,
     enemies: [
-      { faction: FactionId.KLINGON, count: 8, spawnDelay: 400, formation: 'random' },
-      { faction: FactionId.ROMULAN, count: 4, spawnDelay: 600, formation: 'cluster' }
+      { faction: FactionId.KLINGON, count: 6, spawnDelay: 400, formation: 'random' },
+      { faction: FactionId.ROMULAN, count: 6, spawnDelay: 500, formation: 'cluster' }
     ]
   },
   // Wave 5: Mixed Klingon and Romulan
@@ -101,13 +101,13 @@ export const WAVE_CONFIGS: WaveConfig[] = [
       { faction: FactionId.BORG, count: 6, spawnDelay: 700, formation: 'cluster' }
     ]
   },
-  // Wave 10: All enemy types
+  // Wave 10: All enemy types - balanced finale
   {
     waveNumber: 10,
     enemies: [
-      { faction: FactionId.KLINGON, count: 15, spawnDelay: 250, formation: 'v-formation' },
-      { faction: FactionId.ROMULAN, count: 12, spawnDelay: 350, formation: 'cluster' },
-      { faction: FactionId.BORG, count: 8, spawnDelay: 600, formation: 'cluster' },
+      { faction: FactionId.KLINGON, count: 12, spawnDelay: 300, formation: 'v-formation' },
+      { faction: FactionId.ROMULAN, count: 10, spawnDelay: 400, formation: 'v-formation' },
+      { faction: FactionId.BORG, count: 6, spawnDelay: 700, formation: 'cluster' },
       { faction: FactionId.THOLIAN, count: 4, spawnDelay: 800, formation: 'random' },
       { faction: FactionId.SPECIES_8472, count: 2, spawnDelay: 1200, formation: 'random' }
     ]
@@ -122,7 +122,7 @@ export const WAVE_CONFIGS: WaveConfig[] = [
 export function generateProceduralWave(waveNumber: number): WaveConfig {
   // Base counts that scale with wave number
   const baseMultiplier = 1 + (waveNumber - 10) * 0.2; // 20% more enemies per wave after 10
-  const exponentialFactor = Math.pow(1.1, waveNumber - 10); // Slight exponential scaling
+  const exponentialFactor = Math.pow(1.08, waveNumber - 10); // Gentler exponential scaling
 
   // Calculate counts for each faction (all factions available after wave 10)
   const klingonCount = Math.floor(15 * baseMultiplier * exponentialFactor);
