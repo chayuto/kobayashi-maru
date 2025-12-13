@@ -1,104 +1,46 @@
+/**
+ * Particle System for Kobayashi Maru
+ *
+ * Orchestrates particle spawning, physics, and rendering.
+ * Delegates specific functionality to sub-components:
+ * - ParticlePool: object pooling for performance
+ * - ParticleEmitter: velocity calculation for patterns
+ * - ParticleRenderer: drawing and color interpolation
+ */
 import { Application, Container, Graphics } from 'pixi.js';
+import { ParticlePool, ParticleEmitter, ParticleRenderer } from './particles';
 
-// Enums for particle configuration
-export enum EmitterPattern {
-    CIRCULAR = 'circular',
-    CONE = 'cone',
-    RING = 'ring',
-    SPIRAL = 'spiral',
-    BURST = 'burst',
-    FOUNTAIN = 'fountain'
-}
+// Re-export types for backward compatibility
+export {
+    EmitterPattern,
+    type ParticleSpriteType,
+    type ColorGradient,
+    type TrailConfig,
+    type Particle,
+    type ParticleConfig
+} from './particles/types';
 
-export type ParticleSpriteType = 'circle' | 'square' | 'star' | 'spark' | 'smoke' | 'fire' | 'energy';
-
-// Color gradient configuration
-export interface ColorGradient {
-    stops: Array<{ time: number; color: number; alpha: number }>;
-}
-
-// Trail effect configuration
-export interface TrailConfig {
-    enabled: boolean;
-    length: number;      // Number of trail segments
-    fadeRate: number;    // How quickly trail fades
-    width: number;       // Trail width
-}
-
-export interface Particle {
-    x: number;
-    y: number;
-    vx: number;
-    vy: number;
-    ax: number;  // Acceleration X
-    ay: number;  // Acceleration Y
-    life: number;
-    maxLife: number;
-    size: number;
-    color: number;
-    alpha: number;
-    sprite: Graphics;
-    spriteType: ParticleSpriteType;  // Track the sprite type
-    rotation: number;
-    rotationSpeed: number;
-    scale: number;
-    scaleStart: number;
-    scaleEnd: number;
-    drag: number;
-    colorGradient?: ColorGradient;
-    trail?: {
-        positions: Array<{ x: number; y: number }>;
-        config: TrailConfig;
-        graphics: Graphics;
-    };
-    // Debris physics
-    bounces?: number;
-    bounceDamping?: number;
-    groundY?: number;
-}
-
-export interface ParticleConfig {
-    x: number;
-    y: number;
-    count: number;
-    speed: { min: number; max: number };
-    life: { min: number; max: number };
-    size: { min: number; max: number };
-    color?: number;  // Optional if gradient provided
-    spread: number; // Angle spread in radians (2*PI for full circle)
-
-    // New optional fields
-    sprite?: ParticleSpriteType;
-    colorGradient?: ColorGradient;
-    rotation?: { min: number; max: number };
-    rotationSpeed?: { min: number; max: number };
-    scaleStart?: number;
-    scaleEnd?: number;
-    emitterPattern?: EmitterPattern;
-    emitterAngle?: number;
-    emitterWidth?: number;
-    trail?: TrailConfig;
-    gravity?: number;
-    drag?: number;
-    // Debris physics
-    bounceCount?: number;
-    bounceDamping?: number;
-    groundY?: number;
-}
+import type { Particle, ParticleConfig } from './particles/types';
 
 export class ParticleSystem {
     particles: Particle[] = [];
     container: Container;
-    private pool: Particle[] = [];
     private app: Application | null = null;
     private glowContainer: Container | null = null;
 
     private maxParticles: number = 2000;
     private spawnRateMultiplier: number = 1.0;
-    private spiralCounter: number = 0;
+
+    // Sub-components
+    private readonly pool: ParticlePool;
+    private readonly emitter: ParticleEmitter;
+    private readonly renderer: ParticleRenderer;
 
     constructor() {
         this.container = new Container();
+        this.pool = new ParticlePool();
+        this.emitter = new ParticleEmitter();
+        this.renderer = new ParticleRenderer();
     }
 
     init(app: Application, maxParticles: number = 2000, spawnRateMultiplier: number = 1.0, glowContainer?: Container): void {
@@ -128,14 +70,14 @@ export class ParticleSystem {
         count = Math.min(count, this.maxParticles - this.particles.length);
 
         for (let i = 0; i < count; i++) {
-            const particle = this.getParticle();
+            const particle = this.pool.acquire();
 
             // Initialize particle properties
             particle.x = config.x;
             particle.y = config.y;
 
-            // Use emitter pattern to calculate velocity
-            const velocity = this.calculateEmitterVelocity(config);
+            // Use emitter to calculate velocity
+            const velocity = this.emitter.calculateVelocity(config);
             particle.vx = velocity.vx;
             particle.vy = velocity.vy;
 
@@ -152,7 +94,7 @@ export class ParticleSystem {
             // Set initial color
             if (config.colorGradient) {
                 particle.colorGradient = config.colorGradient;
-                const initialColor = this.interpolateColorGradient(config.colorGradient, 1.0);
+                const initialColor = this.renderer.interpolateColorGradient(config.colorGradient, 1.0);
                 particle.color = initialColor.color;
                 particle.alpha = initialColor.alpha;
             } else {
@@ -204,7 +146,7 @@ export class ParticleSystem {
 
             // Store sprite type and initialize visual
             particle.spriteType = config.sprite || 'circle';
-            this.drawParticle(particle);
+            this.renderer.drawParticle(particle);
             particle.sprite.x = particle.x;
             particle.sprite.y = particle.y;
             particle.sprite.alpha = particle.alpha;
@@ -214,91 +156,6 @@ export class ParticleSystem {
             this.particles.push(particle);
             this.container.addChild(particle.sprite);
         }
-    }
-
-    private drawParticle(particle: Particle): void {
-        particle.sprite.clear();
-        particle.sprite.beginFill(particle.color);
-
-        const size = particle.size;
-
-        switch (particle.spriteType) {
-            case 'circle':
-                particle.sprite.drawCircle(0, 0, size);
-                break;
-
-            case 'square':
-                particle.sprite.drawRect(-size, -size, size * 2, size * 2);
-                break;
-
-            case 'star':
-                {
-                    const outerRadius = size;
-                    const innerRadius = size * 0.5;
-                    const points = 5;
-
-                    particle.sprite.moveTo(0, -outerRadius);
-                    for (let i = 0; i < points * 2; i++) {
-                        const radius = i % 2 === 0 ? outerRadius : innerRadius;
-                        const angle = (Math.PI * i) / points - Math.PI / 2;
-                        particle.sprite.lineTo(
-                            Math.cos(angle) * radius,
-                            Math.sin(angle) * radius
-                        );
-                    }
-                    particle.sprite.closePath();
-                }
-                break;
-
-            case 'spark':
-                particle.sprite.moveTo(0, -size * 1.5);
-                particle.sprite.lineTo(size * 0.3, 0);
-                particle.sprite.lineTo(0, size * 1.5);
-                particle.sprite.lineTo(-size * 0.3, 0);
-                particle.sprite.closePath();
-                break;
-
-            case 'smoke':
-                particle.sprite.drawCircle(0, 0, size);
-                break;
-
-            case 'fire':
-                {
-                    // Use deterministic fire shape based on particle position
-                    const firePoints = 8;
-                    const seed = (particle.x * 12.9898 + particle.y * 78.233) % 1;
-                    particle.sprite.moveTo(0, -size);
-                    for (let i = 0; i <= firePoints; i++) {
-                        const angle = (Math.PI * 2 * i) / firePoints - Math.PI / 2;
-                        // Use seeded pseudo-random for consistent shape
-                        const localSeed = (seed + i * 0.123) % 1;
-                        const radius = size * (0.7 + localSeed * 0.3);
-                        particle.sprite.lineTo(
-                            Math.cos(angle) * radius,
-                            Math.sin(angle) * radius
-                        );
-                    }
-                    particle.sprite.closePath();
-                }
-                break;
-
-            case 'energy':
-                {
-                    const hexPoints = 6;
-                    particle.sprite.moveTo(size * Math.cos(-Math.PI / 2), size * Math.sin(-Math.PI / 2));
-                    for (let i = 1; i <= hexPoints; i++) {
-                        const angle = (Math.PI * 2 * i) / hexPoints - Math.PI / 2;
-                        particle.sprite.lineTo(
-                            size * Math.cos(angle),
-                            size * Math.sin(angle)
-                        );
-                    }
-                    particle.sprite.closePath();
-                }
-                break;
-        }
-
-        particle.sprite.endFill();
     }
 
     update(deltaTime: number): void {
@@ -346,7 +203,7 @@ export class ParticleSystem {
 
             // Check if particle is dead
             if (p.life <= 0) {
-                this.returnToPool(p);
+                this.pool.release(p, this.container);
                 continue; // Skip this particle, don't increment writeIndex
             }
 
@@ -356,7 +213,7 @@ export class ParticleSystem {
             // Update color gradient if present
             let colorChanged = false;
             if (p.colorGradient) {
-                const gradientColor = this.interpolateColorGradient(p.colorGradient, normalizedLife);
+                const gradientColor = this.renderer.interpolateColorGradient(p.colorGradient, normalizedLife);
                 // Only mark as changed if color differs significantly
                 if (p.color !== gradientColor.color) {
                     p.color = gradientColor.color;
@@ -385,7 +242,7 @@ export class ParticleSystem {
                 }
 
                 // Render trail
-                this.renderTrail(p);
+                this.renderer.renderTrail(p);
             }
 
             // Update visual
@@ -397,7 +254,7 @@ export class ParticleSystem {
 
             // Only redraw sprite if color actually changed (optimization)
             if (colorChanged) {
-                this.drawParticle(p);
+                this.renderer.drawParticle(p);
             }
 
             // Keep this particle - use swap-and-pop pattern
@@ -411,172 +268,12 @@ export class ParticleSystem {
         this.particles.length = writeIndex;
     }
 
-    private renderTrail(particle: Particle): void {
-        if (!particle.trail || particle.trail.positions.length < 2) {
-            return;
-        }
-
-        const trail = particle.trail;
-        trail.graphics.clear();
-
-        // Draw trail segments
-        for (let i = 1; i < trail.positions.length; i++) {
-            const prev = trail.positions[i - 1];
-            const curr = trail.positions[i];
-
-            // Calculate alpha fade (head is brightest, tail fades)
-            const segmentAlpha = (i / trail.positions.length) * particle.alpha * (1 - trail.config.fadeRate);
-
-            trail.graphics.lineStyle(trail.config.width, particle.color, segmentAlpha);
-            trail.graphics.moveTo(prev.x, prev.y);
-            trail.graphics.lineTo(curr.x, curr.y);
-        }
-    }
-
     destroy(): void {
         if (this.app && this.container) {
             this.app.stage.removeChild(this.container);
         }
         this.container.destroy({ children: true });
         this.particles = [];
-        this.pool = [];
-    }
-
-    private interpolateColorGradient(gradient: ColorGradient, normalizedLife: number): { color: number; alpha: number } {
-        const time = 1 - normalizedLife; // Convert remaining life to elapsed time
-
-        if (gradient.stops.length === 0) {
-            return { color: 0xFFFFFF, alpha: 1 };
-        }
-
-        if (gradient.stops.length === 1) {
-            return { color: gradient.stops[0].color, alpha: gradient.stops[0].alpha };
-        }
-
-        // Find the two stops to interpolate between
-        let startStop = gradient.stops[0];
-        let endStop = gradient.stops[gradient.stops.length - 1];
-
-        for (let i = 0; i < gradient.stops.length - 1; i++) {
-            if (time >= gradient.stops[i].time && time <= gradient.stops[i + 1].time) {
-                startStop = gradient.stops[i];
-                endStop = gradient.stops[i + 1];
-                break;
-            }
-        }
-
-        // Interpolate between the two stops
-        const range = endStop.time - startStop.time;
-        const t = range > 0 ? (time - startStop.time) / range : 0;
-
-        // Interpolate color components
-        const startR = (startStop.color >> 16) & 0xFF;
-        const startG = (startStop.color >> 8) & 0xFF;
-        const startB = startStop.color & 0xFF;
-
-        const endR = (endStop.color >> 16) & 0xFF;
-        const endG = (endStop.color >> 8) & 0xFF;
-        const endB = endStop.color & 0xFF;
-
-        const r = Math.round(startR + (endR - startR) * t);
-        const g = Math.round(startG + (endG - startG) * t);
-        const b = Math.round(startB + (endB - startB) * t);
-
-        const color = (r << 16) | (g << 8) | b;
-        const alpha = startStop.alpha + (endStop.alpha - startStop.alpha) * t;
-
-        return { color, alpha };
-    }
-
-    private calculateEmitterVelocity(config: ParticleConfig): { vx: number; vy: number } {
-        const pattern = config.emitterPattern || EmitterPattern.CIRCULAR;
-        const speed = config.speed.min + Math.random() * (config.speed.max - config.speed.min);
-
-        let angle = 0;
-
-        switch (pattern) {
-            case EmitterPattern.CIRCULAR:
-                // Random angle within spread
-                angle = (Math.random() - 0.5) * config.spread;
-                break;
-
-            case EmitterPattern.CONE:
-                // Random angle within cone
-                angle = (config.emitterAngle || 0) + (Math.random() - 0.5) * (config.emitterWidth || config.spread);
-                break;
-
-            case EmitterPattern.RING:
-                // Evenly distributed around a ring
-                angle = (Math.PI * 2 * Math.random());
-                break;
-
-            case EmitterPattern.SPIRAL:
-                // Spiral pattern
-                angle = this.spiralCounter * 0.5;
-                this.spiralCounter++;
-                break;
-
-            case EmitterPattern.BURST:
-                // All particles in same direction
-                angle = config.emitterAngle || 0;
-                break;
-
-            case EmitterPattern.FOUNTAIN:
-                // Arc upward
-                angle = (config.emitterAngle || -Math.PI / 2) + (Math.random() - 0.5) * (config.emitterWidth || Math.PI / 4);
-                break;
-        }
-
-        return {
-            vx: Math.cos(angle) * speed,
-            vy: Math.sin(angle) * speed
-        };
-    }
-
-    private getParticle(): Particle {
-        if (this.pool.length > 0) {
-            const particle = this.pool.pop()!;
-            // Reset trail if it exists
-            if (particle.trail) {
-                particle.trail.positions = [];
-            }
-            return particle;
-        }
-
-        return {
-            x: 0,
-            y: 0,
-            vx: 0,
-            vy: 0,
-            ax: 0,
-            ay: 0,
-            life: 0,
-            maxLife: 0,
-            size: 0,
-            color: 0,
-            alpha: 0,
-            sprite: new Graphics(),
-            spriteType: 'circle',
-            rotation: 0,
-            rotationSpeed: 0,
-            scale: 1,
-            scaleStart: 1,
-            scaleEnd: 1,
-            drag: 1,
-            colorGradient: undefined,
-            trail: undefined
-        };
-    }
-
-    private returnToPool(particle: Particle): void {
-        this.container.removeChild(particle.sprite);
-
-        // Clean up trail graphics
-        if (particle.trail) {
-            this.container.removeChild(particle.trail.graphics);
-            particle.trail.positions = [];
-        }
-
-        this.pool.push(particle);
+        this.pool.clear();
     }
 }
