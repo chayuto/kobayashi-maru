@@ -6,9 +6,25 @@ import { Container, Graphics, Text, TextStyle } from 'pixi.js';
 import { UI_STYLES } from './styles';
 import { TURRET_CONFIG, TurretType } from '../types/constants';
 
+/**
+ * Named references to turret button elements for robust access.
+ * Avoids fragile child index lookups that break if creation order changes.
+ */
+interface TurretButtonElements {
+    background: Graphics;
+    icon: Container;
+    nameText: Text;
+    descText: Text;
+    statsText: Text;
+    specialText: Text | null;
+    costText: Text;
+}
+
 export class TurretMenu {
     public container: Container;
     private buttons: Map<number, Container> = new Map();
+    /** Named references to button elements for robust updates */
+    private buttonElements: Map<number, TurretButtonElements> = new Map();
     private onSelectCallback: ((turretType: number) => void) | null = null;
     private currentResources: number = 0;
 
@@ -131,6 +147,17 @@ export class TurretMenu {
 
             this.container.addChild(button);
             this.buttons.set(type, button);
+
+            // Store named references for robust updates
+            this.buttonElements.set(type, {
+                background: bg,
+                icon: icon,
+                nameText: nameText,
+                descText: descText,
+                statsText: statsText,
+                specialText: config.special ? (button.children.find(c => c instanceof Text && (c as Text).style.fontStyle === 'italic') as Text) || null : null,
+                costText: costText
+            });
         });
     }
 
@@ -312,13 +339,12 @@ export class TurretMenu {
         this.buttons.forEach((button, type) => {
             const config = TURRET_CONFIG[type];
             const canAfford = resources >= config.cost;
-            const bg = button.children[0] as Graphics;
-            const icon = button.children[1] as Container; // Icon is now child 1
-            const nameText = button.children[2] as Text;
-            const descText = button.children[3] as Text;
-            const statsText = button.children[4] as Text;
-            // Child 5 or 6 is special text (if exists), last child is cost
-            const costText = button.children[button.children.length - 1] as Text;
+
+            // Use named references instead of fragile child indices
+            const elements = this.buttonElements.get(type);
+            if (!elements) return;
+
+            const { background: bg, icon, nameText, descText, statsText, costText } = elements;
 
             if (canAfford) {
                 bg.stroke({ color: UI_STYLES.COLORS.SECONDARY, width: 2 });

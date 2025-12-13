@@ -516,21 +516,19 @@ export class HUDManager {
     // Positioned on left side, below the toggle buttons (now 4th slot for AI Brain button)
     const toggleBtnHeight = ToggleButton.getDimensions().height;
     this.aiPanel = new AIPanel();
-    this.aiPanel.init();
+    this.aiPanel.init(this.container);  // Now adds itself to parent
     const aiPanelDims = AIPanel.getDimensions();
     const aiPanelY = padding + 100 + padding + 40 + padding + 90 + padding + toggleBtnHeight * 4 + padding * 4 + padding;
     this.aiPanel.setPosition(padding, aiPanelY);
     this.aiPanel.hide(); // Hide until AI is enabled
-    this.container.addChild(this.aiPanel.getContainer());
 
     // AI Thought Feed - scrolling message log
     // Positioned below AI Panel on left side
     this.aiThoughtFeed = new AIThoughtFeed();
-    this.aiThoughtFeed.init();
+    this.aiThoughtFeed.init(this.container);  // Now adds itself to parent
     const feedY = aiPanelY + aiPanelDims.height + padding;
     this.aiThoughtFeed.setPosition(padding, feedY);
     this.aiThoughtFeed.hide(); // Hide until AI is enabled
-    this.container.addChild(this.aiThoughtFeed.getContainer());
 
     // Initialize AI Brain Renderer
     this.aiBrainRenderer = new AIBrainRenderer();

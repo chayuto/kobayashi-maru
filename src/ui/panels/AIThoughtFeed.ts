@@ -47,7 +47,7 @@ export class AIThoughtFeed {
         this.titleText = new Text({ text: '📢 COMMANDER LOG', style: titleStyle });
     }
 
-    init(): void {
+    init(parent: Container): void {
         if (this.initialized) return;
 
         // Background
@@ -67,6 +67,8 @@ export class AIThoughtFeed {
         // Initialize text pool
         this.initializeTextPool();
 
+        // Add to parent container
+        parent.addChild(this.container);
         this.initialized = true;
     }
 

@@ -115,7 +115,7 @@ export class AIPanel {
         this.coverageBar = new Graphics();
     }
 
-    init(): void {
+    init(parent: Container): void {
         if (this.initialized) return;
 
         // Background with border
@@ -169,6 +169,8 @@ export class AIPanel {
         this.entityText.visible = false;
         this.container.addChild(this.entityText);
 
+        // Add to parent container
+        parent.addChild(this.container);
         this.initialized = true;
     }
 
