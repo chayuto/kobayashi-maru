@@ -13,13 +13,13 @@ import { MobileControlsOverlay } from './MobileControlsOverlay';
 import { MessageLog } from './MessageLog';
 import { AudioManager } from '../audio';
 import { ResponsiveUIManager } from './ResponsiveUIManager';
+import { HUDLayoutManager } from './HUDLayoutManager';
 import { WavePanel, ResourcePanel, StatusPanel, CombatStatsPanel, ScorePanel, TurretCountPanel, AIPanel, AIThoughtFeed } from './panels';
 import { ToggleButton, IconButton } from './components';
 import { AIBrainRenderer } from '../ai/visualization';
 import type { AIStatusExtended, ThreatVector, SectorData } from '../ai/types';
 import type { AIMessage } from '../ai/humanization/AIMessageGenerator';
 
-// Forward declaration for Game type to avoid circular imports
 // Forward declaration for Game type to avoid circular imports
 export interface HUDCallbacks {
   onToggleGodMode: () => void;
@@ -37,6 +37,7 @@ export class HUDManager {
   private app: Application | null = null;
   private callbacks: HUDCallbacks | null = null;
   private responsiveUIManager: ResponsiveUIManager | null = null;
+  private layoutManager: HUDLayoutManager | null = null;
 
   // Local state for cheat modes
   private godModeEnabled: boolean = false;
@@ -92,6 +93,7 @@ export class HUDManager {
     this.app = app;
     this.callbacks = callbacks ?? null;
     this.responsiveUIManager = new ResponsiveUIManager();
+    this.layoutManager = new HUDLayoutManager();
 
     // Add HUD container to stage (on top of everything)
     this.app.stage.addChild(this.container);
@@ -143,76 +145,72 @@ export class HUDManager {
    * Handle window resize to update HUD layout
    */
   private handleResize(): void {
-    if (!this.responsiveUIManager) return;
+    if (!this.responsiveUIManager || !this.layoutManager) return;
 
     const scale = this.responsiveUIManager.getScaleFactor();
-    const padding = UI_STYLES.PADDING * scale;
-    const width = GAME_CONFIG.WORLD_WIDTH;
-    const height = GAME_CONFIG.WORLD_HEIGHT;
-    const toggleBtnHeight = ToggleButton.getDimensions().height;
+    const layout = this.layoutManager;
 
-    // Update Wave Panel
+    // Update Wave Panel (top-left)
     if (this.wavePanel) {
       this.wavePanel.setScale(scale);
-      this.wavePanel.setPosition(padding, padding);
+      const pos = layout.getWavePanelPosition(scale);
+      this.wavePanel.setPosition(pos.x, pos.y);
     }
 
-    // Update Resource Panel
+    // Update Resource Panel (top-right)
     if (this.resourcePanel) {
-      const panelWidth = 150;
       this.resourcePanel.setScale(scale);
-      this.resourcePanel.setPosition(width - (panelWidth * scale) - padding, padding);
+      const pos = layout.getResourcePanelPosition(scale, 150);
+      this.resourcePanel.setPosition(pos.x, pos.y);
     }
 
-    // Update Score Panel (Bottom Left)
+    // Update Score Panel (bottom-left)
     if (this.scorePanel) {
       this.scorePanel.setScale(scale);
-      this.scorePanel.setPosition(padding, height - (80 * scale) - padding);
+      const pos = layout.getScorePanelPosition(scale, 80);
+      this.scorePanel.setPosition(pos.x, pos.y);
     }
 
-    // Update Turret Count Panel (Bottom Right)
+    // Update Turret Count Panel (bottom-right)
     if (this.turretCountPanel) {
       this.turretCountPanel.setScale(scale);
-      this.turretCountPanel.setPosition(width - (140 * scale) - padding, height - (60 * scale) - padding);
+      const pos = layout.getTurretCountPanelPosition(scale, 140, 60);
+      this.turretCountPanel.setPosition(pos.x, pos.y);
     }
 
-    // Update Status Panel (Bottom Center)
+    // Update Status Panel (bottom-center)
     if (this.statusPanel) {
-      const panelWidth = 280;
       this.statusPanel.setScale(scale);
-      this.statusPanel.setPosition((width - (panelWidth * scale)) / 2, height - (120 * scale) - padding);
+      const pos = layout.getStatusPanelPosition(scale, 280, 120);
+      this.statusPanel.setPosition(pos.x, pos.y);
     }
 
-    // Update Mute Button
+    // Update Mute Button (left column, first element)
     if (this.muteButton) {
       this.muteButton.setScale(scale);
-      this.muteButton.setPosition(padding, padding + (100 * scale) + padding);
+      const pos = layout.getMuteButtonPosition(scale);
+      this.muteButton.setPosition(pos.x, pos.y);
     }
 
-    // Update Combat Stats Panel
+    // Update Combat Stats Panel (left column, below mute button)
     if (this.combatStatsPanel) {
       this.combatStatsPanel.setScale(scale);
-      this.combatStatsPanel.setPosition(padding, padding + (100 * scale) + padding + (40 * scale) + padding);
+      const pos = layout.getCombatStatsPosition(scale);
+      this.combatStatsPanel.setPosition(pos.x, pos.y);
     }
 
-    // Update Turret Menu
+    // Update Turret Menu (right side)
     if (this.turretMenu) {
       this.turretMenu.container.scale.set(scale);
-      this.turretMenu.container.position.set(
-        width - (180 * scale) - padding,
-        padding + (70 * scale) + padding
-      );
+      const pos = layout.getTurretMenuPosition(scale, 180);
+      this.turretMenu.container.position.set(pos.x, pos.y);
     }
 
-    // Update Turret Upgrade Panel
+    // Update Turret Upgrade Panel (left of turret menu)
     if (this.turretUpgradePanel) {
       this.turretUpgradePanel.container.scale.set(scale);
-      const menuX = width - (180 * scale) - padding;
-      const menuY = padding + (70 * scale) + padding;
-      this.turretUpgradePanel.container.position.set(
-        menuX - (304 * scale) - padding,
-        menuY
-      );
+      const pos = layout.getTurretUpgradePanelPosition(scale, 180, 304);
+      this.turretUpgradePanel.container.position.set(pos.x, pos.y);
     }
 
     // Update Mobile Controls
@@ -223,51 +221,49 @@ export class HUDManager {
     // Update Message Log
     if (this.messageLog) {
       this.messageLog.container.scale.set(scale);
-      this.messageLog.container.position.set(padding, height - (200 * scale) - padding);
+      const pos = layout.getMessageLogPosition(scale, 200);
+      this.messageLog.container.position.set(pos.x, pos.y);
     }
 
-    // Update God Mode Button
+    // Update Toggle Buttons (left column, indexed positioning)
+    // 0=God Mode, 1=Slow Mode, 2=AI, 3=AI Brain
     if (this.godModeButton) {
       this.godModeButton.setScale(scale);
-      this.godModeButton.setPosition(padding, padding + (100 * scale) + padding + (40 * scale) + padding + (90 * scale) + padding);
+      const pos = layout.getToggleButtonPosition(0, scale);
+      this.godModeButton.setPosition(pos.x, pos.y);
     }
 
-    // Update Slow Mode Button
     if (this.slowModeButton) {
       this.slowModeButton.setScale(scale);
-      this.slowModeButton.setPosition(padding, padding + (100 * scale) + padding + (40 * scale) + padding + (90 * scale) + padding + (toggleBtnHeight * scale) + padding);
+      const pos = layout.getToggleButtonPosition(1, scale);
+      this.slowModeButton.setPosition(pos.x, pos.y);
     }
 
-    // Update AI Button
     if (this.aiButton) {
       this.aiButton.setScale(scale);
-      this.aiButton.setPosition(padding, padding + (100 * scale) + padding + (40 * scale) + padding + (90 * scale) + padding + (toggleBtnHeight * scale) * 2 + padding * 2);
+      const pos = layout.getToggleButtonPosition(2, scale);
+      this.aiButton.setPosition(pos.x, pos.y);
     }
 
-    // Update AI Brain Button (position below AI Button)
     if (this.aiBrainButton) {
       this.aiBrainButton.setScale(scale);
-      this.aiBrainButton.setPosition(padding, padding + (100 * scale) + padding + (40 * scale) + padding + (90 * scale) + padding + (toggleBtnHeight * scale) * 3 + padding * 3);
+      const pos = layout.getToggleButtonPosition(3, scale);
+      this.aiBrainButton.setPosition(pos.x, pos.y);
     }
 
-    // Update AI Panel (left side, below toggle buttons)
+    // Update AI Panel (below toggle buttons)
     if (this.aiPanel) {
-      const toggleBtnHeight = ToggleButton.getDimensions().height;
       this.aiPanel.setScale(scale);
-      // Position below the AI Brain toggle button (which is the 4th toggle button)
-      const aiPanelY = padding + (100 * scale) + padding + (40 * scale) + padding + (90 * scale) + padding + (toggleBtnHeight * scale) * 4 + padding * 4 + padding;
-      this.aiPanel.setPosition(padding, aiPanelY);
+      const pos = layout.getAIPanelPosition(scale);
+      this.aiPanel.setPosition(pos.x, pos.y);
     }
 
-    // Update AI Thought Feed (left side, below AI Panel)
+    // Update AI Thought Feed (below AI Panel)
     if (this.aiThoughtFeed) {
       const { height: aiPanelHeight } = AIPanel.getDimensions();
-      const toggleBtnHeight = ToggleButton.getDimensions().height;
       this.aiThoughtFeed.setScale(scale);
-      // Position below AI Panel (account for 4th toggle button)
-      const aiPanelY = padding + (100 * scale) + padding + (40 * scale) + padding + (90 * scale) + padding + (toggleBtnHeight * scale) * 4 + padding * 4 + padding;
-      const feedY = aiPanelY + (aiPanelHeight * scale) + padding;
-      this.aiThoughtFeed.setPosition(padding, feedY);
+      const pos = layout.getAIThoughtFeedPosition(scale, aiPanelHeight);
+      this.aiThoughtFeed.setPosition(pos.x, pos.y);
     }
   }
 
@@ -710,6 +706,7 @@ export class HUDManager {
     if (this.messageLog) this.messageLog.destroy();
     if (this.turretUpgradePanel) this.turretUpgradePanel.destroy();
     if (this.godModeButton) this.godModeButton.destroy();
+    if (this.muteButton) this.muteButton.destroy();
     if (this.slowModeButton) this.slowModeButton.destroy();
     if (this.aiButton) this.aiButton.destroy();
     if (this.aiBrainButton) this.aiBrainButton.destroy();
