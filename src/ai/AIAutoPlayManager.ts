@@ -98,6 +98,13 @@ export class AIAutoPlayManager {
     }
 
     /**
+     * Get coverage analyzer for debug visualization
+     */
+    getCoverageAnalyzer(): CoverageAnalyzer {
+        return this.coverageAnalyzer;
+    }
+
+    /**
      * Toggle AI enabled state
      */
     toggle(): boolean {

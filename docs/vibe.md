@@ -33,3 +33,11 @@ put these into multiple seperate tasks for coding agent to executute. put new do
 
 ---
 tell me what you understand from agent instruction?
+
+DEEP check game mechanis and config. we want to relabalce game configs, include but not limit to 
+- enemy
+- waves
+- damage
+- price/reward 
+- resources
+- upgrades

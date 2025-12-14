@@ -27,6 +27,7 @@ import { RenderManager, GameplayManager, UIController, InputRouter, InputAction 
 import { PoolManager } from '../ecs/PoolManager';
 import { getWaveStoryText } from '../game/waveConfig';
 import { AIAutoPlayManager, AIStatus, AIPersonality } from '../ai';
+import { AIDebugVisualizer } from '../ai/visualization';
 
 /**
  * Main game class - orchestrates all game systems.
@@ -51,6 +52,7 @@ export class Game {
 
   // AI Auto-Play
   private aiManager: AIAutoPlayManager | undefined;
+  private aiDebugVisualizer: AIDebugVisualizer | null = null;
 
   // Resize handler
   private boundResizeHandler: (() => void) | null = null;
@@ -181,6 +183,14 @@ export class Game {
       () => this.gameplayManager.getKobayashiMaruId()
     );
 
+    // AI Debug Visualizer
+    this.aiDebugVisualizer = new AIDebugVisualizer(
+      this.app,
+      this.aiManager,
+      this.aiManager.getCoverageAnalyzer()
+    );
+    this.setupDebugKeyboardHandlers();
+
     // Input router
     this.inputRouter = new InputRouter(this.app, this.world);
     this.inputRouter.setStateCheckers({
@@ -289,6 +299,11 @@ export class Game {
     // Post-render: screen effects
     this.loopManager.onPostRender((dt) => {
       this.renderManager.applyPostEffects(dt);
+
+      // Update AI debug visualizer
+      if (this.aiDebugVisualizer?.isEnabled()) {
+        this.aiDebugVisualizer.update(performance.now());
+      }
     });
 
     // UI: HUD and debug
@@ -364,6 +379,45 @@ export class Game {
     this.boundResizeHandler = this.handleResize.bind(this);
     window.addEventListener('resize', this.boundResizeHandler);
     this.handleResize();
+  }
+
+  /**
+   * Setup debug keyboard handlers for AI visualization.
+   * V = toggle all, 1-6 = toggle individual layers
+   */
+  private setupDebugKeyboardHandlers(): void {
+    window.addEventListener('keydown', (e) => {
+      if (!this.aiDebugVisualizer) return;
+
+      // Don't respond if typing in an input
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      switch (e.key.toLowerCase()) {
+        case 'v':
+          this.aiDebugVisualizer.toggle();
+          break;
+        case '1':
+          this.aiDebugVisualizer.toggleLayer('flowField');
+          break;
+        case '2':
+          this.aiDebugVisualizer.toggleLayer('trafficDensity');
+          break;
+        case '3':
+          this.aiDebugVisualizer.toggleLayer('threatMap');
+          break;
+        case '4':
+          this.aiDebugVisualizer.toggleLayer('coverageMap');
+          break;
+        case '5':
+          this.aiDebugVisualizer.toggleLayer('interceptionPoints');
+          break;
+        case '6':
+          this.aiDebugVisualizer.toggleLayer('decisionReasoning');
+          break;
+      }
+    });
   }
 
   /**
@@ -529,6 +583,7 @@ export class Game {
       window.removeEventListener('resize', this.boundResizeHandler);
     }
 
+    this.aiDebugVisualizer?.destroy();
     this.inputRouter.destroy();
     this.uiController.destroy();
     this.gameplayManager.destroy();
