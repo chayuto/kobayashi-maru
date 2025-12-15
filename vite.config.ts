@@ -1,8 +1,8 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  // Use repository name as base for GitHub Pages, otherwise use './' for local dev
-  base: process.env.GITHUB_ACTIONS ? '/kobayashi-maru/' : './',
+  // Use '/' for custom domain deployment, './' for local dev
+  base: process.env.GITHUB_ACTIONS ? '/' : './',
   build: {
     target: 'esnext',
     outDir: 'dist',
