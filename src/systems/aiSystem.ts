@@ -27,6 +27,8 @@ import { query } from 'bitecs';
 import { GameWorld } from '../ecs/world';
 import { Position, Velocity, AIBehavior, Faction, Turret } from '../ecs/components';
 import { AIBehaviorType, GAME_CONFIG } from '../types/constants';
+import type { AIBehaviorTypeId } from '../types/constants';
+import { assertNever } from '../types/utility';
 import { AI_CONFIG } from '../config';
 
 /**
@@ -68,7 +70,11 @@ export function createAISystem() {
 
         for (let i = 0; i < entities.length; i++) {
             const eid = entities[i];
-            const behaviorType = AIBehavior.behaviorType[eid];
+            // Cast to AIBehaviorTypeId for exhaustive switch checking.
+            // bitECS stores all component data as numbers in TypedArrays, so we must
+            // assert the type to get compile-time exhaustiveness checking. The value
+            // is validated by the switch default case at runtime.
+            const behaviorType = AIBehavior.behaviorType[eid] as AIBehaviorTypeId;
 
             // Current position
             const posX = Position.x[eid];
@@ -115,6 +121,10 @@ export function createAISystem() {
                     // Tholian: Slow approach then orbit at distance
                     updateOrbitBehavior(eid, posX, posY, targetX, targetY, gameTime);
                     break;
+
+                default:
+                    // Ensures all AIBehaviorTypeId values are handled - compile error if new type added
+                    assertNever(behaviorType);
             }
         }
     };

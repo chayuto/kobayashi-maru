@@ -5,6 +5,8 @@
 import { query, hasComponent, World } from 'bitecs';
 import { Position, Velocity, Health, Shield, SpecialAbility, Faction } from '../ecs/components';
 import { AbilityType, ABILITY_CONFIG, GAME_CONFIG, FactionId } from '../types/constants';
+import type { AbilityTypeId } from '../types/constants';
+import { assertNever } from '../types/utility';
 import { AI_CONFIG } from '../config';
 import { createEnemy } from '../ecs/entityFactory';
 import type { GameWorld } from '../ecs/world';
@@ -38,7 +40,11 @@ export function createAbilitySystem(
 
     for (let i = 0; i < entities.length; i++) {
       const eid = entities[i];
-      const abilityType = SpecialAbility.abilityType[eid];
+      // Cast to AbilityTypeId for exhaustive switch checking.
+      // bitECS stores all component data as numbers in TypedArrays, so we must
+      // assert the type to get compile-time exhaustiveness checking. The value
+      // is validated by the switch default case at runtime.
+      const abilityType = SpecialAbility.abilityType[eid] as AbilityTypeId;
 
       switch (abilityType) {
         case AbilityType.TELEPORT:
@@ -65,6 +71,9 @@ export function createAbilitySystem(
         case AbilityType.RAMMING_SPEED:
           processRammingSpeedAbility(world, eid, particleSystem);
           break;
+        default:
+          // Ensures all AbilityTypeId values are handled - compile error if new type added
+          assertNever(abilityType);
       }
     }
   };
