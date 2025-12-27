@@ -12,6 +12,7 @@ import { ParticleSystem } from '../rendering/ParticleSystem';
 import { SpriteManager } from '../rendering/spriteManager';
 import { WAVE_CONFIG } from '../config';
 import { GameEventType } from '../types/events';
+import type { IWaveManager, WaveState } from '../types/interfaces';
 import { AudioManager, SoundType } from '../audio';
 import type { GameWorld } from '../ecs/world';
 import {
@@ -38,10 +39,8 @@ interface SpawnGroupState {
   spawnPoints: SpawnPoints;
 }
 
-/**
- * Wave manager state
- */
-export type WaveState = 'idle' | 'spawning' | 'active' | 'complete';
+// Re-export WaveState for backward compatibility
+export type { WaveState };
 
 // Maximum spawns per frame to prevent frame spikes (from centralized config)
 const MAX_SPAWNS_PER_FRAME = WAVE_CONFIG.SPAWN.MAX_SPAWNS_PER_FRAME;
@@ -52,8 +51,9 @@ const WAVE_COMPLETE_DELAY = WAVE_CONFIG.TIMING.COMPLETE_DELAY_MS;
 /**
  * WaveManager class
  * Handles wave progression, enemy spawning, and wave completion
+ * Implements IWaveManager interface for consistent API contract.
  */
-export class WaveManager {
+export class WaveManager implements IWaveManager {
   private world: GameWorld | null = null;
   private currentWave: number = 0;
   private state: WaveState = 'idle';

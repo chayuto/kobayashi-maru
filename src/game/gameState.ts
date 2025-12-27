@@ -2,29 +2,12 @@
  * Game State Manager for Kobayashi Maru
  * Manages game state transitions and emits events on state changes
  */
+import type { IGameState, StateChangeCallback, StateChangeEvent } from '../types/interfaces';
+import { GameStateType } from '../types/interfaces';
 
-/**
- * Game states enum
- */
-export enum GameStateType {
-  MENU = 'MENU',
-  PLAYING = 'PLAYING',
-  PAUSED = 'PAUSED',
-  GAME_OVER = 'GAME_OVER'
-}
-
-/**
- * State change event data
- */
-export interface StateChangeEvent {
-  previousState: GameStateType;
-  newState: GameStateType;
-}
-
-/**
- * State change callback type
- */
-export type StateChangeCallback = (event: StateChangeEvent) => void;
+// Re-export types for backward compatibility
+export { GameStateType };
+export type { StateChangeEvent, StateChangeCallback };
 
 /**
  * Valid state transitions map
@@ -38,8 +21,9 @@ const VALID_TRANSITIONS: Record<GameStateType, GameStateType[]> = {
 
 /**
  * GameState class - manages game state and transitions
+ * Implements IGameState interface for consistent API contract.
  */
-export class GameState {
+export class GameState implements IGameState {
   private currentState: GameStateType = GameStateType.MENU;
   private listeners: StateChangeCallback[] = [];
 
