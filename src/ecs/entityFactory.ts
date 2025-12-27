@@ -266,6 +266,7 @@ export function createProjectile(
 /**
  * Reset projectile components
  * @deprecated Use resetProjectile from entityReset.ts instead
+ * TODO: Remove in future cleanup - this is a wrapper for backwards compatibility
  */
 function resetProjectileComponents(eid: number): void {
   resetProjectile(eid);

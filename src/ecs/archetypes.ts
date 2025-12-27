@@ -177,38 +177,41 @@ export interface ArchetypeValidationResult {
 }
 
 /**
+ * Map of components to their display names for error messages.
+ * Using WeakMap for memory-efficient component identification.
+ */
+const componentNameMap = new WeakMap<object, string>();
+
+// Initialize component name mappings
+componentNameMap.set(Position, 'Position');
+componentNameMap.set(Velocity, 'Velocity');
+componentNameMap.set(Rotation, 'Rotation');
+componentNameMap.set(Faction, 'Faction');
+componentNameMap.set(SpriteRef, 'SpriteRef');
+componentNameMap.set(CompositeSpriteRef, 'CompositeSpriteRef');
+componentNameMap.set(Health, 'Health');
+componentNameMap.set(Shield, 'Shield');
+componentNameMap.set(Collider, 'Collider');
+componentNameMap.set(AIBehavior, 'AIBehavior');
+componentNameMap.set(EnemyWeapon, 'EnemyWeapon');
+componentNameMap.set(Projectile, 'Projectile');
+componentNameMap.set(Target, 'Target');
+componentNameMap.set(Turret, 'Turret');
+componentNameMap.set(TurretUpgrade, 'TurretUpgrade');
+componentNameMap.set(WeaponProperties, 'WeaponProperties');
+componentNameMap.set(EnemyVariant, 'EnemyVariant');
+componentNameMap.set(SpecialAbility, 'SpecialAbility');
+
+/**
  * Get the display name of a component for error messages.
  */
 function getComponentName(component: ComponentType): string {
-    // Use the first property name as identifier
+    const name = componentNameMap.get(component);
+    if (name) return name;
+    
+    // Fallback: use first property name
     const keys = Object.keys(component);
-    if (keys.length === 0) return 'Unknown';
-    
-    // Map known component structures to names
-    if ('x' in component && 'y' in component && !('radius' in component)) {
-        if ('x' in component && Object.keys(component).length === 2) {
-            return 'Position or Velocity';
-        }
-    }
-    if ('current' in component && 'max' in component) {
-        return 'Health or Shield';
-    }
-    if ('angle' in component) return 'Rotation';
-    if ('id' in component) return 'Faction';
-    if ('index' in component) return 'SpriteRef';
-    if ('baseIndex' in component) return 'CompositeSpriteRef';
-    if ('radius' in component) return 'Collider';
-    if ('behaviorType' in component) return 'AIBehavior';
-    if ('turretType' in component) return 'Turret';
-    if ('entityId' in component) return 'Target';
-    if ('projectileType' in component && 'damage' in component && 'speed' in component) return 'Projectile';
-    if ('projectileType' in component && 'fireRate' in component) return 'EnemyWeapon';
-    if ('damageLevel' in component) return 'TurretUpgrade';
-    if ('shieldDamageMultiplier' in component) return 'WeaponProperties';
-    if ('rank' in component) return 'EnemyVariant';
-    if ('abilityType' in component) return 'SpecialAbility';
-    
-    return keys[0];
+    return keys.length > 0 ? keys[0] : 'Unknown';
 }
 
 /**
