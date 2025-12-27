@@ -13,7 +13,8 @@ import { FactionId, TurretType, TURRET_CONFIG, ProjectileType, PROJECTILE_CONFIG
 import type { GameWorld } from './world';
 import { incrementEntityCount } from './world';
 import { createEnemy, createEnemyFromTemplate, createEnemies } from './genericFactory';
-import { ENEMY_TEMPLATES, getEnemyTemplate, getEnemyFactionIds } from './entityTemplates';
+import { ENEMY_TEMPLATES, getEnemyTemplate, getEnemyFactionIds, TURRET_TEMPLATES, getTurretTemplate, PROJECTILE_TEMPLATES, getProjectileTemplate } from './entityTemplates';
+import { resetProjectile } from './entityReset';
 import { PoolManager } from './PoolManager';
 
 const USE_POOLING = true;
@@ -21,6 +22,7 @@ const USE_POOLING = true;
 // Re-export generic factory and templates for convenient access
 export { createEnemy, createEnemyFromTemplate, createEnemies };
 export { ENEMY_TEMPLATES, getEnemyTemplate, getEnemyFactionIds };
+export { TURRET_TEMPLATES, getTurretTemplate, PROJECTILE_TEMPLATES, getProjectileTemplate };
 
 // Placeholder sprite index - will be replaced when sprite system is implemented
 const PLACEHOLDER_SPRITE_INDEX = 0;
@@ -263,23 +265,10 @@ export function createProjectile(
 
 /**
  * Reset projectile components
+ * @deprecated Use resetProjectile from entityReset.ts instead
  */
 function resetProjectileComponents(eid: number): void {
-  Position.x[eid] = 0;
-  Position.y[eid] = 0;
-  Velocity.x[eid] = 0;
-  Velocity.y[eid] = 0;
-  Projectile.damage[eid] = 0;
-  Projectile.projectileType[eid] = 0;
-  Projectile.targetEntityId[eid] = 0;
-  Projectile.speed[eid] = 0;
-  Projectile.lifetime[eid] = 0;
-  Faction.id[eid] = 0;
-  SpriteRef.index[eid] = 0;
-  Collider.radius[eid] = 0;
-  Collider.layer[eid] = 0;
-  Collider.mask[eid] = 0;
-  Rotation.angle[eid] = 0;
+  resetProjectile(eid);
 }
 
 /**
