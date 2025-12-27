@@ -13,7 +13,6 @@
 import { Container, Text, TextStyle, Graphics } from 'pixi.js';
 import { EventBus } from '../../core/EventBus';
 import { UI_STYLES } from '../styles';
-import { UI_CONFIG } from '../../config';
 import type { GameEventType } from '../../types/events';
 
 /**
@@ -223,7 +222,7 @@ export abstract class UIComponent {
     
     /**
      * Create a text element with standard styling.
-     * Uses UI_STYLES and UI_CONFIG for consistent appearance.
+     * Uses UI_STYLES for consistent appearance with existing components.
      * @param text - Text content
      * @param options - Optional styling overrides
      * @returns Text element
@@ -233,7 +232,7 @@ export abstract class UIComponent {
         options: { fontSize?: number; color?: number; fontFamily?: string; fontWeight?: 'normal' | 'bold' } = {}
     ): Text {
         const style = new TextStyle({
-            fontSize: options.fontSize ?? UI_CONFIG.FONTS.SIZE_MEDIUM,
+            fontSize: options.fontSize ?? UI_STYLES.FONT_SIZE_MEDIUM,
             fill: options.color ?? UI_STYLES.COLORS.TEXT,
             fontFamily: options.fontFamily ?? UI_STYLES.FONT_FAMILY,
             fontWeight: options.fontWeight,

@@ -6,7 +6,7 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { Container } from 'pixi.js';
 import { UIComponent } from '../ui/base';
 import { Button } from '../ui/components';
-import { layoutChildren, gridLayout, centerChild, alignChild } from '../ui/layout';
+import { layoutChildren, gridLayout } from '../ui/layout';
 import { UIAnimator } from '../ui/animation';
 
 // Mock PixiJS

@@ -21,26 +21,30 @@
  */
 export const UI_CONFIG = {
     /**
-     * Common padding and spacing values.
+     * Common padding and spacing values for layout positioning.
+     * SPACING.PADDING is used for positioning panels relative to screen edges.
+     * Use PADDING.* for internal element padding within components.
      */
     SPACING: {
-        /** Standard padding in pixels */
+        /** Standard screen-edge padding for panel positioning (16px) */
         PADDING: 16,
-        /** Gap between panels */
+        /** Gap between adjacent panels */
         PANEL_GAP: 8,
         /** Gap between elements within a panel */
         ELEMENT_GAP: 4,
     },
 
     /**
-     * Padding values for UI elements.
+     * Padding values for internal UI element spacing.
+     * Use these for padding within components (e.g., button text padding).
+     * For screen-edge positioning, use SPACING.PADDING.
      */
     PADDING: {
-        /** Small padding (8px) */
+        /** Small internal padding (8px) */
         SMALL: 8,
-        /** Normal padding (12px) */
+        /** Normal internal padding (12px) */
         NORMAL: 12,
-        /** Large padding (20px) */
+        /** Large internal padding (20px) */
         LARGE: 20,
     },
 

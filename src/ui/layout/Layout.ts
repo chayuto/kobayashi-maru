@@ -63,8 +63,9 @@ export interface GridLayoutOptions {
  * });
  * ```
  * 
- * @param container - Container with children to layout
+ * @param container - Container with children to layout. Children must have x, y, width, and height properties (e.g., PixiJS Container, Graphics, Sprite).
  * @param options - Layout options
+ * @remarks This function modifies child positions directly. Children without positioning properties will be skipped.
  */
 export function layoutChildren(
     container: Container,
@@ -82,7 +83,9 @@ export function layoutChildren(
     const isHorizontal = opts.direction === 'horizontal';
 
     for (const child of container.children) {
+        // Skip invisible children and children without positioning properties
         if (!child.visible) continue;
+        if (typeof child.x !== 'number' || typeof child.y !== 'number') continue;
 
         if (isHorizontal) {
             child.x = offset;
@@ -108,8 +111,9 @@ export function layoutChildren(
  * });
  * ```
  * 
- * @param container - Container with children to layout
+ * @param container - Container with children to layout. Children must have x and y properties.
  * @param options - Grid layout options
+ * @remarks This function modifies child positions directly. Children without positioning properties will be skipped.
  */
 export function gridLayout(
     container: Container,
@@ -122,7 +126,9 @@ export function gridLayout(
     let row = 0;
 
     for (const child of container.children) {
+        // Skip invisible children and children without positioning properties
         if (!child.visible) continue;
+        if (typeof child.x !== 'number' || typeof child.y !== 'number') continue;
 
         child.x = padding + col * (options.cellWidth + gap);
         child.y = padding + row * (options.cellHeight + gap);
