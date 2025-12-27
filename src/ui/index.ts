@@ -14,6 +14,21 @@ export { MobileControlsOverlay } from './MobileControlsOverlay';
 export { MessageLog } from './MessageLog';
 export type { HUDData } from './types';
 
+// Base UI component class
+export { UIComponent } from './base';
+
 // Panel components (modular building blocks for HUD)
 export { WavePanel, ResourcePanel, StatusPanel } from './panels';
 export type { WavePanelData, ResourcePanelData, StatusPanelData } from './panels';
+
+// Reusable UI components
+export { Button, ToggleButton, IconButton } from './components';
+export type { ButtonOptions, ToggleButtonConfig, IconButtonConfig } from './components';
+
+// Layout utilities
+export { layoutChildren, gridLayout, centerChild, alignChild } from './layout';
+export type { LayoutOptions, GridLayoutOptions, Alignment, Direction } from './layout';
+
+// Animation utilities
+export { UIAnimator } from './animation';
+export type { AnimationOptions } from './animation';
