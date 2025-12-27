@@ -1,23 +1,248 @@
 /**
  * Game Event Types for Kobayashi Maru
- * Defines all events emitted by the global Event Bus
+ * 
+ * All events emitted through the global EventBus.
+ * Events are organized by domain for discoverability.
+ * 
+ * @module types/events
  */
 
 /**
  * Event type identifiers
+ * 
+ * Events are organized by domain:
+ * - COMBAT EVENTS: Enemy kills, player damage
+ * - WAVE EVENTS: Wave lifecycle
+ * - ECONOMY EVENTS: Resources, upgrades
+ * - UI EVENTS: Combo, achievements
+ * - INPUT EVENTS: Touch and gesture handling
  */
 export enum GameEventType {
+  // ============================================
+  // COMBAT EVENTS
+  // ============================================
+
+  /**
+   * Fired when an enemy entity is destroyed.
+   * 
+   * @emittedBy damageSystem.ts - when Health.current reaches 0 for non-Federation entities
+   * @payload EnemyKilledPayload
+   * @timing Immediate, before entity removal from world
+   * 
+   * @example
+   * ```typescript
+   * eventBus.on(GameEventType.ENEMY_KILLED, (payload) => {
+   *   spawnExplosion(payload.x, payload.y);
+   *   addResources(GAME_CONFIG.RESOURCE_REWARD);
+   * });
+   * ```
+   */
   ENEMY_KILLED = 'ENEMY_KILLED',
-  WAVE_STARTED = 'WAVE_STARTED',
-  WAVE_COMPLETED = 'WAVE_COMPLETED',
+
+  /**
+   * Fired when the Kobayashi Maru (player ship) takes damage.
+   * 
+   * @emittedBy Not yet implemented - reserved for future use
+   * @payload PlayerDamagedPayload
+   * @timing After health reduction is applied
+   * 
+   * @example
+   * ```typescript
+   * eventBus.on(GameEventType.PLAYER_DAMAGED, (payload) => {
+   *   triggerScreenShake();
+   *   updateHealthBar(payload.currentHealth);
+   * });
+   * ```
+   */
   PLAYER_DAMAGED = 'PLAYER_DAMAGED',
+
+  // ============================================
+  // WAVE EVENTS
+  // ============================================
+
+  /**
+   * Fired when a new wave begins spawning.
+   * 
+   * @emittedBy WaveManager.startWave() - at the start of wave initialization
+   * @payload WaveStartedPayload
+   * @timing Before first enemy spawns
+   * 
+   * @example
+   * ```typescript
+   * eventBus.on(GameEventType.WAVE_STARTED, (payload) => {
+   *   showWaveAnnouncement(payload.waveNumber);
+   *   prepareDefenses(payload.totalEnemies);
+   * });
+   * ```
+   */
+  WAVE_STARTED = 'WAVE_STARTED',
+
+  /**
+   * Fired when all enemies in a wave are defeated.
+   * 
+   * @emittedBy WaveManager.completeWave() - when activeEnemies.size === 0
+   * @payload WaveCompletedPayload
+   * @timing After last enemy killed, before next wave delay
+   * 
+   * @example
+   * ```typescript
+   * eventBus.on(GameEventType.WAVE_COMPLETED, (payload) => {
+   *   showWaveCompleteMessage(payload.waveNumber);
+   *   awardWaveBonus();
+   * });
+   * ```
+   */
+  WAVE_COMPLETED = 'WAVE_COMPLETED',
+
+  // ============================================
+  // ECONOMY EVENTS
+  // ============================================
+
+  /**
+   * Fired when player resources change.
+   * 
+   * @emittedBy ResourceManager.emitResourceUpdate() - on add, spend, or set
+   * @payload ResourceUpdatedPayload
+   * @timing Immediate after resource change
+   * 
+   * @example
+   * ```typescript
+   * eventBus.on(GameEventType.RESOURCE_UPDATED, (payload) => {
+   *   updateResourceDisplay(payload.current);
+   *   if (payload.amount > 0) showGainAnimation(payload.amount);
+   * });
+   * ```
+   */
   RESOURCE_UPDATED = 'RESOURCE_UPDATED',
+
+  // ============================================
+  // LIFECYCLE EVENTS
+  // ============================================
+
+  /**
+   * Fired when the game ends (Kobayashi Maru destroyed).
+   * 
+   * @emittedBy Not yet implemented - reserved for future use
+   * @payload GameOverPayload
+   * @timing After game state transitions to GAME_OVER
+   * 
+   * @example
+   * ```typescript
+   * eventBus.on(GameEventType.GAME_OVER, (payload) => {
+   *   showGameOverScreen(payload.score);
+   *   saveHighScore(payload.score);
+   * });
+   * ```
+   */
   GAME_OVER = 'GAME_OVER',
+
+  // ============================================
+  // UI EVENTS
+  // ============================================
+
+  /**
+   * Fired when combo count or multiplier changes.
+   * 
+   * @emittedBy ScoreManager.addKill() - on kill combo update
+   * @emittedBy ScoreManager.resetCombo() - when combo timer expires
+   * @payload ComboUpdatedPayload
+   * @timing Immediate after combo state change
+   * 
+   * @example
+   * ```typescript
+   * eventBus.on(GameEventType.COMBO_UPDATED, (payload) => {
+   *   updateComboDisplay(payload.comboCount, payload.multiplier);
+   *   if (payload.isActive) showComboFlash();
+   * });
+   * ```
+   */
   COMBO_UPDATED = 'COMBO_UPDATED',
+
+  /**
+   * Fired when a player unlocks an achievement.
+   * 
+   * @emittedBy AchievementManager.checkAchievements() - when conditions met
+   * @payload AchievementUnlockedPayload
+   * @timing After achievement is marked as unlocked
+   * 
+   * @example
+   * ```typescript
+   * eventBus.on(GameEventType.ACHIEVEMENT_UNLOCKED, (payload) => {
+   *   showAchievementToast(payload.name, payload.description);
+   *   playAchievementSound();
+   * });
+   * ```
+   */
   ACHIEVEMENT_UNLOCKED = 'ACHIEVEMENT_UNLOCKED',
+
+  // ============================================
+  // INPUT EVENTS
+  // ============================================
+
+  /**
+   * Fired when a touch begins on the game canvas.
+   * 
+   * @emittedBy TouchInputManager.handleTouchStart()
+   * @payload TouchEventPayload
+   * @timing Immediate on touchstart event
+   * 
+   * @example
+   * ```typescript
+   * eventBus.on(GameEventType.TOUCH_START, (payload) => {
+   *   startDragOperation(payload.x, payload.y);
+   * });
+   * ```
+   */
   TOUCH_START = 'TOUCH_START',
+
+  /**
+   * Fired when a touch moves on the game canvas.
+   * 
+   * @emittedBy TouchInputManager.handleTouchMove()
+   * @payload TouchEventPayload
+   * @timing On touchmove event
+   * 
+   * @example
+   * ```typescript
+   * eventBus.on(GameEventType.TOUCH_MOVE, (payload) => {
+   *   updateDragPosition(payload.x, payload.y);
+   * });
+   * ```
+   */
   TOUCH_MOVE = 'TOUCH_MOVE',
+
+  /**
+   * Fired when a touch ends on the game canvas.
+   * 
+   * @emittedBy TouchInputManager.handleTouchEnd()
+   * @payload TouchEventPayload
+   * @timing Immediate on touchend event
+   * 
+   * @example
+   * ```typescript
+   * eventBus.on(GameEventType.TOUCH_END, (payload) => {
+   *   completeDragOperation(payload.x, payload.y);
+   * });
+   * ```
+   */
   TOUCH_END = 'TOUCH_END',
+
+  /**
+   * Fired when a gesture is recognized (pan, pinch, swipe, tap).
+   * 
+   * @emittedBy GestureManager - on gesture recognition
+   * @payload GestureEvent
+   * @timing After gesture is classified
+   * 
+   * @example
+   * ```typescript
+   * eventBus.on(GameEventType.GESTURE, (payload) => {
+   *   if (payload.type === GestureType.PINCH) {
+   *     adjustZoom(payload.scale);
+   *   }
+   * });
+   * ```
+   */
   GESTURE = 'GESTURE'
 }
 

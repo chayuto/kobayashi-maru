@@ -7,6 +7,8 @@ export * from './Game';
 export * from './PerformanceMonitor';
 export * from './QualityManager';
 export * from './EventBus';
+export * from './EventBusDebugger';
+export * from './EventBusSubscription';
 export * from './TouchInputManager';
 export * from './GestureManager';
 export * from './HapticManager';
