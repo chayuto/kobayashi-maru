@@ -217,6 +217,38 @@ describe('NewFeature', () => {
 - Use EventBus for cross-system communication
 - Prefer composition over inheritance
 
+## Interface-First Design
+
+All new services should have corresponding interfaces in `src/types/interfaces/`:
+
+```typescript
+// Step 1: Define interface
+import { IWaveManager } from '../types/interfaces';
+
+// Step 2: Implement
+export class WaveManager implements IWaveManager {
+  // Implementation fulfills the contract
+}
+
+// Step 3: Register with container
+services.register('waveManager', () => new WaveManager());
+```
+
+Available interfaces:
+- `IWaveManager` - Wave spawning and progression
+- `IGameState` - Game state management
+- `IResourceManager` - Player resource management
+- `IScoreManager` - Score and combo tracking
+- `IEntityFactory` - Standardized entity creation
+- `SystemContext` - Unified system execution context
+
+Benefits:
+- Agents can understand contracts without reading implementation
+- Mock generation is trivial for testing
+- Type system enforces correct usage
+
+See `docs/ARCHITECTURE.md` for detailed architecture documentation.
+
 ## Validation Checklist
 
 Before completing any task:

@@ -5,6 +5,10 @@
 import { EventBus } from '../core/EventBus';
 import { GameEventType, EnemyKilledPayload, WaveCompletedPayload } from '../types/events';
 import { SCORE_CONFIG } from '../config';
+import type { IScoreManager, ScoreData } from '../types/interfaces';
+
+// Re-export ScoreData for backward compatibility
+export type { ScoreData };
 
 /** Combo multiplier thresholds (from centralized config) */
 const COMBO_TIERS = SCORE_CONFIG.COMBO.TIERS;
@@ -13,23 +17,11 @@ const COMBO_TIERS = SCORE_CONFIG.COMBO.TIERS;
 const COMBO_TIMEOUT = SCORE_CONFIG.COMBO.TIMEOUT;
 
 /**
- * Score data interface
- */
-export interface ScoreData {
-  timeSurvived: number;
-  waveReached: number;
-  enemiesDefeated: number;
-  civiliansSaved: number;
-  comboCount?: number;      // Optional for backward compatibility
-  comboMultiplier?: number; // Optional for backward compatibility
-  maxCombo?: number;        // Optional for backward compatibility
-}
-
-/**
  * ScoreManager class - tracks all gameplay metrics
  * Automatically subscribes to EventBus events for ENEMY_KILLED and WAVE_COMPLETED
+ * Implements IScoreManager interface for consistent API contract.
  */
-export class ScoreManager {
+export class ScoreManager implements IScoreManager {
   private timeSurvived: number = 0;
   private waveReached: number = 0;
   private enemiesDefeated: number = 0;

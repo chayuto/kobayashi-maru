@@ -4,12 +4,14 @@
  */
 import { GAME_CONFIG } from '../types/constants';
 import { GameEventType } from '../types/events';
+import type { IResourceManager } from '../types/interfaces';
 import { EventBus } from '../core/EventBus';
 
 /**
  * Manages player resources (Replication Matter)
+ * Implements IResourceManager interface for consistent API contract.
  */
-export class ResourceManager {
+export class ResourceManager implements IResourceManager {
   private resources: number;
   private eventBus: EventBus;
 
