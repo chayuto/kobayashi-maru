@@ -5,3 +5,4 @@
 export * from './constants';
 export * from './events';
 export * from './interfaces';
+export * from './utility';

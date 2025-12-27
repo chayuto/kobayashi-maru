@@ -5,6 +5,8 @@
 import { hasComponent, removeEntity } from 'bitecs';
 import { Turret, TurretUpgrade, CompositeSpriteRef } from '../ecs/components';
 import { TURRET_CONFIG, UPGRADE_CONFIG, UpgradePath, TURRET_SELL_REFUND_PERCENT } from '../types/constants';
+import type { UpgradePathId } from '../types/constants';
+import { assertNever } from '../types/utility';
 import { RENDERING_CONFIG } from '../config';
 import { ResourceManager } from './resourceManager';
 import { GameWorld, decrementEntityCount } from '../ecs/world';
@@ -248,7 +250,10 @@ export class UpgradeManager {
 
     // Apply the upgrade
     const newLevel = currentLevel + 1;
-    switch (upgradePath) {
+    // Cast to UpgradePathId for exhaustive switch checking
+    // This is safe because we already validated upgradePath in the earlier switch
+    const typedPath = upgradePath as UpgradePathId;
+    switch (typedPath) {
       case UpgradePath.DAMAGE:
         TurretUpgrade.damageLevel[entityId] = newLevel;
         this.applyDamageUpgrade(entityId, newLevel);
@@ -269,6 +274,9 @@ export class UpgradeManager {
         TurretUpgrade.specialLevel[entityId] = newLevel;
         // Special upgrades are handled in combat/damage systems
         break;
+      default:
+        // Ensures all UpgradePathId values are handled - compile error if new type added
+        assertNever(typedPath);
     }
 
     // Play upgrade sound
