@@ -66,10 +66,15 @@ export interface ProjectileConfig extends EntityConfig {
  */
 export interface IEntityFactory<T extends EntityConfig> {
   /**
-   * Creates a new entity from configuration
+   * Creates a new entity from configuration.
+   * 
+   * Note: Returns -1 on failure following bitECS convention where entity IDs
+   * are always positive integers. This convention is used throughout the codebase
+   * for consistency with ECS patterns.
+   * 
    * @param world - The ECS world
    * @param config - Entity configuration
-   * @returns Entity ID, or -1 if creation failed
+   * @returns Entity ID (positive integer), or -1 if creation failed
    */
   create(world: GameWorld, config: T): number;
 

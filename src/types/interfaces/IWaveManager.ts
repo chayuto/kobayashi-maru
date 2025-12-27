@@ -5,10 +5,6 @@
  * @module types/interfaces/IWaveManager
  */
 
-import type { GameWorld } from '../../ecs/world';
-import type { ParticleSystem } from '../../rendering/ParticleSystem';
-import type { SpriteManager } from '../../rendering/spriteManager';
-
 /**
  * Wave state enum - represents the current phase of wave processing
  */
@@ -20,17 +16,22 @@ export type WaveState = 'idle' | 'spawning' | 'active' | 'complete';
  */
 export interface IWaveManager {
   /**
-   * Sets rendering dependencies for visual effects
+   * Sets rendering dependencies for visual effects.
+   * 
+   * Note: Uses `unknown` types to avoid coupling the interface to concrete
+   * rendering implementations. The implementation is responsible for
+   * type-checking these dependencies.
+   * 
    * @param particleSystem - Particle system for spawn effects
    * @param spriteManager - Sprite manager for entity visuals
    */
-  setRenderingDependencies(particleSystem: ParticleSystem, spriteManager: SpriteManager): void;
+  setRenderingDependencies(particleSystem: unknown, spriteManager: unknown): void;
 
   /**
    * Initializes the wave manager with a world
    * @param world - The ECS world to spawn entities into
    */
-  init(world: GameWorld): void;
+  init(world: unknown): void;
 
   /**
    * Starts a specific wave

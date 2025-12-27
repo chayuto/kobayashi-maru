@@ -39,13 +39,18 @@ export interface SystemContext {
 }
 
 /**
- * Standard ECS system function signature
+ * Standard ECS system function signature.
  * All systems should conform to this unified signature for consistency.
+ * 
+ * Note: Uses `unknown` for world type to maintain compatibility with bitECS's
+ * IWorld type without coupling the interface to a specific ECS implementation.
+ * Concrete systems should cast to their expected world type internally.
  * 
  * @example
  * ```typescript
  * const movementSystem: ECSSystem = (world, context) => {
- *   for (const eid of movementQuery(world)) {
+ *   const ecsWorld = world as IWorld;  // Cast to bitECS type internally
+ *   for (const eid of movementQuery(ecsWorld)) {
  *     Position.x[eid] += Velocity.x[eid] * context.delta;
  *     Position.y[eid] += Velocity.y[eid] * context.delta;
  *   }
