@@ -120,5 +120,31 @@ describe('Utility Types', () => {
       // config.outer = { inner: { value: 1 } }; // Error: readonly
       // config.outer.inner.value = 100; // Error: readonly
     });
+
+    it('should properly handle arrays as readonly', () => {
+      interface ConfigWithArray {
+        items: number[];
+        nested: {
+          values: string[];
+        };
+      }
+      
+      // Type test - verifies arrays become readonly
+      const config: DeepReadonly<ConfigWithArray> = {
+        items: [1, 2, 3],
+        nested: {
+          values: ['a', 'b', 'c']
+        }
+      };
+      
+      // Read access should work
+      expect(config.items[0]).toBe(1);
+      expect(config.nested.values[1]).toBe('b');
+      
+      // At compile time, these would error:
+      // config.items.push(4); // Error: readonly array
+      // config.items[0] = 10; // Error: readonly array
+      // config.nested.values.pop(); // Error: readonly array
+    });
   });
 });

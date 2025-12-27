@@ -250,8 +250,10 @@ export class UpgradeManager {
 
     // Apply the upgrade
     const newLevel = currentLevel + 1;
-    // Cast to UpgradePathId for exhaustive switch checking
-    // This is safe because we already validated upgradePath in the earlier switch
+    // Cast to UpgradePathId for exhaustive switch checking.
+    // The upgradePath was already validated in the earlier switch (which returns early
+    // for invalid paths), so this cast is safe. The default case with assertNever
+    // provides additional runtime validation.
     const typedPath = upgradePath as UpgradePathId;
     switch (typedPath) {
       case UpgradePath.DAMAGE:

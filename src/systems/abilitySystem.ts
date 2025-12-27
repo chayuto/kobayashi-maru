@@ -40,7 +40,10 @@ export function createAbilitySystem(
 
     for (let i = 0; i < entities.length; i++) {
       const eid = entities[i];
-      // Cast to AbilityTypeId for exhaustive switch checking
+      // Cast to AbilityTypeId for exhaustive switch checking.
+      // bitECS stores all component data as numbers in TypedArrays, so we must
+      // assert the type to get compile-time exhaustiveness checking. The value
+      // is validated by the switch default case at runtime.
       const abilityType = SpecialAbility.abilityType[eid] as AbilityTypeId;
 
       switch (abilityType) {

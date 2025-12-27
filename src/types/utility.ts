@@ -96,13 +96,19 @@ export type WithRequired<T, K extends keyof T> = T & Required<Pick<T, K>>;
 
 /**
  * Make all properties of an object and nested objects readonly.
+ * Properly handles arrays by making them readonly arrays.
  *
  * @example
  * ```typescript
  * const config: DeepReadonly<{ nested: { value: number } }> = { nested: { value: 1 } };
  * // config.nested.value = 2; // Error: Cannot assign to 'value'
+ *
+ * const items: DeepReadonly<{ list: number[] }> = { list: [1, 2, 3] };
+ * // items.list.push(4); // Error: Property 'push' does not exist on 'readonly number[]'
  * ```
  */
-export type DeepReadonly<T> = {
-    readonly [P in keyof T]: T[P] extends object ? DeepReadonly<T[P]> : T[P];
-};
+export type DeepReadonly<T> = T extends readonly (infer U)[]
+    ? readonly DeepReadonly<U>[]
+    : T extends object
+        ? { readonly [P in keyof T]: DeepReadonly<T[P]> }
+        : T;
