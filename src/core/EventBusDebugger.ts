@@ -52,11 +52,11 @@ export class EventBusDebugger {
    * 
    * @param options - Configuration options
    * @param options.maxLogSize - Maximum number of events to keep in log (default: 100)
-   * @param options.consoleLogging - Whether to log events to console (default: true in DEV)
+   * @param options.consoleLogging - Whether to log events to console (default: false)
    */
   constructor(options: { maxLogSize?: number; consoleLogging?: boolean } = {}) {
     this.maxLogSize = options.maxLogSize ?? 100;
-    this.consoleLogging = options.consoleLogging ?? (typeof import.meta !== 'undefined' && import.meta.env?.DEV === true);
+    this.consoleLogging = options.consoleLogging ?? false;
   }
 
   /**
@@ -85,7 +85,8 @@ export class EventBusDebugger {
 
   /**
    * Disable event debugging.
-   * Unsubscribes from all events.
+   * Unsubscribes from all events but preserves the existing event log.
+   * Use clear() if you also want to clear the log.
    */
   disable(): void {
     if (!this.enabled) return;
