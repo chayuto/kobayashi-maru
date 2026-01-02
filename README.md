@@ -7,8 +7,8 @@ https://chayuto.github.io/kobayashi-maru/
 ## Quick Start
 
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm run dev
 ```
 
 Open your browser to `http://localhost:5173`
@@ -121,8 +121,8 @@ src/
 ## Testing
 
 ```bash
-npm test          # Run all tests
-npm run test:watch # Watch mode
+pnpm test          # Run all tests
+pnpm run test:watch # Watch mode
 ```
 
 **Test Coverage:** 48 test files covering:
