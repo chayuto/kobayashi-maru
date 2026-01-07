@@ -8,18 +8,43 @@ import type { ScoreData } from '../game/scoreManager';
 
 const STORAGE_KEY = 'kobayashi-maru-highscores';
 
+// Create a proper localStorage mock that implements Storage interface
+const createLocalStorageMock = () => {
+  let store: Record<string, string> = {};
+  return {
+    getItem: vi.fn((key: string) => store[key] || null),
+    setItem: vi.fn((key: string, value: string) => {
+      store[key] = value;
+    }),
+    removeItem: vi.fn((key: string) => {
+      delete store[key];
+    }),
+    clear: vi.fn(() => {
+      store = {};
+    }),
+    key: vi.fn((index: number) => Object.keys(store)[index] || null),
+    get length() {
+      return Object.keys(store).length;
+    },
+  };
+};
+
+const localStorageMock = createLocalStorageMock();
+vi.stubGlobal('localStorage', localStorageMock);
+
 describe('HighScoreManager', () => {
   let highScoreManager: HighScoreManager;
 
   beforeEach(() => {
     // Clear localStorage before each test
-    localStorage.clear();
+    localStorageMock.clear();
+    vi.clearAllMocks();
     highScoreManager = new HighScoreManager();
   });
 
   afterEach(() => {
     vi.clearAllMocks();
-    localStorage.clear();
+    localStorageMock.clear();
   });
 
   describe('initial state', () => {
@@ -252,7 +277,7 @@ describe('HighScoreManager', () => {
 
       // Should not throw
       expect(() => new HighScoreManager()).not.toThrow();
-      
+
       const manager = new HighScoreManager();
       expect(manager.getHighScores()).toEqual([]);
     });

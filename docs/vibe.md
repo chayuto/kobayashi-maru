@@ -41,3 +41,13 @@ DEEP check game mechanis and config. we want to relabalce game configs, include 
 - price/reward 
 - resources
 - upgrades
+
+---- 
+
+create a full report on the game mechanis and balance. AI system on both sides. for Expert game designer to review. we want to achieve maximum Feel good Fish tank effect to watch.
+- enemy
+- waves
+- damage
+- price/reward 
+- resources
+- upgrades

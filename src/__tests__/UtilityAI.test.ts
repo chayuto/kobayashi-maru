@@ -55,6 +55,48 @@ describe('ScoringCurves', () => {
             expect(highThreat).toBeGreaterThan(lowThreat);
             expect(highThreat).toBeGreaterThan(0.7);
         });
+
+        it('should score distance with quadratic falloff (closer = higher)', () => {
+            const close = ScoringCurves.PRESETS.distanceValue(50, 500);
+            const mid = ScoringCurves.PRESETS.distanceValue(250, 500);
+            const far = ScoringCurves.PRESETS.distanceValue(450, 500);
+
+            expect(close).toBeGreaterThan(mid);
+            expect(mid).toBeGreaterThan(far);
+            expect(close).toBeGreaterThan(0.5);
+            expect(far).toBeLessThan(0.25); // Quadratic means far is low but not 0
+        });
+
+        it('should score resources linearly', () => {
+            const low = ScoringCurves.PRESETS.resourceValue(100, 1000);
+            const mid = ScoringCurves.PRESETS.resourceValue(500, 1000);
+            const high = ScoringCurves.PRESETS.resourceValue(900, 1000);
+
+            expect(low).toBeCloseTo(0.1, 1);
+            expect(mid).toBeCloseTo(0.5, 1);
+            expect(high).toBeCloseTo(0.9, 1);
+        });
+
+        it('should make large coverage gaps more urgent (exponential)', () => {
+            const small = ScoringCurves.PRESETS.coverageGap(10);
+            const medium = ScoringCurves.PRESETS.coverageGap(50);
+            const large = ScoringCurves.PRESETS.coverageGap(90);
+
+            expect(large).toBeGreaterThan(medium);
+            expect(medium).toBeGreaterThan(small);
+            // Exponential means large gap should be much more urgent
+            expect(large).toBeGreaterThan(0.7);
+        });
+
+        it('should increase urgency as wave approaches (inverted logistic)', () => {
+            const farAway = ScoringCurves.PRESETS.waveTiming(10, 15);
+            const approaching = ScoringCurves.PRESETS.waveTiming(5, 15);
+            const imminent = ScoringCurves.PRESETS.waveTiming(1, 15);
+
+            expect(imminent).toBeGreaterThan(approaching);
+            expect(approaching).toBeGreaterThan(farAway);
+            expect(imminent).toBeGreaterThan(0.7);
+        });
     });
 });
 
