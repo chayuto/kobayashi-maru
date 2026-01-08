@@ -3,6 +3,7 @@
  * Contains visual rendering components and systems
  */
 export * from './textures';
+export * from './BaseRenderer';
 export * from './spriteManager';
 export * from './BeamRenderer';
 export * from './RenderingSystem';

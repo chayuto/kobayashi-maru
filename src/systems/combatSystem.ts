@@ -50,15 +50,10 @@ export interface CombatStats {
 // Beam generation constants (from centralized config)
 const MIN_BEAM_LENGTH = COMBAT_CONFIG.BEAM.MIN_LENGTH;
 const BEAM_SEGMENT_COUNT = COMBAT_CONFIG.BEAM.SEGMENT_COUNT;
+const DPS_WINDOW = COMBAT_CONFIG.STATS.DPS_WINDOW_SECONDS;
 
 /**
- * Generate beam segments with electricity jitter effect (private helper function)
- * @param startX - Beam start X coordinate
- * @param startY - Beam start Y coordinate
- * @param endX - Beam end X coordinate
- * @param endY - Beam end Y coordinate
- * @param turretType - Type of turret (affects jitter amount)
- * @returns Array of beam segments with perpendicular offsets
+ * Generate beam segments with electricity jitter effect
  */
 function generateBeamSegments(startX: number, startY: number, endX: number, endY: number, turretType: number): BeamSegment[] {
   const segments: BeamSegment[] = [];
@@ -99,8 +94,6 @@ function generateBeamSegments(startX: number, startY: number, endX: number, endY
     const y2 = startY + dy * t2;
 
     // Add random offset (less at endpoints for smooth connection)
-    // midFactor ranges from 0 at endpoints to 1 at beam center
-    // This creates stronger jitter in the middle and smoother connections at the ends
     const midFactor = 1 - Math.abs(t1 - 0.5) * 2;
     const offset = (Math.random() - 0.5) * jitter * midFactor;
 
@@ -117,110 +110,29 @@ function generateBeamSegments(startX: number, startY: number, endX: number, endY
 }
 
 /**
- * Creates the combat system that handles turret firing
- * @param particleSystem - Optional particle system for visual effects
- * @returns A system function that processes turret combat
+ * Combat System class
+ * Handles turret firing, damage application, and combat statistics
  */
-export function createCombatSystem(particleSystem?: ParticleSystem) {
-  // Store beam visuals for this frame (cleared each update)
-  const activeBeams: BeamVisual[] = [];
+export class CombatSystem {
+  private particleSystem?: ParticleSystem;
+  private activeBeams: BeamVisual[] = [];
 
-  // Combat statistics tracking
-  let totalDamageDealt = 0;
-  let totalShotsFired = 0;
-  let shotsHit = 0;
-  let damageHistory: { time: number; damage: number }[] = [];
-  const DPS_WINDOW = COMBAT_CONFIG.STATS.DPS_WINDOW_SECONDS;
+  // Combat statistics
+  private totalDamageDealt = 0;
+  private totalShotsFired = 0;
+  private shotsHit = 0;
+  private damageHistory: { time: number; damage: number }[] = [];
 
-  /**
-   * Applies damage to an entity, prioritizing shields over health
-   * @param turretEid - The turret entity ID (for WeaponProperties)
-   * @returns The actual damage dealt (for stats tracking)
-   */
-  function applyDamage(world: World, entityId: number, damage: number, hitX: number, hitY: number, currentTime: number, turretEid: number): number {
-    let finalDamage = damage;
-
-    // Check for weapon properties to modify damage
-    if (hasComponent(world, turretEid, WeaponProperties)) {
-      const hasShield = hasComponent(world, entityId, Shield) && Shield.current[entityId] > 0;
-
-      if (hasShield) {
-        // Apply shield damage multiplier
-        const shieldMult = WeaponProperties.shieldDamageMultiplier[turretEid] || 1.0;
-        finalDamage *= shieldMult;
-      } else {
-        // Apply hull damage multiplier
-        const hullMult = WeaponProperties.hullDamageMultiplier[turretEid] || 1.0;
-        finalDamage *= hullMult;
-      }
-    }
-
-    let actualDamage = 0;
-
-    // Apply damage to shields first if entity has Shield component
-    if (hasComponent(world, entityId, Shield)) {
-      const currentShield = Shield.current[entityId];
-      if (currentShield > 0) {
-        const shieldDamage = Math.min(currentShield, finalDamage);
-        Shield.current[entityId] = currentShield - shieldDamage;
-        actualDamage += shieldDamage;
-        finalDamage -= shieldDamage;
-
-        // Shield hit effect
-        if (particleSystem) {
-          // Calculate angle from center to hit point for directional spread
-          const targetX = Position.x[entityId];
-          const targetY = Position.y[entityId];
-          const angle = Math.atan2(hitY - targetY, hitX - targetX);
-
-          particleSystem.spawn({
-            ...EFFECTS.SHIELD_HIT,
-            x: hitX,
-            y: hitY,
-            spread: angle
-          });
-        }
-      }
-    }
-
-    // Apply remaining damage to health
-    if (finalDamage > 0) {
-      const currentHealth = Health.current[entityId];
-      const healthDamage = Math.min(currentHealth, finalDamage);
-      Health.current[entityId] = Math.max(0, currentHealth - finalDamage);
-      actualDamage += healthDamage;
-    }
-
-    // Apply status effects if weapon has them
-    if (hasComponent(world, turretEid, WeaponProperties)) {
-      const statusType = WeaponProperties.statusEffectType[turretEid];
-      const statusChance = WeaponProperties.statusEffectChance[turretEid];
-
-      if (statusType > 0 && Math.random() < statusChance) {
-        if (statusType === 1) {
-          // Burning: 4 dmg/sec for 5 seconds
-          applyBurning(world, entityId, 4.0, 5.0);
-        } else if (statusType === 3) {
-          // Drain: 3 second duration per stack
-          applyDrained(world, entityId, 3.0);
-        }
-      }
-    }
-
-    // Track stats
-    totalDamageDealt += actualDamage;
-    shotsHit++;
-    damageHistory.push({ time: currentTime, damage: actualDamage });
-
-    // Clean up old damage history entries (keep only last DPS_WINDOW seconds)
-    damageHistory = damageHistory.filter(entry => currentTime - entry.time < DPS_WINDOW);
-
-    return actualDamage;
+  constructor(particleSystem?: ParticleSystem) {
+    this.particleSystem = particleSystem;
   }
 
-  function combatSystem(world: World, _deltaTime: number, currentTime: number): World {
+  /**
+   * Main update method - processes turret combat
+   */
+  update(world: World, _deltaTime: number, currentTime: number): World {
     // Clear beam visuals from last frame
-    activeBeams.length = 0;
+    this.activeBeams.length = 0;
 
     const turrets = query(world, [Position, Turret, Target, Faction]);
 
@@ -266,7 +178,7 @@ export function createCombatSystem(particleSystem?: ParticleSystem) {
         continue;
       }
 
-      const cooldown = 1 / fireRate; // Convert shots per second to seconds between shots
+      const cooldown = 1 / fireRate;
       const lastFired = Turret.lastFired[turretEid];
 
       if (currentTime - lastFired < cooldown) {
@@ -280,8 +192,8 @@ export function createCombatSystem(particleSystem?: ParticleSystem) {
       const turretType = Turret.turretType[turretEid];
 
       // Muzzle flash
-      if (particleSystem) {
-        particleSystem.spawn({
+      if (this.particleSystem) {
+        this.particleSystem.spawn({
           ...EFFECTS.MUZZLE_FLASH,
           x: turretX,
           y: turretY
@@ -296,26 +208,26 @@ export function createCombatSystem(particleSystem?: ParticleSystem) {
         // Apply damage based on weapon type
         if (turretType === TurretType.TORPEDO_LAUNCHER) {
           // Spawn projectile (tracked as shot fired)
-          totalShotsFired++;
+          this.totalShotsFired++;
           createProjectile(world, turretX, turretY, targetX, targetY, damage, ProjectileType.PHOTON_TORPEDO, targetEid);
         } else {
           // Beam weapons - instant hit
-          totalShotsFired++;
-          applyDamage(world, targetEid, damage, targetX, targetY, currentTime, turretEid);
+          this.totalShotsFired++;
+          this.applyDamage(world, targetEid, damage, targetX, targetY, currentTime, turretEid);
 
           // Generate beam segments for electricity effect
           const segments = generateBeamSegments(turretX, turretY, targetX, targetY, turretType);
 
           // Store beam visual for rendering with animation properties
-          activeBeams.push({
+          this.activeBeams.push({
             startX: turretX,
             startY: turretY,
             endX: targetX,
             endY: targetY,
             turretType,
-            intensity: 1.0,  // Full intensity when just fired
+            intensity: 1.0,
             segments,
-            age: 0  // Just created
+            age: 0
           });
         }
       }
@@ -333,13 +245,13 @@ export function createCombatSystem(particleSystem?: ParticleSystem) {
           audioManager.play(SoundType.DISRUPTOR_FIRE, { volume: 0.5 });
           break;
         case TurretType.TETRYON_BEAM:
-          audioManager.play(SoundType.PHASER_FIRE, { volume: 0.45 }); // Similar to phaser
+          audioManager.play(SoundType.PHASER_FIRE, { volume: 0.45 });
           break;
         case TurretType.PLASMA_CANNON:
-          audioManager.play(SoundType.TORPEDO_FIRE, { volume: 0.55 }); // Similar to torpedo
+          audioManager.play(SoundType.TORPEDO_FIRE, { volume: 0.55 });
           break;
         case TurretType.POLARON_BEAM:
-          audioManager.play(SoundType.DISRUPTOR_FIRE, { volume: 0.48 }); // Similar to disruptor
+          audioManager.play(SoundType.DISRUPTOR_FIRE, { volume: 0.48 });
           break;
       }
 
@@ -371,52 +283,140 @@ export function createCombatSystem(particleSystem?: ParticleSystem) {
   }
 
   /**
+   * Applies damage to an entity, prioritizing shields over health
+   */
+  private applyDamage(world: World, entityId: number, damage: number, hitX: number, hitY: number, currentTime: number, turretEid: number): number {
+    let finalDamage = damage;
+
+    // Check for weapon properties to modify damage
+    if (hasComponent(world, turretEid, WeaponProperties)) {
+      const hasShield = hasComponent(world, entityId, Shield) && Shield.current[entityId] > 0;
+
+      if (hasShield) {
+        const shieldMult = WeaponProperties.shieldDamageMultiplier[turretEid] || 1.0;
+        finalDamage *= shieldMult;
+      } else {
+        const hullMult = WeaponProperties.hullDamageMultiplier[turretEid] || 1.0;
+        finalDamage *= hullMult;
+      }
+    }
+
+    let actualDamage = 0;
+
+    // Apply damage to shields first if entity has Shield component
+    if (hasComponent(world, entityId, Shield)) {
+      const currentShield = Shield.current[entityId];
+      if (currentShield > 0) {
+        const shieldDamage = Math.min(currentShield, finalDamage);
+        Shield.current[entityId] = currentShield - shieldDamage;
+        actualDamage += shieldDamage;
+        finalDamage -= shieldDamage;
+
+        // Shield hit effect
+        if (this.particleSystem) {
+          const targetX = Position.x[entityId];
+          const targetY = Position.y[entityId];
+          const angle = Math.atan2(hitY - targetY, hitX - targetX);
+
+          this.particleSystem.spawn({
+            ...EFFECTS.SHIELD_HIT,
+            x: hitX,
+            y: hitY,
+            spread: angle
+          });
+        }
+      }
+    }
+
+    // Apply remaining damage to health
+    if (finalDamage > 0) {
+      const currentHealth = Health.current[entityId];
+      const healthDamage = Math.min(currentHealth, finalDamage);
+      Health.current[entityId] = Math.max(0, currentHealth - finalDamage);
+      actualDamage += healthDamage;
+    }
+
+    // Apply status effects if weapon has them
+    if (hasComponent(world, turretEid, WeaponProperties)) {
+      const statusType = WeaponProperties.statusEffectType[turretEid];
+      const statusChance = WeaponProperties.statusEffectChance[turretEid];
+
+      if (statusType > 0 && Math.random() < statusChance) {
+        if (statusType === 1) {
+          applyBurning(world, entityId, 4.0, 5.0);
+        } else if (statusType === 3) {
+          applyDrained(world, entityId, 3.0);
+        }
+      }
+    }
+
+    // Track stats
+    this.totalDamageDealt += actualDamage;
+    this.shotsHit++;
+    this.damageHistory.push({ time: currentTime, damage: actualDamage });
+
+    // Clean up old damage history entries
+    this.damageHistory = this.damageHistory.filter(entry => currentTime - entry.time < DPS_WINDOW);
+
+    return actualDamage;
+  }
+
+  /**
+   * Get active beam visuals for rendering
+   */
+  getActiveBeams(): BeamVisual[] {
+    return this.activeBeams;
+  }
+
+  /**
    * Get current combat statistics
    */
-  function getStats(): CombatStats {
-    // Calculate DPS from damage history
-    const recentDamage = damageHistory.reduce((sum, entry) => sum + entry.damage, 0);
-    // Use the full DPS_WINDOW or actual elapsed time, whichever gives meaningful results
+  getStats(): CombatStats {
+    const recentDamage = this.damageHistory.reduce((sum, entry) => sum + entry.damage, 0);
     const dps = recentDamage / DPS_WINDOW;
 
     return {
-      totalDamageDealt,
-      totalShotsFired,
-      shotsHit,
+      totalDamageDealt: this.totalDamageDealt,
+      totalShotsFired: this.totalShotsFired,
+      shotsHit: this.shotsHit,
       dps,
-      accuracy: totalShotsFired > 0 ? shotsHit / totalShotsFired : 0
+      accuracy: this.totalShotsFired > 0 ? this.shotsHit / this.totalShotsFired : 0
     };
   }
 
   /**
    * Reset all combat statistics (for game restart)
    */
-  function resetStats(): void {
-    totalDamageDealt = 0;
-    totalShotsFired = 0;
-    shotsHit = 0;
-    damageHistory = [];
+  resetStats(): void {
+    this.totalDamageDealt = 0;
+    this.totalShotsFired = 0;
+    this.shotsHit = 0;
+    this.damageHistory = [];
   }
 
   /**
    * Record a projectile hit for stats tracking
    * Called by projectile system when a projectile hits a target
    */
-  function recordProjectileHit(damage: number, currentTime: number): void {
-    totalDamageDealt += damage;
-    shotsHit++;
-    damageHistory.push({ time: currentTime, damage });
-    // Clean up old entries
-    damageHistory = damageHistory.filter(entry => currentTime - entry.time < DPS_WINDOW);
+  recordProjectileHit(damage: number, currentTime: number): void {
+    this.totalDamageDealt += damage;
+    this.shotsHit++;
+    this.damageHistory.push({ time: currentTime, damage });
+    this.damageHistory = this.damageHistory.filter(entry => currentTime - entry.time < DPS_WINDOW);
   }
-
-  return {
-    update: combatSystem,
-    getActiveBeams: () => activeBeams,
-    getStats,
-    resetStats,
-    recordProjectileHit
-  };
 }
 
-export type CombatSystem = ReturnType<typeof createCombatSystem>;
+/**
+ * Legacy factory function for backward compatibility
+ * @deprecated Use `new CombatSystem(particleSystem)` instead
+ */
+export function createCombatSystem(particleSystem?: ParticleSystem) {
+  const system = new CombatSystem(particleSystem);
+  return {
+    update: system.update.bind(system),
+    getActiveBeams: system.getActiveBeams.bind(system),
+    getStats: system.getStats.bind(system),
+    resetStats: system.resetStats.bind(system),
+    recordProjectileHit: system.recordProjectileHit.bind(system)
+  };
+}
