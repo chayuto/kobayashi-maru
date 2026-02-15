@@ -512,7 +512,7 @@ describe('Enemy & Status Systems', () => {
             // Insert KM into spatial hash
             spatialHash.insert(kmId, 100, 100);
 
-            const projId = createEnemyProjectileEntity(world, {
+            createEnemyProjectileEntity(world, {
                 x: 100, y: 100,
                 damage: 25,
                 colliderRadius: 5,
@@ -583,7 +583,7 @@ describe('Enemy & Status Systems', () => {
             });
             spatialHash.insert(targetId, 200, 200);
 
-            const projId = createEnemyProjectileEntity(world, {
+            createEnemyProjectileEntity(world, {
                 x: 100, y: 100, // far from target
                 damage: 30,
                 colliderRadius: 5,
