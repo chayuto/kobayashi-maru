@@ -11,7 +11,7 @@ import { GAME_CONFIG } from '../types/constants';
 
 // Create mock flow analyzer
 const mockGetTrafficAt = vi.fn(() => 0.5);
-const mockGetFlowAt = vi.fn(() => ({ x: 0.5, y: 0.5 }));
+const mockGetFlowAt: ReturnType<typeof vi.fn<(x: number, y: number) => { x: number; y: number }>> = vi.fn(() => ({ x: 0.5, y: 0.5 }));
 
 const mockFlowFieldAnalyzer = {
     analyze: vi.fn(),

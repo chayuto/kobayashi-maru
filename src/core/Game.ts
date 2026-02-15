@@ -13,7 +13,7 @@ import { Turret } from '../ecs/components';
 import { GameWorld } from '../ecs';
 import {
   createRenderSystem, createMovementSystem, createCollisionSystem, createTargetingSystem,
-  createCombatSystem, createDamageSystem, createAISystem, createProjectileSystem,
+  createDamageSystem, createAISystem, createProjectileSystem,
   statusEffectSystem, createEnemyCollisionSystem, createEnemyCombatSystem,
   createEnemyProjectileSystem, createAbilitySystem,
   createTurretRotationSystem, createEnemyRotationSystem,
@@ -219,7 +219,7 @@ export class Game {
     const movementSystem = createMovementSystem(() => this.gameplayManager.getSpeedMultiplier());
     const collisionSystem = createCollisionSystem(spatialHash);
     const targetingSystem = createTargetingSystem(spatialHash);
-    const combatSystem = createCombatSystem(particleSystem);
+    const combatSystem = new CombatSystem(particleSystem);
     const damageSystem = createDamageSystem(particleSystem, spriteManager);
     const aiSystem = createAISystem();
     const abilitySystem = createAbilitySystem(particleSystem, spriteManager, audioManager, spatialHash);
