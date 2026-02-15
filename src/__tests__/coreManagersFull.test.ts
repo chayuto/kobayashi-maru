@@ -763,7 +763,7 @@ describe('UIController', () => {
 
     it('should not show panel when upgrade panel is null', () => {
       // Arrange
-      svcMocks.hudManager.getTurretUpgradePanel.mockReturnValue(null);
+      svcMocks.hudManager.getTurretUpgradePanel.mockReturnValue(null as never);
 
       // Act & Assert
       expect(() => uiController.showTurretUpgradePanel(1)).not.toThrow();
@@ -771,7 +771,7 @@ describe('UIController', () => {
 
     it('should not show panel when turret info is null', () => {
       // Arrange
-      svcMocks.upgradeManager.getTurretInfo.mockReturnValue(null);
+      svcMocks.upgradeManager.getTurretInfo.mockReturnValue(null as never);
       const upgradePanel = { show: vi.fn(), hide: vi.fn(), onUpgrade: vi.fn(), onSell: vi.fn() };
       svcMocks.hudManager.getTurretUpgradePanel.mockReturnValue(upgradePanel);
 

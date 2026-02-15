@@ -204,7 +204,7 @@ describe('ParticleEmitter', () => {
 
   it('should default to CIRCULAR pattern when none is specified', () => {
     const config = createMinimalConfig();
-    delete (config as Record<string, unknown>).emitterPattern;
+    delete (config as unknown as Record<string, unknown>).emitterPattern;
     // Should not throw
     const vel = emitter.calculateVelocity(config);
     expect(typeof vel.vx).toBe('number');

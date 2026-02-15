@@ -687,7 +687,7 @@ describe('Game', () => {
     it('should return AI status', async () => {
       // Arrange
       await game.init();
-      const status = { enabled: true, personality: 'aggressive' };
+      const status = { enabled: true, personality: 'aggressive' } as never;
       mockAIManager.getStatus.mockReturnValue(status);
 
       // Act

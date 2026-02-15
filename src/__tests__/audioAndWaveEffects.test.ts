@@ -32,14 +32,14 @@ import type { BossWaveConfig } from '../game/waveConfig';
 // Mock AudioContext / AudioBuffer for Web Audio API
 // ---------------------------------------------------------------------------
 function createMockAudioContext(sampleRate = 44100): AudioContext {
-  const channelData = new Map<number, Float32Array>();
+  const channelData = new Map<number, Float32Array<ArrayBuffer>>();
 
   const mockBuffer: AudioBuffer = {
     sampleRate,
     length: 0,
     duration: 0,
     numberOfChannels: 1,
-    getChannelData: vi.fn((channel: number) => {
+    getChannelData: vi.fn((channel: number): Float32Array<ArrayBuffer> => {
       if (!channelData.has(channel)) {
         channelData.set(channel, new Float32Array(0));
       }
