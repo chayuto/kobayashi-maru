@@ -1,5 +1,6 @@
 /**
  * Tests for Turret Upgrade Visuals
+ * @vitest-environment jsdom
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { Container } from 'pixi.js';

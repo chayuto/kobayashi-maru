@@ -1,6 +1,7 @@
 /**
  * Integration tests for TurretUpgradePanel
  * Tests the connection between the UI and the upgrade system
+ * @vitest-environment jsdom
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { TurretUpgradePanel } from '../ui/TurretUpgradePanel';

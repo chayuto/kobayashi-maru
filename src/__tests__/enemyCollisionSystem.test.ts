@@ -1,5 +1,6 @@
 /**
  * Tests for Enemy Collision System
+ * @vitest-environment jsdom
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createWorld, addEntity, addComponent } from 'bitecs';

@@ -1,5 +1,6 @@
 /**
  * Tests for GlowManager
+ * @vitest-environment jsdom
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { GlowManager, GlowLayer, GLOW_PRESETS } from '../rendering/filters/GlowManager';

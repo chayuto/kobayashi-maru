@@ -1,5 +1,6 @@
 /**
  * Tests for Combat System
+ * @vitest-environment jsdom
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { createGameWorld, createTurret, createEnemy } from '../ecs';
