@@ -1,5 +1,6 @@
 /**
  * Tests for Damage System
+ * @vitest-environment jsdom
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { createGameWorld, createEnemy, getEntityCount } from '../ecs';

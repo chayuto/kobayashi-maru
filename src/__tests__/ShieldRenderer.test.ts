@@ -1,5 +1,6 @@
 /**
  * Tests for ShieldRenderer
+ * @vitest-environment jsdom
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { ShieldRenderer } from '../rendering/ShieldRenderer';

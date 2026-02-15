@@ -61,9 +61,9 @@ describe('ActionExecutor', () => {
         resourceManager = createMockResourceManager();
 
         executor = new ActionExecutor(
-            placementManager as unknown as Parameters<typeof ActionExecutor['prototype']['constructor']>[0],
-            upgradeManager as unknown as Parameters<typeof ActionExecutor['prototype']['constructor']>[1],
-            resourceManager as unknown as Parameters<typeof ActionExecutor['prototype']['constructor']>[2]
+            placementManager as unknown as ConstructorParameters<typeof ActionExecutor>[0],
+            upgradeManager as unknown as ConstructorParameters<typeof ActionExecutor>[1],
+            resourceManager as unknown as ConstructorParameters<typeof ActionExecutor>[2]
         );
     });
 
