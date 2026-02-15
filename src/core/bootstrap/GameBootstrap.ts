@@ -25,6 +25,8 @@ import { TurretUpgradeVisuals } from '../../rendering/TurretUpgradeVisuals';
 import { PlacementRenderer } from '../../rendering/PlacementRenderer';
 import { Starfield } from '../../rendering/Starfield';
 import { ScreenShake } from '../../rendering/ScreenShake';
+import { DamageNumberRenderer } from '../../rendering/DamageNumberRenderer';
+import { ScreenFlash } from '../../rendering/ScreenFlash';
 
 import { WaveManager } from '../../game/waveManager';
 import { GameState } from '../../game/gameState';
@@ -281,6 +283,23 @@ export class GameBootstrap {
                 services.get('particleSystem'),
                 services.get('shockwaveRenderer')
             );
+        });
+
+        // Damage number renderer
+        services.register('damageNumberRenderer', () => {
+            const dnr = new DamageNumberRenderer();
+            const explosionsLayer = services.get('glowManager').getLayer(GlowLayer.EXPLOSIONS);
+            if (explosionsLayer) {
+                dnr.init(explosionsLayer);
+            }
+            return dnr;
+        });
+
+        // Screen flash overlay
+        services.register('screenFlash', () => {
+            const sf = new ScreenFlash();
+            sf.init(services.get('app'));
+            return sf;
         });
 
         // Turret upgrade visuals

@@ -70,6 +70,8 @@ export class RenderManager {
         services.get('starfield');
         services.get('placementRenderer'); // Must be initialized to subscribe to placement events
         services.get('hapticManager'); // Must be initialized to subscribe to game events for vibration feedback
+        services.get('damageNumberRenderer'); // Must be initialized to subscribe to damage events
+        services.get('screenFlash'); // Must be initialized for screen flash overlay
 
         this.initialized = true;
     }
@@ -98,6 +100,12 @@ export class RenderManager {
 
         // Update beam charge effects
         services.get('beamRenderer').updateCharges(deltaTime);
+
+        // Update floating damage numbers
+        services.get('damageNumberRenderer').update(deltaTime);
+
+        // Update screen flash overlay
+        services.get('screenFlash').update(deltaTime);
     }
 
     /**
@@ -169,6 +177,17 @@ export class RenderManager {
      */
     shake(intensity: number = 5, duration: number = 0.3): void {
         getServices().get('screenShake').shake(intensity, duration);
+    }
+
+    /**
+     * Trigger screen flash effect.
+     *
+     * @param color - Flash color
+     * @param intensity - Flash alpha (0-1)
+     * @param duration - Flash duration in seconds
+     */
+    flash(color: number, intensity: number, duration: number): void {
+        getServices().get('screenFlash').flash(color, intensity, duration);
     }
 
     /**

@@ -17,6 +17,7 @@ import { HUDLayoutManager } from './HUDLayoutManager';
 import { WavePanel, ResourcePanel, StatusPanel, CombatStatsPanel, ScorePanel, TurretCountPanel, AIPanel, AIThoughtFeed } from './panels';
 import { ToggleButton, IconButton } from './components';
 import { AIBrainRenderer } from '../ai/visualization';
+import { WaveAnnouncement } from './overlays/WaveAnnouncement';
 import type { AIStatusExtended, ThreatVector, SectorData } from '../ai/types';
 import type { AIMessage } from '../ai/humanization/AIMessageGenerator';
 
@@ -77,6 +78,9 @@ export class HUDManager {
   // AI state
   private aiEnabled: boolean = false;
 
+  // Wave announcement overlay
+  private waveAnnouncement: WaveAnnouncement | null = null;
+
   // Bound event handler for cleanup
   private boundResizeHandler: (() => void) | null = null;
 
@@ -134,6 +138,10 @@ export class HUDManager {
     this.messageLog = new MessageLog();
     this.messageLog.setPosition(UI_STYLES.PADDING, GAME_CONFIG.WORLD_HEIGHT - 200);
     this.container.addChild(this.messageLog.container);
+
+    // Create Wave Announcement overlay
+    this.waveAnnouncement = new WaveAnnouncement();
+    this.waveAnnouncement.init(this.container);
 
     // Handle resize
     this.boundResizeHandler = this.handleResize.bind(this);
@@ -664,6 +672,11 @@ export class HUDManager {
     if (this.messageLog) {
       this.messageLog.update();
     }
+
+    // Update wave announcement animation
+    if (this.waveAnnouncement) {
+      this.waveAnnouncement.update();
+    }
   }
 
   /**
@@ -711,6 +724,7 @@ export class HUDManager {
     if (this.aiPanel) this.aiPanel.destroy();
     if (this.aiThoughtFeed) this.aiThoughtFeed.destroy();
     if (this.aiBrainRenderer) this.aiBrainRenderer.destroy();
+    if (this.waveAnnouncement) this.waveAnnouncement.destroy();
 
     // Remove resize listener
     if (this.boundResizeHandler) {

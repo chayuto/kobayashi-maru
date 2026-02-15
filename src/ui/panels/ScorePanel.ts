@@ -7,6 +7,7 @@
  */
 import { Container, Graphics, Text, TextStyle } from 'pixi.js';
 import { UI_STYLES } from '../styles';
+import { UIAnimator } from '../animation/UIAnimator';
 
 /** Data required to update the score panel */
 export interface ScorePanelData {
@@ -25,6 +26,7 @@ export class ScorePanel {
     private timeText: Text;
     private killsText: Text;
     private initialized: boolean = false;
+    private previousKills: number = 0;
 
     private static readonly WIDTH = 180;
     private static readonly HEIGHT = 80;
@@ -67,6 +69,12 @@ export class ScorePanel {
 
         this.timeText.text = `TIME: ${this.formatTime(data.timeSurvived)}`;
         this.killsText.text = `KILLS: ${data.enemiesDefeated}`;
+
+        // Pulse kills text on new kill
+        if (data.enemiesDefeated > this.previousKills && this.previousKills > 0) {
+            UIAnimator.pulse(this.killsText, 1.12, { duration: 0.15 });
+        }
+        this.previousKills = data.enemiesDefeated;
     }
 
     private formatTime(seconds: number): string {

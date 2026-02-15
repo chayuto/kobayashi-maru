@@ -9,7 +9,10 @@
 
 import { Application } from 'pixi.js';
 import { query } from 'bitecs';
-import { Turret } from '../ecs/components';
+import { Turret, Health, EnemyVariant } from '../ecs/components';
+import { GameEventType, EnemyKilledPayload } from '../types/events';
+import { EventBus } from './EventBus';
+import { RENDERING_CONFIG } from '../config';
 import { GameWorld } from '../ecs';
 import {
   createRenderSystem, createMovementSystem, createCollisionSystem, createTargetingSystem,
@@ -130,9 +133,37 @@ export class Game {
       onEnemyKilled: () => {
         // Kill logging removed intentionally - was too spammy
       },
-      onKobayashiMaruDamaged: () => {
-        this.renderManager.shake(5, 0.3);
+      onKobayashiMaruDamaged: (damage: number) => {
+        // Scale shake intensity with damage percentage
+        const kmId = this.gameplayManager.getKobayashiMaruId();
+        const maxHealth = kmId >= 0 ? Health.max[kmId] : 100;
+        const damagePercent = maxHealth > 0 ? damage / maxHealth : 0;
+        const shakeIntensity = 5 + damagePercent * 35; // 5-40 range
+        const shakeDuration = 0.3 + damagePercent * 0.3; // 0.3-0.6s
+        this.renderManager.shake(shakeIntensity, shakeDuration);
+
+        // Red flash scaled with damage
+        const flashConfig = RENDERING_CONFIG.SCREEN_FLASH;
+        const flashIntensity = 0.1 + damagePercent * 0.5;
+        this.renderManager.flash(
+          flashConfig.KM_DAMAGE_COLOR,
+          flashIntensity,
+          flashConfig.KM_DAMAGE_DURATION
+        );
       },
+    });
+
+    // Boss kill white flash
+    const flashConfig = RENDERING_CONFIG.SCREEN_FLASH;
+    EventBus.getInstance().on(GameEventType.ENEMY_KILLED, (payload: EnemyKilledPayload) => {
+      const rank = EnemyVariant.rank[payload.entityId] ?? 0;
+      if (rank === 2) {
+        this.renderManager.flash(
+          flashConfig.BOSS_KILL_COLOR,
+          flashConfig.BOSS_KILL_INTENSITY,
+          flashConfig.BOSS_KILL_DURATION
+        );
+      }
     });
 
     // UI controller

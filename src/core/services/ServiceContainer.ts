@@ -29,6 +29,8 @@ import type { TurretUpgradeVisuals } from '../../rendering/TurretUpgradeVisuals'
 import type { PlacementRenderer } from '../../rendering/PlacementRenderer';
 import type { Starfield } from '../../rendering/Starfield';
 import type { ScreenShake } from '../../rendering/ScreenShake';
+import type { DamageNumberRenderer } from '../../rendering/DamageNumberRenderer';
+import type { ScreenFlash } from '../../rendering/ScreenFlash';
 
 import type { WaveManager } from '../../game/waveManager';
 import type { GameState } from '../../game/gameState';
@@ -79,6 +81,8 @@ export interface ServiceRegistry {
     placementRenderer: PlacementRenderer;
     starfield: Starfield;
     screenShake: ScreenShake;
+    damageNumberRenderer: DamageNumberRenderer;
+    screenFlash: ScreenFlash;
 
     // Game Logic
     waveManager: WaveManager;

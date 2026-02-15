@@ -7,6 +7,7 @@
  */
 import { Container, Graphics, Text, TextStyle } from 'pixi.js';
 import { UI_STYLES } from '../styles';
+import { UIAnimator } from '../animation/UIAnimator';
 
 /**
  * Data required to update the resource panel.
@@ -32,6 +33,7 @@ export class ResourcePanel {
     private labelText: Text;
     private amountText: Text;
     private initialized: boolean = false;
+    private previousResources: number = 0;
 
     private static readonly WIDTH = 150;
     private static readonly HEIGHT = 70;
@@ -97,6 +99,12 @@ export class ResourcePanel {
     update(data: ResourcePanelData): void {
         if (!this.initialized) return;
         this.amountText.text = this.formatNumber(data.resources);
+
+        // Pulse on resource gain
+        if (data.resources > this.previousResources && this.previousResources > 0) {
+            UIAnimator.pulse(this.container, 1.08, { duration: 0.15 });
+        }
+        this.previousResources = data.resources;
     }
 
     /**

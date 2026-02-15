@@ -243,7 +243,20 @@ export enum GameEventType {
    * });
    * ```
    */
-  GESTURE = 'GESTURE'
+  GESTURE = 'GESTURE',
+
+  // ============================================
+  // DAMAGE EVENTS
+  // ============================================
+
+  /**
+   * Fired when damage is dealt to an entity.
+   *
+   * @emittedBy combatSystem.ts - after damage application
+   * @payload DamageDealtPayload
+   * @timing Immediate after damage is applied
+   */
+  DAMAGE_DEALT = 'DAMAGE_DEALT'
 }
 
 /**
@@ -338,6 +351,17 @@ export interface GestureEvent {
 }
 
 /**
+ * Payload for DAMAGE_DEALT event
+ */
+export interface DamageDealtPayload {
+  entityId: number;
+  damage: number;
+  isShield: boolean;
+  x: number;
+  y: number;
+}
+
+/**
  * Map of event types to their payload types
  */
 export interface GameEventMap {
@@ -353,4 +377,5 @@ export interface GameEventMap {
   [GameEventType.TOUCH_MOVE]: TouchEventPayload;
   [GameEventType.TOUCH_END]: TouchEventPayload;
   [GameEventType.GESTURE]: GestureEvent;
+  [GameEventType.DAMAGE_DEALT]: DamageDealtPayload;
 }

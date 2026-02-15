@@ -203,6 +203,45 @@ export const UI_CONFIG = {
         /** Radius for enemy selection in pixels */
         ENEMY_SELECT_RADIUS: 24,
     },
+    /**
+     * Wave announcement banner settings.
+     */
+    WAVE_ANNOUNCEMENT: {
+        /** Fade-in duration in seconds */
+        FADE_IN_DURATION: 0.3,
+        /** Hold duration in seconds */
+        HOLD_DURATION: 2.0,
+        /** Fade-out duration in seconds */
+        FADE_OUT_DURATION: 0.5,
+        /** Background bar alpha */
+        BACKGROUND_ALPHA: 0.7,
+        /** Background bar height */
+        BACKGROUND_HEIGHT: 120,
+        /** Title font size */
+        TITLE_FONT_SIZE: 48,
+        /** Subtitle font size */
+        SUBTITLE_FONT_SIZE: 20,
+        /** Vertical position as ratio of screen height */
+        Y_POSITION_RATIO: 0.35,
+    },
+
+    /**
+     * Combo celebration settings.
+     */
+    COMBO: {
+        /** Scale factor for pulse animation */
+        PULSE_SCALE: 1.15,
+        /** Pulse animation duration in seconds */
+        PULSE_DURATION: 0.25,
+        /** Popup text duration in seconds */
+        POPUP_DURATION: 1.0,
+        /** Popup float speed in pixels per second */
+        POPUP_FLOAT_SPEED: 60,
+        /** Multiplier threshold for particle celebration */
+        CELEBRATION_THRESHOLD: 5,
+        /** Number of particles for celebration effect */
+        CELEBRATION_PARTICLE_COUNT: 10,
+    },
 } as const;
 
 export type UIConfig = typeof UI_CONFIG;

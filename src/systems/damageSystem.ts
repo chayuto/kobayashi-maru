@@ -3,15 +3,16 @@
  * Handles entity destruction when health reaches 0 and returns entities to pool
  */
 import { query, removeEntity, World } from 'bitecs';
-import { Health, Faction, Position, SpriteRef, CompositeSpriteRef } from '../ecs/components';
+import { Health, Faction, Position, SpriteRef, CompositeSpriteRef, EnemyVariant } from '../ecs/components';
 import { FactionId } from '../types/constants';
+import { RENDERING_CONFIG } from '../config';
 import { GameEventType } from '../types/events';
 import { AudioManager, SoundType } from '../audio';
 import { decrementEntityCount } from '../ecs/world';
 import { ParticleSystem, EFFECTS } from '../rendering';
 import { EventBus } from '../core/EventBus';
 import { PoolManager } from '../ecs/PoolManager';
-import { RENDERING_CONFIG } from '../config';
+import { getServices } from '../core/services';
 import type { SpriteManager } from '../rendering/spriteManager';
 
 // Use centralized config for unset sprite index
@@ -63,15 +64,87 @@ export function createDamageSystem(particleSystem?: ParticleSystem, spriteManage
           });
         }
       } else {
-        // Enemy explosion
-        audioManager.play(SoundType.EXPLOSION_SMALL, { volume: 0.5 });
+        // Enemy explosion - rank-based effects
+        const rank = EnemyVariant.rank[eid] ?? 0;
+        const explosionConfig = RENDERING_CONFIG.EXPLOSIONS;
 
-        if (particleSystem) {
-          particleSystem.spawn({
-            ...EFFECTS.EXPLOSION_SMALL,
-            x,
-            y
-          });
+        if (rank === 2) {
+          // Boss: multi-stage explosion + screen shake
+          audioManager.play(SoundType.EXPLOSION_LARGE, { volume: 0.8 });
+
+          if (particleSystem) {
+            // Stage 1: fire explosion
+            particleSystem.spawn({
+              ...EFFECTS.FIRE_EXPLOSION,
+              count: explosionConfig.BOSS_PARTICLE_COUNT,
+              x,
+              y
+            });
+
+            // Stage 2: metal debris (delayed)
+            setTimeout(() => {
+              particleSystem.spawn({
+                ...EFFECTS.METAL_DEBRIS,
+                x,
+                y
+              });
+            }, 150);
+
+            // Stage 3: smoke plume (delayed)
+            setTimeout(() => {
+              particleSystem.spawn({
+                ...EFFECTS.SMOKE_PLUME,
+                x,
+                y
+              });
+            }, 300);
+          }
+
+          // Shockwave
+          const shockwaveRenderer = getServices().tryGet('shockwaveRenderer');
+          if (shockwaveRenderer) {
+            shockwaveRenderer.create(x, y, 120, 0xFFAA00, 0.6);
+          }
+
+          // Screen shake
+          const screenShake = getServices().tryGet('screenShake');
+          if (screenShake) {
+            screenShake.shake(explosionConfig.BOSS_SHAKE_INTENSITY, explosionConfig.BOSS_SHAKE_DURATION);
+          }
+        } else if (rank === 1) {
+          // Elite: fire explosion + small shockwave
+          audioManager.play(SoundType.EXPLOSION_SMALL, { volume: 0.6 });
+
+          if (particleSystem) {
+            particleSystem.spawn({
+              ...EFFECTS.ELITE_FIRE_EXPLOSION,
+              count: explosionConfig.ELITE_PARTICLE_COUNT,
+              x,
+              y
+            });
+          }
+
+          // Small shockwave
+          const shockwaveRenderer = getServices().tryGet('shockwaveRenderer');
+          if (shockwaveRenderer) {
+            shockwaveRenderer.create(
+              x, y,
+              explosionConfig.ELITE_SHOCKWAVE_RADIUS,
+              0xFF6600,
+              explosionConfig.ELITE_SHOCKWAVE_DURATION
+            );
+          }
+        } else {
+          // Normal: unchanged
+          audioManager.play(SoundType.EXPLOSION_SMALL, { volume: 0.5 });
+
+          if (particleSystem) {
+            particleSystem.spawn({
+              ...EFFECTS.EXPLOSION_SMALL,
+              x,
+              y
+            });
+          }
         }
       }
 

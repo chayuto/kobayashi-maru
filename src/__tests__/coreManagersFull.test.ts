@@ -143,6 +143,15 @@ function createServiceMocks() {
       update: vi.fn(() => ({ offsetX: 0, offsetY: 0 })),
       shake: vi.fn(),
     },
+    damageNumberRenderer: {
+      update: vi.fn(),
+      clear: vi.fn(),
+    },
+    screenFlash: {
+      update: vi.fn(),
+      flash: vi.fn(),
+      isActive: vi.fn(() => false),
+    },
     app: new MockApplication(),
     hudManager: {
       init: vi.fn(),

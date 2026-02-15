@@ -10,6 +10,8 @@ import { createProjectile } from '../ecs/entityFactory';
 import { AudioManager, SoundType } from '../audio';
 import { ParticleSystem, EFFECTS } from '../rendering';
 import { applyBurning, applyDrained } from './statusEffectSystem';
+import { EventBus } from '../core/EventBus';
+import { GameEventType } from '../types/events';
 
 /**
  * Beam segment for multi-segment beams with jitter
@@ -302,6 +304,7 @@ export class CombatSystem {
     }
 
     let actualDamage = 0;
+    let shieldAbsorbed = false;
 
     // Apply damage to shields first if entity has Shield component
     if (hasComponent(world, entityId, Shield)) {
@@ -311,6 +314,7 @@ export class CombatSystem {
         Shield.current[entityId] = currentShield - shieldDamage;
         actualDamage += shieldDamage;
         finalDamage -= shieldDamage;
+        shieldAbsorbed = true;
 
         // Shield hit effect
         if (this.particleSystem) {
@@ -357,6 +361,17 @@ export class CombatSystem {
 
     // Clean up old damage history entries
     this.damageHistory = this.damageHistory.filter(entry => currentTime - entry.time < DPS_WINDOW);
+
+    // Emit damage dealt event for visual feedback (damage numbers)
+    if (actualDamage > 0) {
+      EventBus.getInstance().emit(GameEventType.DAMAGE_DEALT, {
+        entityId,
+        damage: actualDamage,
+        isShield: shieldAbsorbed && finalDamage <= 0,
+        x: hitX,
+        y: hitY
+      });
+    }
 
     return actualDamage;
   }

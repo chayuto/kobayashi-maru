@@ -85,6 +85,67 @@ export const RENDERING_CONFIG = {
         /** Decay rate per frame (0.0 - 1.0) */
         DECAY_RATE: 0.9,
     },
+    /**
+     * Floating damage number settings.
+     */
+    DAMAGE_NUMBERS: {
+        /** Object pool size for Text recycling */
+        POOL_SIZE: 30,
+        /** Duration of float animation in seconds */
+        DURATION: 0.8,
+        /** Upward float speed in pixels per second */
+        FLOAT_SPEED: 80,
+        /** Starting scale */
+        START_SCALE: 1.0,
+        /** Ending scale */
+        END_SCALE: 0.3,
+        /** Font size for damage text */
+        FONT_SIZE: 20,
+        /** Color for shield damage */
+        SHIELD_COLOR: 0x44BBFF,
+        /** Color for health damage */
+        HEALTH_COLOR: 0xFF4455,
+        /** Color for critical hits (high damage) */
+        CRITICAL_COLOR: 0xFF9900,
+        /** Damage threshold for critical display */
+        CRITICAL_THRESHOLD: 50,
+    },
+
+    /**
+     * Explosion effect settings by enemy rank.
+     */
+    EXPLOSIONS: {
+        /** Boss death screen shake intensity */
+        BOSS_SHAKE_INTENSITY: 8,
+        /** Boss death screen shake duration */
+        BOSS_SHAKE_DURATION: 0.5,
+        /** Elite death shockwave radius */
+        ELITE_SHOCKWAVE_RADIUS: 80,
+        /** Elite death shockwave duration */
+        ELITE_SHOCKWAVE_DURATION: 0.4,
+        /** Elite particle count */
+        ELITE_PARTICLE_COUNT: 30,
+        /** Boss particle count */
+        BOSS_PARTICLE_COUNT: 40,
+    },
+
+    /**
+     * Screen flash overlay settings.
+     */
+    SCREEN_FLASH: {
+        /** Maximum flash alpha intensity */
+        MAX_INTENSITY: 0.6,
+        /** Flash color when Kobayashi Maru takes damage */
+        KM_DAMAGE_COLOR: 0xFF2200,
+        /** Flash color on boss kill */
+        BOSS_KILL_COLOR: 0xFFFFFF,
+        /** Boss kill flash intensity */
+        BOSS_KILL_INTENSITY: 0.4,
+        /** Boss kill flash duration */
+        BOSS_KILL_DURATION: 0.5,
+        /** KM damage flash duration */
+        KM_DAMAGE_DURATION: 0.3,
+    },
 } as const;
 
 export type RenderingConfig = typeof RENDERING_CONFIG;
