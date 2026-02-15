@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { ScoringCurves, CurveConfig } from '../ai/utility/ScoringCurves';
+import { ScoringCurves } from '../ai/utility/ScoringCurves';
 import { DecisionInertia, DEFAULT_INERTIA_CONFIG } from '../ai/utility/DecisionInertia';
 import { ActionBucketing, ActionBucket, GameContext } from '../ai/utility/ActionBucketing';
 import { WavePredictor, WavePrediction } from '../ai/prediction/WavePredictor';
@@ -395,9 +395,6 @@ describe('ActionBucketing', () => {
             const early = ActionBucketing.calculateBucketWeights(
                 makeContext({ waveNumber: 2, threatLevel: 10 })
             );
-            const late = ActionBucketing.calculateBucketWeights(
-                makeContext({ waveNumber: 10, threatLevel: 10 })
-            );
             // Before normalization, early economy = 0.5 + 0.3 = 0.8, late = 0.5
             // After normalization ratios should reflect this
             expect(early[ActionBucket.ECONOMY]).toBeGreaterThan(0);
@@ -488,11 +485,7 @@ describe('ActionBucketing', () => {
             ];
 
             const result = ActionBucketing.prioritizeActions(actions, context);
-            // Should get at least the SELL action (SURVIVAL bucket)
-            const hasOnlySurvival = result.every(
-                (a) => ActionBucketing.classifyAction(a) === ActionBucket.SURVIVAL
-            );
-            // Or DEFENSE — depends on actual weights; just verify it returns actions
+            // Verify it returns actions
             expect(result.length).toBeGreaterThan(0);
             // All returned should be from the same bucket
             const bucket = ActionBucketing.classifyAction(result[0]);

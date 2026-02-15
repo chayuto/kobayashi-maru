@@ -10,7 +10,7 @@ vi.mock('pixi.js', async () => {
 });
 
 import { AIBrainRenderer } from '../ai/visualization/AIBrainRenderer';
-import { AIDebugVisualizer, VisualizationLayers } from '../ai/visualization/AIDebugVisualizer';
+import { AIDebugVisualizer } from '../ai/visualization/AIDebugVisualizer';
 import { FlowFieldRenderer } from '../ai/visualization/FlowFieldRenderer';
 import { InfluenceMapRenderer } from '../ai/visualization/InfluenceMapRenderer';
 import { InterceptionRenderer, InterceptionPoint } from '../ai/visualization/InterceptionRenderer';
@@ -25,7 +25,7 @@ import {
     ThreatVector,
     SectorData,
 } from '../ai/types';
-import { Application, Container } from 'pixi.js';
+import { Application } from 'pixi.js';
 
 // ---------------------------------------------------------------------------
 // Helpers

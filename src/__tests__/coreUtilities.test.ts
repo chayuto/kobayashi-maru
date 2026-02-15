@@ -143,7 +143,7 @@ describe('QualityManager', () => {
   beforeEach(() => {
     performanceMonitor = new PerformanceMonitor();
     // Suppress console.log from constructor
-    vi.spyOn(console, 'log').mockImplementation(() => {});
+    vi.spyOn(console, 'log').mockImplementation(() => { });
     qualityManager = new QualityManager(performanceMonitor);
   });
 
@@ -378,7 +378,7 @@ describe('TouchInputManager', () => {
 
   it('should warn when canvas is not found during init', () => {
     // Arrange
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
     const noCanvasApp = new MockApplication();
     // @ts-expect-error - setting canvas to null for testing
     noCanvasApp.canvas = null;
@@ -396,7 +396,6 @@ describe('TouchInputManager', () => {
   it('should emit TOUCH_START event when touchstart fires', () => {
     // Arrange
     touchInputManager.init();
-    const canvas = mockApp.canvas as HTMLCanvasElement;
 
     // Act - invoke handler via private method
     const touchEvent = createTouchEvent('touchstart', [{ clientX: 100, clientY: 200 }]);

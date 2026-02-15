@@ -17,7 +17,6 @@ import {
   AIBehavior,
   Collider,
   Faction,
-  SpriteRef,
   Rotation,
   EnemyWeapon,
 } from '../ecs/components';
@@ -41,7 +40,7 @@ import {
 import { ENEMY_TEMPLATES, getEnemyTemplate } from '../ecs/entityTemplates';
 import { EntityPool } from '../ecs/entityPool';
 import { PoolManager } from '../ecs/PoolManager';
-import { GAME_CONFIG, FactionId, TurretType, TURRET_CONFIG, AIBehaviorType, ProjectileType } from '../types/constants';
+import { GAME_CONFIG, FactionId, TurretType, AIBehaviorType } from '../types/constants';
 
 // =============================================================================
 // COMPONENT VALIDATION TESTS
@@ -642,7 +641,7 @@ describe('Component Validation', () => {
     });
 
     it('should return false and log warnings when entity is invalid', () => {
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
       const eid = addEntity(world);
       addComponent(world, eid, Health);
       Health.current[eid] = -10;
@@ -656,7 +655,7 @@ describe('Component Validation', () => {
     });
 
     it('should log debug warnings with entity type name when provided', () => {
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
       const eid = addEntity(world);
       addComponent(world, eid, Health);
       Health.current[eid] = -10;
@@ -672,7 +671,7 @@ describe('Component Validation', () => {
     });
 
     it('should log debug message for warnings on valid entity', () => {
-      const debugSpy = vi.spyOn(console, 'debug').mockImplementation(() => {});
+      const debugSpy = vi.spyOn(console, 'debug').mockImplementation(() => { });
       const eid = addEntity(world);
       addComponent(world, eid, Shield);
       Shield.current[eid] = 60;
@@ -724,7 +723,7 @@ describe('Generic Factory', () => {
     });
 
     it('should return -1 when faction has no template', () => {
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
 
       const eid = createEnemy(world, 777, 100, 100);
 
@@ -806,7 +805,7 @@ describe('Generic Factory', () => {
     });
 
     it('should return array with -1 when faction has no template', () => {
-      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
 
       const eids = createEnemies(world, 777, [{ x: 100, y: 100 }]);
 
@@ -849,7 +848,7 @@ describe('EntityPool', () => {
   });
 
   it('should create new entity when pool is exhausted', () => {
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
     const pool = new EntityPool(world, 2);
 
     pool.acquire();
@@ -863,7 +862,7 @@ describe('EntityPool', () => {
   });
 
   it('should not release entity that is not in use', () => {
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => { });
     const pool = new EntityPool(world, 5);
 
     pool.release(9999);
