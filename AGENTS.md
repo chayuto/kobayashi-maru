@@ -5,11 +5,11 @@ Instructions for AI coding agents working on this codebase.
 ## Quick Reference
 
 ```bash
-npm ci              # Install dependencies
-npm run lint        # Must pass before commit
-npm run test        # Must pass before commit
-npm run build       # Verify build works
-npm run dev         # Development server
+pnpm install        # Install dependencies (project uses pnpm)
+pnpm run lint       # Must pass before commit
+pnpm run test       # Must pass before commit (2,224 tests / 95 files)
+pnpm run build      # Verify build works
+pnpm run dev        # Development server
 ```
 
 ## Architecture Overview
@@ -73,7 +73,7 @@ Game.ts (facade)
    TURRET_BARREL_NEW: 113,
    ```
 
-4. **Create textures** - `src/rendering/textures.ts`
+4. **Create textures** - `src/rendering/textures/` (split into createFactionTextures, factionTextures, turretTextures, types, utils)
 
 5. **Update sprite manager** - `src/rendering/spriteManager.ts`
 
@@ -253,9 +253,9 @@ See `docs/ARCHITECTURE.md` for detailed architecture documentation.
 
 Before completing any task:
 
-- [ ] `npm run lint` passes
-- [ ] `npm run test` passes
-- [ ] `npm run build` succeeds
+- [ ] `pnpm run lint` passes
+- [ ] `pnpm run test` passes
+- [ ] `pnpm run build` succeeds
 - [ ] New code has tests where applicable
 
 
