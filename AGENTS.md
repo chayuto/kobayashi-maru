@@ -39,7 +39,7 @@ Game.ts (facade)
 | Directory | Purpose |
 |-----------|---------|
 | `src/ecs/` | ECS core: components, entities, world |
-| `src/systems/` | 17 game systems (ai, combat, ability, etc.) |
+| `src/systems/` | ECS game systems (ai, combat, ability, etc.) |
 | `src/game/` | Managers: Wave, Score, Upgrade, Achievement |
 | `src/config/` | Centralized configuration files |
 | `src/rendering/` | PixiJS rendering, textures, effects |
@@ -254,7 +254,7 @@ See `docs/ARCHITECTURE.md` for detailed architecture documentation.
 Before completing any task:
 
 - [ ] `npm run lint` passes
-- [ ] `npm run test` passes (all 48 tests)
+- [ ] `npm run test` passes
 - [ ] `npm run build` succeeds
 - [ ] New code has tests where applicable
 
