@@ -50,8 +50,8 @@ export class StatusPanel {
     private eventBus: EventBus;
     private boundHandleAlert: (payload: AlertLevelChangedPayload) => void;
 
-    private static readonly WIDTH = 280;
-    private static readonly HEIGHT = 120;
+    private static readonly WIDTH = UI_CONFIG.PANELS.STATUS.WIDTH;
+    private static readonly HEIGHT = UI_CONFIG.PANELS.STATUS.HEIGHT;
     private static readonly BAR_WIDTH = 200;
     private static readonly BAR_HEIGHT = 20;
 

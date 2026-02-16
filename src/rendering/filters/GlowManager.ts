@@ -69,9 +69,9 @@ export const GLOW_PRESETS: Record<string, GlowConfig> = {
 };
 
 /**
- * Constants for glow calculations
+ * Constants for glow calculations — from centralized config
  */
-const MAX_STRENGTH_VALUE = 10;
+const MAX_STRENGTH_VALUE = RENDERING_CONFIG.GLOW.MAX_STRENGTH;
 
 /**
  * GlowManager handles glow/bloom effects for various game elements

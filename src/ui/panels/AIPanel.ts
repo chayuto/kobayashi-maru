@@ -9,6 +9,7 @@
 
 import { Container, Graphics, Text, TextStyle } from 'pixi.js';
 import { UI_STYLES } from '../styles';
+import { UI_CONFIG } from '../../config';
 import { AIMood, AIPhase, AIPersonality, AIStatusExtended } from '../../ai/types';
 
 /**
@@ -74,8 +75,8 @@ export class AIPanel {
     private actionText: Text | null = null;
     private entityText: Text | null = null;
 
-    private static readonly WIDTH = 260;
-    private static readonly HEIGHT = 160;
+    private static readonly WIDTH = UI_CONFIG.PANELS.AI_PANEL.WIDTH;
+    private static readonly HEIGHT = UI_CONFIG.PANELS.AI_PANEL.HEIGHT;
     private static readonly EXPANDED_HEIGHT = 220;
     private static readonly BAR_WIDTH = 180;
     private static readonly BAR_HEIGHT = 8;

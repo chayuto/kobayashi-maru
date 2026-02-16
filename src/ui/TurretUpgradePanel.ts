@@ -4,6 +4,7 @@
  */
 import { Container, Graphics, Text, TextStyle } from 'pixi.js';
 import { UI_STYLES } from './styles';
+import { UI_CONFIG } from '../config';
 import { TURRET_CONFIG, UPGRADE_CONFIG, UpgradePath, TURRET_SPECIAL_UPGRADES } from '../types/constants';
 import type { TurretUpgradeInfo } from '../game/UpgradeManager';
 
@@ -335,8 +336,8 @@ export class TurretUpgradePanel {
    * Update background size
    */
   private updateBackground(): void {
-    const width = 304;
-    const height = 480;
+    const width = UI_CONFIG.PANELS.UPGRADE.WIDTH;
+    const height = UI_CONFIG.PANELS.UPGRADE.HEIGHT;
 
     this.background.clear();
     this.background.roundRect(0, 0, width, height, 12);

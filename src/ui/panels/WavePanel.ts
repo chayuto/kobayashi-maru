@@ -8,6 +8,7 @@
  */
 import { Container, Graphics, Text, TextStyle } from 'pixi.js';
 import { UI_STYLES } from '../styles';
+import { UI_CONFIG } from '../../config';
 
 /**
  * Data required to update the wave panel.
@@ -61,8 +62,8 @@ export class WavePanel {
     private initialized: boolean = false;
 
     /** Panel dimensions */
-    private static readonly WIDTH = 200;
-    private static readonly HEIGHT = 100;
+    private static readonly WIDTH = UI_CONFIG.PANELS.WAVE.WIDTH;
+    private static readonly HEIGHT = UI_CONFIG.PANELS.WAVE.HEIGHT;
 
     constructor() {
         this.container = new Container();

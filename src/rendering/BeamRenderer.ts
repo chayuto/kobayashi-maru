@@ -5,6 +5,7 @@
 import { Application, Graphics, Container } from 'pixi.js';
 import { BeamVisual } from '../systems/combatSystem';
 import { TurretType } from '../types/constants';
+import { COMBAT_CONFIG } from '../config';
 
 // Colors for different beam types
 const BEAM_COLORS = {
@@ -28,11 +29,11 @@ export interface ChargeEffect {
   color: number;
 }
 
-// Charging effect constants
-const MAX_CHARGE_RADIUS = 15;
-const BASE_CORE_ALPHA = 0.3;
-const PULSE_AMPLITUDE = 0.2;
-const PULSE_FREQUENCY = 4;
+// Charging effect constants — from centralized config
+const MAX_CHARGE_RADIUS = COMBAT_CONFIG.BEAM.MAX_CHARGE_RADIUS;
+const BASE_CORE_ALPHA = COMBAT_CONFIG.BEAM.BASE_CORE_ALPHA;
+const PULSE_AMPLITUDE = COMBAT_CONFIG.BEAM.PULSE_AMPLITUDE;
+const PULSE_FREQUENCY = COMBAT_CONFIG.BEAM.PULSE_FREQUENCY;
 
 /**
  * BeamRenderer renders weapon beam effects

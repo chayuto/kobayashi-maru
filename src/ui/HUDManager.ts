@@ -4,6 +4,7 @@
  */
 import { Application, Container, Graphics } from 'pixi.js';
 import { UI_STYLES } from './styles';
+import { UI_CONFIG } from '../config';
 import { HUDData } from './types';
 
 import { GAME_CONFIG } from '../types/constants';
@@ -123,14 +124,14 @@ export class HUDManager {
 
     // Create Turret Menu
     this.turretMenu = new TurretMenu();
-    const menuX = GAME_CONFIG.WORLD_WIDTH - 180 - UI_STYLES.PADDING;
+    const menuX = GAME_CONFIG.WORLD_WIDTH - UI_CONFIG.PANELS.TURRET_MENU.WIDTH - UI_STYLES.PADDING;
     const menuY = UI_STYLES.PADDING + 70 + UI_STYLES.PADDING;
     this.turretMenu.setPosition(menuX, menuY);
     this.container.addChild(this.turretMenu.container);
 
     // Create Turret Upgrade Panel (hidden by default)
     this.turretUpgradePanel = new TurretUpgradePanel();
-    const upgradePanelX = menuX - 304 - UI_STYLES.PADDING;
+    const upgradePanelX = menuX - UI_CONFIG.PANELS.UPGRADE.WIDTH - UI_STYLES.PADDING;
     const upgradePanelY = menuY;
     this.turretUpgradePanel.setPosition(upgradePanelX, upgradePanelY);
     this.container.addChild(this.turretUpgradePanel.container);
@@ -229,14 +230,14 @@ export class HUDManager {
     // Update Turret Menu (right side)
     if (this.turretMenu) {
       this.turretMenu.container.scale.set(scale);
-      const pos = layout.getTurretMenuPosition(scale, 180);
+      const pos = layout.getTurretMenuPosition(scale, UI_CONFIG.PANELS.TURRET_MENU.WIDTH);
       this.turretMenu.container.position.set(pos.x, pos.y);
     }
 
     // Update Turret Upgrade Panel (left of turret menu)
     if (this.turretUpgradePanel) {
       this.turretUpgradePanel.container.scale.set(scale);
-      const pos = layout.getTurretUpgradePanelPosition(scale, 180, 304);
+      const pos = layout.getTurretUpgradePanelPosition(scale, UI_CONFIG.PANELS.TURRET_MENU.WIDTH, UI_CONFIG.PANELS.UPGRADE.WIDTH);
       this.turretUpgradePanel.container.position.set(pos.x, pos.y);
     }
 

@@ -7,6 +7,7 @@
  */
 import { Container, Graphics, Text, TextStyle } from 'pixi.js';
 import { UI_STYLES } from '../styles';
+import { UI_CONFIG } from '../../config';
 import { UIAnimator } from '../animation/UIAnimator';
 
 /**
@@ -35,8 +36,8 @@ export class ResourcePanel {
     private initialized: boolean = false;
     private previousResources: number = 0;
 
-    private static readonly WIDTH = 150;
-    private static readonly HEIGHT = 70;
+    private static readonly WIDTH = UI_CONFIG.PANELS.RESOURCE.WIDTH;
+    private static readonly HEIGHT = UI_CONFIG.PANELS.RESOURCE.HEIGHT;
 
     constructor() {
         this.container = new Container();

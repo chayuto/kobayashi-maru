@@ -1,19 +1,55 @@
 /**
  * UI Configuration
- * 
+ *
  * Settings for user interface elements, dimensions, and colors.
  * Centralized configuration for consistent UI appearance across the game.
- * 
+ *
  * @module config/ui
  */
 
 /**
+ * UI styling constants for Kobayashi Maru HUD System.
+ * LCARS-inspired color scheme and layout values — enhanced for premium look.
+ *
+ * Previously defined in `src/ui/styles.ts`, now centralized here as the
+ * single source of truth for all UI styling values.
+ *
+ * @example
+ * ```typescript
+ * import { UI_STYLES } from '../config';
+ *
+ * const font = UI_STYLES.FONT_FAMILY;
+ * const primary = UI_STYLES.COLORS.PRIMARY;
+ * ```
+ */
+export const UI_STYLES = {
+    FONT_FAMILY: 'monospace',
+    FONT_SIZE_LARGE: 24,
+    FONT_SIZE_MEDIUM: 18,
+    FONT_SIZE_SMALL: 14,
+    PADDING: 16,
+    BAR_HEIGHT: 20,
+    BAR_WIDTH: 300,
+    COLORS: {
+        PRIMARY: 0xFF9922,      // Warmer LCARS orange
+        SECONDARY: 0x66DDFF,    // Brighter galaxy blue
+        ACCENT: 0xFF66AA,       // Pink accent for highlights
+        HEALTH: 0x00FFAA,       // Vibrant health green
+        SHIELD: 0x44BBFF,       // Electric shield blue
+        DANGER: 0xFF4455,       // Brighter warning red
+        BACKGROUND: 0x0A0A1A,   // Deep space blue-black
+        TEXT: 0xEEFFFF,         // Slight cyan tint
+        GLOW: 0x00FFCC          // Glow effect color
+    }
+} as const;
+
+/**
  * UI configuration values.
- * 
+ *
  * @example
  * ```typescript
  * import { UI_CONFIG } from '../config';
- * 
+ *
  * const buttonWidth = UI_CONFIG.BUTTONS.TOGGLE_WIDTH;
  * const primaryColor = UI_CONFIG.COLORS.PRIMARY;
  * const panelWidth = UI_CONFIG.PANELS.RESOURCE.WIDTH;
@@ -132,7 +168,7 @@ export const UI_CONFIG = {
         SUCCESS: 0x00FF00,
         /** Disabled element color */
         DISABLED: 0x888888,
-        
+
         /** Faction colors */
         FEDERATION: 0x0066FF,
         KLINGON: 0xFF0000,
@@ -142,6 +178,7 @@ export const UI_CONFIG = {
 
     /**
      * Panel dimensions for layout calculations.
+     * These are the single source of truth — panel classes read from here.
      */
     PANELS: {
         /** Resource panel dimensions */
@@ -151,17 +188,23 @@ export const UI_CONFIG = {
         /** Score panel dimensions */
         SCORE: { WIDTH: 180, HEIGHT: 80 },
         /** Combo panel dimensions */
-        COMBO: { WIDTH: 100, HEIGHT: 70 },
+        COMBO: { WIDTH: 120, HEIGHT: 60 },
         /** Status panel dimensions */
         STATUS: { WIDTH: 280, HEIGHT: 120 },
         /** Turret menu dimensions */
-        TURRET_MENU: { WIDTH: 180, HEIGHT: 400 },
+        TURRET_MENU: { WIDTH: 240, HEIGHT: 400 },
         /** Upgrade panel dimensions */
-        UPGRADE: { WIDTH: 304, HEIGHT: 400 },
+        UPGRADE: { WIDTH: 304, HEIGHT: 480 },
         /** Combat stats panel dimensions */
-        COMBAT_STATS: { WIDTH: 120, HEIGHT: 90 },
+        COMBAT_STATS: { WIDTH: 160, HEIGHT: 90 },
         /** Turret count panel dimensions */
         TURRET_COUNT: { WIDTH: 140, HEIGHT: 60 },
+        /** Achievement toast dimensions */
+        ACHIEVEMENT_TOAST: { WIDTH: 280, HEIGHT: 70 },
+        /** AI thought feed dimensions */
+        AI_THOUGHT_FEED: { WIDTH: 280, HEIGHT: 100 },
+        /** AI panel dimensions */
+        AI_PANEL: { WIDTH: 260, HEIGHT: 160 },
     },
 
     /**

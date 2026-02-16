@@ -28,8 +28,8 @@ export class ComboPanel {
     private popupStartTime: number = 0;
     private comboConfig = UI_CONFIG.COMBO;
 
-    private static readonly WIDTH = 120;
-    private static readonly HEIGHT = 60;
+    private static readonly WIDTH = UI_CONFIG.PANELS.COMBO.WIDTH;
+    private static readonly HEIGHT = UI_CONFIG.PANELS.COMBO.HEIGHT;
 
     constructor() {
         this.container = new Container();

@@ -9,6 +9,7 @@
 
 import { Container, Graphics, Text, TextStyle } from 'pixi.js';
 import { UI_STYLES } from '../styles';
+import { UI_CONFIG } from '../../config';
 import type { AIMessage } from '../../ai/humanization/AIMessageGenerator';
 
 interface DisplayMessage {
@@ -26,8 +27,8 @@ export class AIThoughtFeed {
     private textPool: Text[] = [];
     private initialized: boolean = false;
 
-    private static readonly WIDTH = 280;
-    private static readonly HEIGHT = 100;
+    private static readonly WIDTH = UI_CONFIG.PANELS.AI_THOUGHT_FEED.WIDTH;
+    private static readonly HEIGHT = UI_CONFIG.PANELS.AI_THOUGHT_FEED.HEIGHT;
     private static readonly MAX_MESSAGES = 4;
     private static readonly MESSAGE_HEIGHT = 18;
     private static readonly FADE_DURATION = 8000; // 8 seconds
