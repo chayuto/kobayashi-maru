@@ -73,6 +73,7 @@ export class RenderManager {
         services.get('damageNumberRenderer'); // Must be initialized to subscribe to damage events
         services.get('screenFlash'); // Must be initialized for screen flash overlay
         services.get('hitFlashManager'); // Must be initialized to subscribe to damage events
+        services.tryGet('hullDamageOverlay'); // Force lazy initialization of hull damage overlay
 
         this.initialized = true;
     }
@@ -110,6 +111,10 @@ export class RenderManager {
 
         // Update hit flash tinting
         services.get('hitFlashManager').update(deltaTime);
+
+        // Update hull damage vignette overlay
+        const hullOverlay = services.tryGet('hullDamageOverlay');
+        if (hullOverlay) hullOverlay.update(deltaTime);
     }
 
     /**
@@ -130,10 +135,11 @@ export class RenderManager {
     /**
      * Render all game visuals.
      * Called after update phase.
-     * 
+     *
      * @param activeBeams - Active beam visuals from combat system
+     * @param deltaTime - Time since last frame in seconds
      */
-    render(activeBeams: BeamVisual[] = []): void {
+    render(activeBeams: BeamVisual[] = [], deltaTime: number = 0): void {
         const services = getServices();
 
         // 1. Render entities (sprites)
@@ -148,7 +154,7 @@ export class RenderManager {
         services.get('healthBarRenderer').update(this.world);
 
         // 4. Render shields
-        services.get('shieldRenderer').update(this.world, 0);
+        services.get('shieldRenderer').update(this.world, deltaTime);
 
         // 5. Render turret upgrade visuals
         services.get('turretUpgradeVisuals').update();

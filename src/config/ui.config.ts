@@ -266,6 +266,38 @@ export const UI_CONFIG = {
         /** Alert banner fade-out duration */
         FADE_OUT_DURATION: 0.5,
     },
+
+    /**
+     * Tutorial overlay settings.
+     */
+    TUTORIAL: {
+        /** Panel width in pixels */
+        PANEL_WIDTH: 700,
+        /** Panel padding in pixels */
+        PANEL_PADDING: 24,
+        /** Panel corner radius */
+        PANEL_CORNER_RADIUS: 8,
+        /** Panel background alpha */
+        PANEL_BACKGROUND_ALPHA: 0.85,
+        /** Panel border width */
+        PANEL_BORDER_WIDTH: 2,
+        /** Fade-in duration in seconds */
+        FADE_IN_DURATION: 0.3,
+        /** Fade-out duration in seconds */
+        FADE_OUT_DURATION: 0.3,
+        /** Y position for 'top' placement */
+        POSITION_TOP_Y: 100,
+        /** Y position for 'center' placement */
+        POSITION_CENTER_Y: 540,
+        /** Y position for 'bottom' placement */
+        POSITION_BOTTOM_Y: 900,
+        /** Container z-index (below pause overlay at 1000) */
+        Z_INDEX: 998,
+        /** localStorage key for tutorial completion */
+        STORAGE_KEY: 'km_tutorial_complete',
+        /** Delay in seconds before first step after start */
+        INITIAL_DELAY: 1.0,
+    },
 } as const;
 
 export type UIConfig = typeof UI_CONFIG;

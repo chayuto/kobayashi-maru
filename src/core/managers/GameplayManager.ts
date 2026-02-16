@@ -215,6 +215,10 @@ export class GameplayManager {
         const isBossWaveActive = waveNumber % 5 === 0 && (waveState === 'spawning' || waveState === 'active');
 
         this.alertStatusManager.evaluate(hullPercent, isBossWaveActive);
+
+        // Update hull damage overlay with current hull percent
+        const hullOverlay = services.tryGet('hullDamageOverlay');
+        if (hullOverlay) hullOverlay.setHullPercent(hullPercent);
     }
 
     // ==========================================================================
@@ -264,6 +268,38 @@ export class GameplayManager {
 
         // Notify callback
         this.callbacks.onGameOver?.(finalScore, isHighScore);
+    }
+
+    /**
+     * Stop gameplay and clear all entities without restarting.
+     * Used when quitting to main menu.
+     */
+    stopAndClear(): void {
+        const services = getServices();
+
+        // Unsubscribe from events
+        const eventBus = services.get('eventBus');
+        eventBus.off(GameEventType.ENEMY_KILLED, this.boundHandleEnemyKilled);
+        eventBus.off(GameEventType.WAVE_STARTED, this.boundHandleWaveStarted);
+        eventBus.off(GameEventType.WAVE_COMPLETED, this.boundHandleWaveCompleted);
+
+        // Clear all entities
+        this.clearAllEntities();
+
+        // Reset managers
+        services.get('scoreManager').reset();
+        services.get('resourceManager').reset();
+        services.get('waveManager').reset();
+
+        // Reset local state
+        this.killCount = 0;
+        this.gameTime = 0;
+        this.alertStatusManager.reset();
+
+        // Reset game state back to MENU
+        services.get('gameState').reset();
+
+        console.log('Gameplay stopped and cleared');
     }
 
     /**

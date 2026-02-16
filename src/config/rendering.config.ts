@@ -168,6 +168,51 @@ export const RENDERING_CONFIG = {
         /** Flash tint color (white) */
         COLOR: 0xFFFFFF,
     },
+
+    /**
+     * Bloom/glow post-processing settings.
+     */
+    BLOOM: {
+        /** Whether bloom effects are enabled */
+        ENABLED: true,
+        /** Global bloom intensity multiplier (0-1) */
+        INTENSITY: 0.7,
+    },
+
+    /**
+     * Shield impact ripple effect settings.
+     */
+    SHIELD_RIPPLE: {
+        /** Ripple animation duration in seconds */
+        DURATION: 0.3,
+        /** How much the ripple expands in pixels */
+        MAX_RADIUS_GROWTH: 20,
+        /** Arc angle in radians (60 degrees) */
+        ARC_ANGLE: Math.PI / 3,
+        /** Starting opacity */
+        START_ALPHA: 0.8,
+        /** Arc line width */
+        LINE_WIDTH: 3,
+    },
+
+    /**
+     * Hull damage vignette overlay settings.
+     * Red border overlay that intensifies as Kobayashi Maru hull decreases.
+     */
+    HULL_DAMAGE_OVERLAY: {
+        /** Start showing overlay at this hull fraction (30%) */
+        ENABLE_THRESHOLD: 0.30,
+        /** Maximum vignette alpha */
+        MAX_INTENSITY: 0.4,
+        /** Pulse speed at critical hull (radians per second multiplier) */
+        PULSE_SPEED: 2.0,
+        /** Hull fraction below which pulsing effect activates */
+        CRITICAL_THRESHOLD: 0.20,
+        /** Red tint color */
+        TINT_COLOR: 0xFF0000,
+        /** Vignette border width in pixels */
+        BORDER_WIDTH: 100,
+    },
 } as const;
 
 export type RenderingConfig = typeof RENDERING_CONFIG;

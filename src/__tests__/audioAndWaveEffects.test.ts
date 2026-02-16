@@ -156,6 +156,24 @@ describe('SoundGenerator', () => {
       expect(buffer.length).toBe(Math.floor(1.0 * 44100));
     });
 
+    it('should return an AudioBuffer for TETRYON_FIRE sound type', () => {
+      const buffer = SoundGenerator.generateSound(ctx, SoundType.TETRYON_FIRE);
+      expect(buffer).toBeDefined();
+      expect(buffer.length).toBe(Math.floor(0.12 * 44100));
+    });
+
+    it('should return an AudioBuffer for PLASMA_FIRE sound type', () => {
+      const buffer = SoundGenerator.generateSound(ctx, SoundType.PLASMA_FIRE);
+      expect(buffer).toBeDefined();
+      expect(buffer.length).toBeCloseTo(0.35 * 44100, 0);
+    });
+
+    it('should return an AudioBuffer for POLARON_FIRE sound type', () => {
+      const buffer = SoundGenerator.generateSound(ctx, SoundType.POLARON_FIRE);
+      expect(buffer).toBeDefined();
+      expect(buffer.length).toBe(Math.floor(0.18 * 44100));
+    });
+
     it('should return a default fallback buffer for unknown sound type', () => {
       // Use a type assertion to pass an unknown value
       const buffer = SoundGenerator.generateSound(ctx, 'some_unknown_type' as SoundType);
@@ -248,6 +266,60 @@ describe('SoundGenerator', () => {
       // Verify it has audible content
       const hasNonZero = data.some((v) => v !== 0);
       expect(hasNonZero).toBe(true);
+    });
+  });
+
+  describe('createTetryonSound', () => {
+    it('should create a buffer with correct duration and non-zero data', () => {
+      const buffer = SoundGenerator.createTetryonSound(ctx);
+      const data = buffer.getChannelData(0);
+      expect(data.length).toBe(Math.floor(0.12 * 44100));
+      const hasNonZero = data.some((v) => v !== 0);
+      expect(hasNonZero).toBe(true);
+    });
+
+    it('should have decaying amplitude (crystalline shimmer envelope)', () => {
+      const buffer = SoundGenerator.createTetryonSound(ctx);
+      const data = buffer.getChannelData(0);
+      // Early samples should have larger magnitude than late samples
+      const earlyMax = Math.max(...Array.from(data.slice(0, 100)).map(Math.abs));
+      const lateMax = Math.max(...Array.from(data.slice(-100)).map(Math.abs));
+      expect(earlyMax).toBeGreaterThan(lateMax);
+    });
+  });
+
+  describe('createPlasmaSound', () => {
+    it('should create a buffer with correct duration and non-zero data', () => {
+      const buffer = SoundGenerator.createPlasmaSound(ctx);
+      const data = buffer.getChannelData(0);
+      expect(data.length).toBe(Math.floor(0.35 * 44100));
+      const hasNonZero = data.some((v) => v !== 0);
+      expect(hasNonZero).toBe(true);
+    });
+
+    it('should have a slow attack (low amplitude at start)', () => {
+      const buffer = SoundGenerator.createPlasmaSound(ctx);
+      const data = buffer.getChannelData(0);
+      // Very first sample should be near zero due to attack ramp
+      expect(Math.abs(data[0])).toBeLessThan(0.01);
+    });
+  });
+
+  describe('createPolaronSound', () => {
+    it('should create a buffer with correct duration and non-zero data', () => {
+      const buffer = SoundGenerator.createPolaronSound(ctx);
+      const data = buffer.getChannelData(0);
+      expect(data.length).toBe(Math.floor(0.18 * 44100));
+      const hasNonZero = data.some((v) => v !== 0);
+      expect(hasNonZero).toBe(true);
+    });
+
+    it('should have decaying amplitude (warble envelope)', () => {
+      const buffer = SoundGenerator.createPolaronSound(ctx);
+      const data = buffer.getChannelData(0);
+      const earlyMax = Math.max(...Array.from(data.slice(0, 100)).map(Math.abs));
+      const lateMax = Math.max(...Array.from(data.slice(-100)).map(Math.abs));
+      expect(earlyMax).toBeGreaterThan(lateMax);
     });
   });
 });

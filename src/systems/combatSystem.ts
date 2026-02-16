@@ -5,11 +5,11 @@
 import { query, hasComponent, World } from 'bitecs';
 import { Position, Turret, Target, Faction, Health, Shield, WeaponProperties, EnemyVariant } from '../ecs/components';
 import { TurretType, ProjectileType } from '../types/constants';
-import { COMBAT_CONFIG, RENDERING_CONFIG } from '../config';
+import { COMBAT_CONFIG, RENDERING_CONFIG, TURRET_DAMAGE_TYPE, FACTION_RESISTANCES } from '../config';
 import { createProjectile } from '../ecs/entityFactory';
 import { AudioManager, SoundType } from '../audio';
 import { ParticleSystem, EFFECTS } from '../rendering';
-import { applyBurning, applyDrained } from './statusEffectSystem';
+import { applyBurning, applySlowed, applyDrained, applyDisabled } from './statusEffectSystem';
 import { EventBus } from '../core/EventBus';
 import { GameEventType } from '../types/events';
 
@@ -247,13 +247,13 @@ export class CombatSystem {
           audioManager.play(SoundType.DISRUPTOR_FIRE, { volume: 0.5 });
           break;
         case TurretType.TETRYON_BEAM:
-          audioManager.play(SoundType.PHASER_FIRE, { volume: 0.45 });
+          audioManager.play(SoundType.TETRYON_FIRE, { volume: 0.45 });
           break;
         case TurretType.PLASMA_CANNON:
-          audioManager.play(SoundType.TORPEDO_FIRE, { volume: 0.55 });
+          audioManager.play(SoundType.PLASMA_FIRE, { volume: 0.55 });
           break;
         case TurretType.POLARON_BEAM:
-          audioManager.play(SoundType.DISRUPTOR_FIRE, { volume: 0.48 });
+          audioManager.play(SoundType.POLARON_FIRE, { volume: 0.48 });
           break;
       }
 
@@ -289,6 +289,18 @@ export class CombatSystem {
    */
   private applyDamage(world: World, entityId: number, damage: number, hitX: number, hitY: number, currentTime: number, turretEid: number): number {
     let finalDamage = damage;
+
+    // Apply faction resistance based on damage type
+    const turretType = Turret.turretType[turretEid];
+    const damageType = TURRET_DAMAGE_TYPE[turretType];
+    if (damageType !== undefined && hasComponent(world, entityId, Faction)) {
+      const factionId = Faction.id[entityId];
+      const resistances = FACTION_RESISTANCES[factionId];
+      if (resistances) {
+        const resistMult = resistances[damageType] ?? 1.0;
+        finalDamage *= resistMult;
+      }
+    }
 
     // Check for weapon properties to modify damage
     if (hasComponent(world, turretEid, WeaponProperties)) {
@@ -348,8 +360,12 @@ export class CombatSystem {
       if (statusType > 0 && Math.random() < statusChance) {
         if (statusType === 1) {
           applyBurning(world, entityId, 4.0, 5.0);
+        } else if (statusType === 2) {
+          applySlowed(world, entityId, 0.3, 3.0); // 30% slow for 3 seconds
         } else if (statusType === 3) {
           applyDrained(world, entityId, 3.0);
+        } else if (statusType === 4) {
+          applyDisabled(world, entityId, 2.0, 1); // 2s weapon disable
         }
       }
     }

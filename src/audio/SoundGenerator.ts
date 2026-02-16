@@ -16,6 +16,12 @@ export class SoundGenerator {
                 return this.createTorpedoSound(ctx);
             case SoundType.DISRUPTOR_FIRE:
                 return this.createDisruptorSound(ctx);
+            case SoundType.TETRYON_FIRE:
+                return this.createTetryonSound(ctx);
+            case SoundType.PLASMA_FIRE:
+                return this.createPlasmaSound(ctx);
+            case SoundType.POLARON_FIRE:
+                return this.createPolaronSound(ctx);
             case SoundType.EXPLOSION_SMALL:
                 return this.createExplosionSound(ctx, 0.3);
             case SoundType.EXPLOSION_LARGE:
@@ -76,6 +82,82 @@ export class SoundGenerator {
             const signal = Math.sin(2 * Math.PI * 400 * t) > 0 ? 0.5 : -0.5;
             const noise = Math.random() * 0.4;
             data[i] = (signal + noise) * Math.exp(-t * 8) * 0.3;
+        }
+
+        return buffer;
+    }
+
+    /**
+     * Tetryon: Crystalline high-frequency oscillating beam
+     * Two sine oscillators with rapid amplitude modulation for shimmer
+     */
+    static createTetryonSound(ctx: AudioContext): AudioBuffer {
+        const duration = 0.12;
+        const sampleRate = ctx.sampleRate;
+        const buffer = ctx.createBuffer(1, duration * sampleRate, sampleRate);
+        const data = buffer.getChannelData(0);
+
+        for (let i = 0; i < data.length; i++) {
+            const t = i / sampleRate;
+            // Two sine oscillators at 2000 Hz and 3000 Hz
+            const osc1 = Math.sin(2 * Math.PI * 2000 * t);
+            const osc2 = Math.sin(2 * Math.PI * 3000 * t);
+            // Rapid amplitude modulation at 20 Hz for shimmer
+            const modulation = 0.5 + 0.5 * Math.sin(2 * Math.PI * 20 * t);
+            // Exponential decay
+            const envelope = Math.exp(-t * 25);
+            data[i] = (osc1 + osc2) * 0.5 * modulation * envelope * 0.3;
+        }
+
+        return buffer;
+    }
+
+    /**
+     * Plasma: Low rumble with sizzle
+     * Low sine at 150 Hz combined with filtered noise, slow attack then decay
+     */
+    static createPlasmaSound(ctx: AudioContext): AudioBuffer {
+        const duration = 0.35;
+        const sampleRate = ctx.sampleRate;
+        const buffer = ctx.createBuffer(1, duration * sampleRate, sampleRate);
+        const data = buffer.getChannelData(0);
+
+        for (let i = 0; i < data.length; i++) {
+            const t = i / sampleRate;
+            // Low rumble at 150 Hz
+            const rumble = Math.sin(2 * Math.PI * 150 * t);
+            // Filtered noise (sizzle) - use noise attenuated by high frequency
+            const noise = (Math.random() * 2 - 1) * 0.3;
+            // Slow attack: ramp up over first 0.05s, then decay
+            const attack = t < 0.05 ? t / 0.05 : 1.0;
+            const decay = Math.exp(-(t - 0.05) * 4);
+            const envelope = attack * (t < 0.05 ? 1.0 : decay);
+            data[i] = (rumble * 0.6 + noise) * envelope * 0.5;
+        }
+
+        return buffer;
+    }
+
+    /**
+     * Polaron: Descending warble
+     * Frequency sweep from 800 Hz to 400 Hz with vibrato modulation
+     */
+    static createPolaronSound(ctx: AudioContext): AudioBuffer {
+        const duration = 0.18;
+        const sampleRate = ctx.sampleRate;
+        const buffer = ctx.createBuffer(1, duration * sampleRate, sampleRate);
+        const data = buffer.getChannelData(0);
+
+        for (let i = 0; i < data.length; i++) {
+            const t = i / sampleRate;
+            // Frequency sweep from 800 Hz down to 400 Hz
+            const baseFreq = 800 - (400 * t / duration);
+            // Vibrato modulation at 15 Hz
+            const vibrato = Math.sin(2 * Math.PI * 15 * t) * 30;
+            const freq = baseFreq + vibrato;
+            // Exponential decay
+            const envelope = Math.exp(-t * 15);
+            data[i] = Math.sin(2 * Math.PI * freq * t) * envelope * 0.3;
         }
 
         return buffer;

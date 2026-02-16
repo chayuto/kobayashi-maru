@@ -176,6 +176,26 @@ export function createTurret(world: GameWorld, x: number, y: number, turretType:
     WeaponProperties.aoeRadius[eid] = 0;
     WeaponProperties.statusEffectType[eid] = 3; // Drain
     WeaponProperties.statusEffectChance[eid] = 1.0; // 100% chance
+  } else if (turretType === TurretType.PHASER_ARRAY) {
+    // Phaser: 5% chance to disable enemy weapons
+    addComponent(world, eid, WeaponProperties);
+    WeaponProperties.shieldDamageMultiplier[eid] = 1.0;
+    WeaponProperties.hullDamageMultiplier[eid] = 1.0;
+    WeaponProperties.critChance[eid] = 0;
+    WeaponProperties.critMultiplier[eid] = 1.0;
+    WeaponProperties.aoeRadius[eid] = 0;
+    WeaponProperties.statusEffectType[eid] = 4; // Disable
+    WeaponProperties.statusEffectChance[eid] = 0.05; // 5% chance
+  } else if (turretType === TurretType.DISRUPTOR_BANK) {
+    // Disruptor: 15% chance to slow enemies
+    addComponent(world, eid, WeaponProperties);
+    WeaponProperties.shieldDamageMultiplier[eid] = 1.0;
+    WeaponProperties.hullDamageMultiplier[eid] = 1.0;
+    WeaponProperties.critChance[eid] = 0;
+    WeaponProperties.critMultiplier[eid] = 1.0;
+    WeaponProperties.aoeRadius[eid] = 0;
+    WeaponProperties.statusEffectType[eid] = 2; // Slow
+    WeaponProperties.statusEffectChance[eid] = 0.15; // 15% chance
   }
 
   incrementEntityCount();

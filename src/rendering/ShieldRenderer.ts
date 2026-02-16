@@ -5,6 +5,19 @@
 import { Application, Graphics, Container } from 'pixi.js';
 import { query, World } from 'bitecs';
 import { Position, Shield, Health } from '../ecs/components';
+import { RENDERING_CONFIG } from '../config';
+import { EventBus } from '../core/EventBus';
+import { GameEventType } from '../types/events';
+
+/**
+ * Represents an active shield impact ripple effect
+ */
+interface ShieldRipple {
+  entityId: number;
+  angle: number;      // Impact angle in radians
+  age: number;         // Time elapsed since creation
+  color: number;       // Ripple color (matches shield color)
+}
 
 /**
  * Shield rendering configuration constants
@@ -40,6 +53,7 @@ export class ShieldRenderer {
   private initialized: boolean = false;
   private shieldAlphaMap: Map<number, number> = new Map(); // Track shield flash/fade animation
   private animationTime: number = 0;
+  private activeRipples: ShieldRipple[] = [];
 
   constructor(app: Application) {
     this.app = app;
@@ -65,6 +79,14 @@ export class ShieldRenderer {
     } else {
       this.app.stage.addChild(this.container);
     }
+
+    // Subscribe to damage events for shield impact ripples
+    const eventBus = EventBus.getInstance();
+    eventBus.on(GameEventType.DAMAGE_DEALT, (payload) => {
+      if (payload.isShield) {
+        this.addRipple(payload.entityId, payload.x, payload.y);
+      }
+    });
 
     this.initialized = true;
     console.log('ShieldRenderer initialized');
@@ -156,6 +178,38 @@ export class ShieldRenderer {
       this.graphics.stroke({ width: SHIELD_CONFIG.INNER_RING_WIDTH, color: shieldColor, alpha: alpha });
     }
 
+    // Draw active ripples
+    const rippleConfig = RENDERING_CONFIG.SHIELD_RIPPLE;
+    this.activeRipples = this.activeRipples.filter((ripple) => {
+      const progress = ripple.age / rippleConfig.DURATION;
+
+      // Look up entity position for the ripple
+      // Use Position component if entity still exists in the query results
+      const entityX = Position.x[ripple.entityId];
+      const entityY = Position.y[ripple.entityId];
+
+      if (entityX !== undefined && entityY !== undefined) {
+        const rippleRadius = SHIELD_CONFIG.BASE_RADIUS + rippleConfig.MAX_RADIUS_GROWTH * progress;
+        const rippleAlpha = rippleConfig.START_ALPHA * (1 - progress);
+        const halfArc = rippleConfig.ARC_ANGLE / 2;
+        const startAngle = ripple.angle - halfArc;
+        const endAngle = ripple.angle + halfArc;
+
+        this.graphics.arc(entityX, entityY, rippleRadius, startAngle, endAngle);
+        this.graphics.stroke({
+          width: rippleConfig.LINE_WIDTH,
+          color: ripple.color,
+          alpha: rippleAlpha,
+        });
+      }
+
+      // Age the ripple
+      ripple.age += deltaTime;
+
+      // Keep ripple if it hasn't expired
+      return ripple.age < rippleConfig.DURATION;
+    });
+
     // Clean up alpha map for entities that no longer exist
     const entitySet = new Set(entities);
     for (const eid of this.shieldAlphaMap.keys()) {
@@ -166,12 +220,54 @@ export class ShieldRenderer {
   }
 
   /**
+   * Add a localized ripple effect at the point of impact on a shield
+   * @param entityId Entity whose shield was hit
+   * @param hitX World X coordinate of the impact
+   * @param hitY World Y coordinate of the impact
+   */
+  addRipple(entityId: number, hitX: number, hitY: number): void {
+    const entityX = Position.x[entityId];
+    const entityY = Position.y[entityId];
+
+    // Calculate angle from entity center to hit point
+    const angle = Math.atan2(hitY - entityY, hitX - entityX);
+
+    // Determine shield color based on current shield state
+    const shieldCurrent = Shield.current[entityId] ?? 0;
+    const shieldMax = Shield.max[entityId] ?? 1;
+    const shieldPercent = shieldMax > 0 ? shieldCurrent / shieldMax : 0;
+
+    let color: number;
+    if (shieldPercent > 0.66) {
+      color = 0x3399FF;
+    } else if (shieldPercent > 0.33) {
+      color = 0xFFCC00;
+    } else {
+      color = 0xFF3333;
+    }
+
+    this.activeRipples.push({
+      entityId,
+      angle,
+      age: 0,
+      color,
+    });
+  }
+
+  /**
    * Trigger a shield impact flash effect
    * @param entityId Entity that was hit
+   * @param hitX Optional world X coordinate of the impact point
+   * @param hitY Optional world Y coordinate of the impact point
    */
-  flashShield(entityId: number): void {
+  flashShield(entityId: number, hitX?: number, hitY?: number): void {
     // Set alpha to maximum for flash effect
     this.shieldAlphaMap.set(entityId, SHIELD_CONFIG.FLASH_ALPHA);
+
+    // Also create a ripple if hit position is provided
+    if (hitX !== undefined && hitY !== undefined) {
+      this.addRipple(entityId, hitX, hitY);
+    }
   }
 
   /**
@@ -181,6 +277,7 @@ export class ShieldRenderer {
     this.graphics.destroy();
     this.container.destroy({ children: true });
     this.shieldAlphaMap.clear();
+    this.activeRipples = [];
     this.initialized = false;
   }
 }

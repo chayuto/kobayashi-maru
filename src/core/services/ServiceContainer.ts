@@ -32,6 +32,7 @@ import type { ScreenShake } from '../../rendering/ScreenShake';
 import type { DamageNumberRenderer } from '../../rendering/DamageNumberRenderer';
 import type { ScreenFlash } from '../../rendering/ScreenFlash';
 import type { HitFlashManager } from '../../rendering/HitFlashManager';
+import type { HullDamageOverlay } from '../../rendering/HullDamageOverlay';
 
 import type { WaveManager } from '../../game/waveManager';
 import type { GameState } from '../../game/gameState';
@@ -40,12 +41,17 @@ import type { HighScoreManager } from '../../game/highScoreManager';
 import type { ResourceManager } from '../../game/resourceManager';
 import type { PlacementManager } from '../../game/PlacementManager';
 import type { UpgradeManager } from '../../game/UpgradeManager';
+import type { TechnobabbleGenerator } from '../../game/TechnobabbleGenerator';
+import type { TutorialManager } from '../../game/TutorialManager';
 
 import type { HUDManager } from '../../ui/HUDManager';
 import type { GameOverScreen } from '../../ui/GameOverScreen';
 import type { PauseOverlay } from '../../ui/PauseOverlay';
+import type { TutorialOverlay } from '../../ui/overlays/TutorialOverlay';
+import type { MainMenu } from '../../ui/screens/MainMenu';
 
 import type { AudioManager } from '../../audio/AudioManager';
+import type { MusicManager } from '../../audio/MusicManager';
 import type { SpatialHash } from '../../collision/spatialHash';
 import type { SystemManager } from '../../systems/SystemManager';
 
@@ -85,6 +91,7 @@ export interface ServiceRegistry {
     damageNumberRenderer: DamageNumberRenderer;
     screenFlash: ScreenFlash;
     hitFlashManager: HitFlashManager;
+    hullDamageOverlay: HullDamageOverlay;
 
     // Game Logic
     waveManager: WaveManager;
@@ -94,6 +101,8 @@ export interface ServiceRegistry {
     resourceManager: ResourceManager;
     placementManager: PlacementManager;
     upgradeManager: UpgradeManager;
+    technobabbleGenerator: TechnobabbleGenerator;
+    tutorialManager: TutorialManager;
 
     // Systems
     systemManager: SystemManager;
@@ -103,6 +112,8 @@ export interface ServiceRegistry {
     hudManager: HUDManager;
     gameOverScreen: GameOverScreen;
     pauseOverlay: PauseOverlay;
+    tutorialOverlay: TutorialOverlay;
+    mainMenu: MainMenu;
 
     // Input
     inputManager: InputManager;
@@ -116,6 +127,7 @@ export interface ServiceRegistry {
 
     // Audio
     audioManager: AudioManager;
+    musicManager: MusicManager;
 
     // Pools
     poolManager: PoolManager;

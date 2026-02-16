@@ -32,6 +32,7 @@ const {
     pause: vi.fn(),
     resume: vi.fn(),
     isPaused: vi.fn(() => false),
+    getState: vi.fn(() => ({ running: false, gameTime: 0, deltaTime: 0, fps: 60 })),
     destroy: vi.fn(),
     onPreUpdate: vi.fn(() => vi.fn()),
     onGameplay: vi.fn(() => vi.fn()),
@@ -58,6 +59,7 @@ const {
     pause: vi.fn(),
     resume: vi.fn(),
     restart: vi.fn(),
+    stopAndClear: vi.fn(),
     toggleGodMode: vi.fn(() => true),
     toggleSlowMode: vi.fn(() => true),
     isGodModeEnabled: vi.fn(() => false),
@@ -314,6 +316,12 @@ function createMockServices() {
           off: vi.fn(),
           emit: vi.fn(),
         },
+        mainMenu: {
+          setOnStart: vi.fn(),
+          show: vi.fn(),
+          hide: vi.fn(),
+          isVisible: vi.fn(() => false),
+        },
       };
       return serviceMap[name] ?? {};
     }),
@@ -386,7 +394,8 @@ describe('Game', () => {
       // Assert
       expect(mockBootstrapGame).toHaveBeenCalledWith('test-container');
       expect(mockPoolManagerInstance.init).toHaveBeenCalledWith(mockWorld);
-      expect(mockGameplayManager.init).toHaveBeenCalled();
+      // Game no longer auto-starts gameplay; it shows the main menu instead
+      expect(mockGameplayManager.init).not.toHaveBeenCalled();
     });
 
     it('should skip initialization when already initialized', async () => {
