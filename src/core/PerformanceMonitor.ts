@@ -2,7 +2,7 @@
  * Performance Monitor for Kobayashi Maru
  * Tracks frame time, system timings, and performance metrics
  */
-import { PERFORMANCE_CONFIG } from '../config';
+import { PERFORMANCE_CONFIG, QUALITY_CONFIG } from '../config';
 
 /**
  * Performance metrics collected by the monitor
@@ -22,16 +22,16 @@ export interface PerformanceMetrics {
  * Frame budget configuration for performance warnings
  */
 export const FRAME_BUDGET = {
-  TOTAL: 16.67,           // 60 FPS
-  MOVEMENT: 2.0,
-  COLLISION: 2.0,
-  AI: 2.0,
-  COMBAT: 2.0,
-  TARGETING: 1.0,
-  PROJECTILE: 1.0,
-  DAMAGE: 1.0,
-  RENDERING: 5.0,
-  OTHER: 3.67
+  TOTAL: QUALITY_CONFIG.FRAME_BUDGETS.TOTAL,           // 60 FPS
+  MOVEMENT: QUALITY_CONFIG.FRAME_BUDGETS.MOVEMENT,
+  COLLISION: QUALITY_CONFIG.FRAME_BUDGETS.COLLISION,
+  AI: QUALITY_CONFIG.FRAME_BUDGETS.AI,
+  COMBAT: QUALITY_CONFIG.FRAME_BUDGETS.COMBAT,
+  TARGETING: QUALITY_CONFIG.FRAME_BUDGETS.TARGETING,
+  PROJECTILE: QUALITY_CONFIG.FRAME_BUDGETS.PROJECTILE,
+  DAMAGE: QUALITY_CONFIG.FRAME_BUDGETS.DAMAGE,
+  RENDERING: QUALITY_CONFIG.FRAME_BUDGETS.RENDERING,
+  OTHER: QUALITY_CONFIG.FRAME_BUDGETS.OTHER
 } as const;
 
 // Rolling average window size (from centralized config)
@@ -349,19 +349,19 @@ export class PerformanceMonitor {
    */
   detectPerformanceTier(): PerformanceTier {
     // Basic heuristic based on logical cores
-    const cores = navigator.hardwareConcurrency || 4;
+    const cores = navigator.hardwareConcurrency || QUALITY_CONFIG.HARDWARE.DEFAULT_CORES;
 
     // Check for mobile device
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
     if (isMobile) {
-      if (cores >= 8) return PerformanceTier.HIGH; // High-end mobile
-      if (cores >= 4) return PerformanceTier.MEDIUM; // Mid-range
+      if (cores >= QUALITY_CONFIG.HARDWARE.MOBILE_HIGH_CORES) return PerformanceTier.HIGH; // High-end mobile
+      if (cores >= QUALITY_CONFIG.HARDWARE.MOBILE_MID_CORES) return PerformanceTier.MEDIUM; // Mid-range
       return PerformanceTier.LOW; // Low-end
     }
 
     // Desktop defaults to HIGH, unless very low core count
-    if (cores < 4) return PerformanceTier.MEDIUM;
+    if (cores < QUALITY_CONFIG.HARDWARE.DESKTOP_MID_CORES) return PerformanceTier.MEDIUM;
     return PerformanceTier.HIGH;
   }
 }

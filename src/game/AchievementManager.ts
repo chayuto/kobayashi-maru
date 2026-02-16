@@ -7,6 +7,7 @@
  */
 import { EventBus } from '../core/EventBus';
 import { GameEventType, WaveCompletedPayload, ComboUpdatedPayload } from '../types/events';
+import { ACHIEVEMENT_CONFIG } from '../config';
 
 /** Achievement definition */
 export interface Achievement {
@@ -150,28 +151,28 @@ export class AchievementManager {
     private handleEnemyKilled(): void {
         this.sessionKills++;
 
-        if (this.sessionKills === 1) {
+        if (this.sessionKills === ACHIEVEMENT_CONFIG.KILLS.FIRST_BLOOD) {
             this.unlock(AchievementId.FIRST_BLOOD);
         }
-        if (this.sessionKills >= 100) {
+        if (this.sessionKills >= ACHIEVEMENT_CONFIG.KILLS.DECIMATOR) {
             this.unlock(AchievementId.DECIMATOR);
         }
-        if (this.sessionKills >= 500) {
+        if (this.sessionKills >= ACHIEVEMENT_CONFIG.KILLS.EXTERMINATOR) {
             this.unlock(AchievementId.KILLS_500);
         }
     }
 
     private handleWaveCompleted(payload: WaveCompletedPayload): void {
-        if (payload.waveNumber >= 5) {
+        if (payload.waveNumber >= ACHIEVEMENT_CONFIG.WAVES.EARLY_BIRD) {
             this.unlock(AchievementId.WAVE_SURVIVOR_5);
         }
-        if (payload.waveNumber >= 10) {
+        if (payload.waveNumber >= ACHIEVEMENT_CONFIG.WAVES.WAVE_MASTER) {
             this.unlock(AchievementId.WAVE_MASTER);
         }
     }
 
     private handleComboUpdated(payload: ComboUpdatedPayload): void {
-        if (payload.multiplier >= 10) {
+        if (payload.multiplier >= ACHIEVEMENT_CONFIG.COMBO_KING_MULTIPLIER) {
             this.unlock(AchievementId.COMBO_KING);
         }
     }
@@ -182,7 +183,7 @@ export class AchievementManager {
     update(deltaTime: number): void {
         this.sessionTime += deltaTime;
 
-        if (this.sessionTime >= 300) { // 5 minutes
+        if (this.sessionTime >= ACHIEVEMENT_CONFIG.SURVIVOR_TIME) { // 5 minutes
             this.unlock(AchievementId.SURVIVOR);
         }
     }
@@ -192,7 +193,7 @@ export class AchievementManager {
      */
     onTurretBuilt(): void {
         this.turretsBuilt++;
-        if (this.turretsBuilt >= 10) {
+        if (this.turretsBuilt >= ACHIEVEMENT_CONFIG.TURRET_COMMANDER_COUNT) {
             this.unlock(AchievementId.TURRET_COMMANDER);
         }
     }

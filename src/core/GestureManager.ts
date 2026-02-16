@@ -1,5 +1,6 @@
 import { EventBus } from './EventBus';
 import { GameEventType, GestureType, GestureEvent } from '../types';
+import { INPUT_CONFIG } from '../config';
 
 export class GestureManager {
     private eventBus: EventBus;
@@ -15,10 +16,10 @@ export class GestureManager {
     private startTime: number = 0;
 
     // Configuration
-    private readonly SWIPE_THRESHOLD = 50;
-    private readonly SWIPE_TIMEOUT = 300;
-    private readonly PAN_THRESHOLD = 10;
-    private readonly PINCH_THRESHOLD = 10;
+    private readonly SWIPE_THRESHOLD = INPUT_CONFIG.GESTURES.SWIPE_THRESHOLD;
+    private readonly SWIPE_TIMEOUT = INPUT_CONFIG.GESTURES.SWIPE_TIMEOUT;
+    private readonly PAN_THRESHOLD = INPUT_CONFIG.GESTURES.PAN_THRESHOLD;
+    private readonly PINCH_THRESHOLD = INPUT_CONFIG.GESTURES.PINCH_THRESHOLD;
 
     constructor() {
         this.eventBus = EventBus.getInstance();

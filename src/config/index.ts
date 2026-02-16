@@ -33,3 +33,7 @@ export * from './ai.config';
 export * from './autoplay.config';
 export * from './audio.config';
 export * from './combat.damageTypes';
+export * from './ability.config';
+export * from './achievement.config';
+export * from './quality.config';
+export * from './input.config';

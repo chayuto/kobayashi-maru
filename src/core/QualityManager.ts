@@ -1,4 +1,5 @@
 import { PerformanceMonitor, PerformanceTier } from './PerformanceMonitor';
+import { QUALITY_CONFIG } from '../config';
 
 export interface QualitySettings {
     maxParticles: number;
@@ -10,25 +11,25 @@ export interface QualitySettings {
 
 export const QUALITY_PRESETS: Record<PerformanceTier, QualitySettings> = {
     [PerformanceTier.HIGH]: {
-        maxParticles: 2000,
-        starCount: 1000,
+        maxParticles: QUALITY_CONFIG.PRESETS.HIGH.maxParticles,
+        starCount: QUALITY_CONFIG.PRESETS.HIGH.starCount,
         bloomEnabled: true,
-        resolutionMultiplier: 1.0,
-        particleSpawnRate: 1.0
+        resolutionMultiplier: QUALITY_CONFIG.PRESETS.HIGH.resolutionMultiplier,
+        particleSpawnRate: QUALITY_CONFIG.PRESETS.HIGH.particleSpawnRate
     },
     [PerformanceTier.MEDIUM]: {
-        maxParticles: 1000,
-        starCount: 500,
+        maxParticles: QUALITY_CONFIG.PRESETS.MEDIUM.maxParticles,
+        starCount: QUALITY_CONFIG.PRESETS.MEDIUM.starCount,
         bloomEnabled: false,
-        resolutionMultiplier: 1.0,
-        particleSpawnRate: 0.5
+        resolutionMultiplier: QUALITY_CONFIG.PRESETS.MEDIUM.resolutionMultiplier,
+        particleSpawnRate: QUALITY_CONFIG.PRESETS.MEDIUM.particleSpawnRate
     },
     [PerformanceTier.LOW]: {
-        maxParticles: 500,
-        starCount: 200,
+        maxParticles: QUALITY_CONFIG.PRESETS.LOW.maxParticles,
+        starCount: QUALITY_CONFIG.PRESETS.LOW.starCount,
         bloomEnabled: false,
-        resolutionMultiplier: 0.8,
-        particleSpawnRate: 0.25
+        resolutionMultiplier: QUALITY_CONFIG.PRESETS.LOW.resolutionMultiplier,
+        particleSpawnRate: QUALITY_CONFIG.PRESETS.LOW.particleSpawnRate
     }
 };
 
@@ -71,7 +72,7 @@ export class QualityManager {
         const avg = this.performanceMonitor.getAverages();
 
         // Downgrade if FPS is consistently low
-        if (avg.fps < 30 && this.currentTier > PerformanceTier.LOW) {
+        if (avg.fps < QUALITY_CONFIG.DOWNGRADE_FPS_THRESHOLD && this.currentTier > PerformanceTier.LOW) {
             // Downgrade logic here (debounce needed)
         }
     }

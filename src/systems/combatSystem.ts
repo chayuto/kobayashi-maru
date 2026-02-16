@@ -61,15 +61,15 @@ function generateBeamSegments(startX: number, startY: number, endX: number, endY
   const segments: BeamSegment[] = [];
 
   // Jitter amount varies by weapon type
-  let jitter = 8; // Default jitter
+  let jitter: number = COMBAT_CONFIG.BEAM.JITTER.DEFAULT; // Default jitter
   if (turretType === TurretType.PHASER_ARRAY) {
-    jitter = 6; // Less jitter for phasers
+    jitter = COMBAT_CONFIG.BEAM.JITTER.PHASER; // Less jitter for phasers
   } else if (turretType === TurretType.DISRUPTOR_BANK) {
-    jitter = 10; // More jitter for disruptors
+    jitter = COMBAT_CONFIG.BEAM.JITTER.DISRUPTOR; // More jitter for disruptors
   } else if (turretType === TurretType.TETRYON_BEAM) {
-    jitter = 12; // Even more jitter for tetryons
+    jitter = COMBAT_CONFIG.BEAM.JITTER.TETRYON; // Even more jitter for tetryons
   } else if (turretType === TurretType.POLARON_BEAM) {
-    jitter = 9; // Moderate jitter for polarons
+    jitter = COMBAT_CONFIG.BEAM.JITTER.POLARON; // Moderate jitter for polarons
   }
 
   // Calculate perpendicular vector for offset
@@ -238,22 +238,22 @@ export class CombatSystem {
       const audioManager = AudioManager.getInstance();
       switch (turretType) {
         case TurretType.PHASER_ARRAY:
-          audioManager.play(SoundType.PHASER_FIRE, { volume: 0.4 });
+          audioManager.play(SoundType.PHASER_FIRE, { volume: COMBAT_CONFIG.AUDIO_VOLUMES.PHASER });
           break;
         case TurretType.TORPEDO_LAUNCHER:
-          audioManager.play(SoundType.TORPEDO_FIRE, { volume: 0.6 });
+          audioManager.play(SoundType.TORPEDO_FIRE, { volume: COMBAT_CONFIG.AUDIO_VOLUMES.TORPEDO });
           break;
         case TurretType.DISRUPTOR_BANK:
-          audioManager.play(SoundType.DISRUPTOR_FIRE, { volume: 0.5 });
+          audioManager.play(SoundType.DISRUPTOR_FIRE, { volume: COMBAT_CONFIG.AUDIO_VOLUMES.DISRUPTOR });
           break;
         case TurretType.TETRYON_BEAM:
-          audioManager.play(SoundType.TETRYON_FIRE, { volume: 0.45 });
+          audioManager.play(SoundType.TETRYON_FIRE, { volume: COMBAT_CONFIG.AUDIO_VOLUMES.TETRYON });
           break;
         case TurretType.PLASMA_CANNON:
-          audioManager.play(SoundType.PLASMA_FIRE, { volume: 0.55 });
+          audioManager.play(SoundType.PLASMA_FIRE, { volume: COMBAT_CONFIG.AUDIO_VOLUMES.PLASMA });
           break;
         case TurretType.POLARON_BEAM:
-          audioManager.play(SoundType.POLARON_FIRE, { volume: 0.48 });
+          audioManager.play(SoundType.POLARON_FIRE, { volume: COMBAT_CONFIG.AUDIO_VOLUMES.POLARON });
           break;
       }
 
@@ -359,13 +359,13 @@ export class CombatSystem {
 
       if (statusType > 0 && Math.random() < statusChance) {
         if (statusType === 1) {
-          applyBurning(world, entityId, 4.0, 5.0);
+          applyBurning(world, entityId, COMBAT_CONFIG.STATUS_EFFECTS.BURNING.DAMAGE_PER_TICK, COMBAT_CONFIG.STATUS_EFFECTS.BURNING.DURATION);
         } else if (statusType === 2) {
-          applySlowed(world, entityId, 0.3, 3.0); // 30% slow for 3 seconds
+          applySlowed(world, entityId, COMBAT_CONFIG.STATUS_EFFECTS.SLOW.PERCENT, COMBAT_CONFIG.STATUS_EFFECTS.SLOW.DURATION); // 30% slow for 3 seconds
         } else if (statusType === 3) {
-          applyDrained(world, entityId, 3.0);
+          applyDrained(world, entityId, COMBAT_CONFIG.STATUS_EFFECTS.DRAIN.DURATION);
         } else if (statusType === 4) {
-          applyDisabled(world, entityId, 2.0, 1); // 2s weapon disable
+          applyDisabled(world, entityId, COMBAT_CONFIG.STATUS_EFFECTS.DISABLE.DURATION, COMBAT_CONFIG.STATUS_EFFECTS.DISABLE.SYSTEMS); // 2s weapon disable
         }
       }
     }
