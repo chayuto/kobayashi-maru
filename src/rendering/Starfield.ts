@@ -16,6 +16,7 @@ export class Starfield {
     private app: Application;
     private container: Container;
     private layers: { sprite: TilingSprite; speed: number }[] = [];
+    public frozen: boolean = false;
 
     constructor(app: Application) {
         this.app = app;
@@ -121,6 +122,7 @@ export class Starfield {
     }
 
     public update(deltaTime: number, speedX: number = RENDERING_CONFIG.STARFIELD.DEFAULT_SCROLL_SPEED_X, speedY: number = RENDERING_CONFIG.STARFIELD.DEFAULT_SCROLL_SPEED_Y): void {
+        if (this.frozen) return;
         // Scroll textures based on speed and layer depth
         for (const layer of this.layers) {
             layer.sprite.tilePosition.x -= speedX * layer.speed * deltaTime;

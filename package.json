@@ -9,7 +9,11 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "e2e": "playwright test --config e2e/playwright.config.ts",
+    "e2e:headed": "playwright test --config e2e/playwright.config.ts --headed",
+    "e2e:ui": "playwright test --config e2e/playwright.config.ts --ui",
+    "e2e:update": "playwright test --config e2e/playwright.config.ts --update-snapshots"
   },
   "keywords": [
     "game",
@@ -27,6 +31,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
+    "@playwright/test": "^1.58.2",
     "@typescript-eslint/eslint-plugin": "^8.54.0",
     "@typescript-eslint/parser": "^8.54.0",
     "@vitest/coverage-v8": "^4.0.18",

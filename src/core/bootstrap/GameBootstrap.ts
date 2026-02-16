@@ -154,14 +154,18 @@ export class GameBootstrap {
     private async initializePixiJS(): Promise<Application> {
         const app = new Application();
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const isE2E = (window as any).__E2E_MODE__ === true;
+
         await app.init({
             width: GAME_CONFIG.WORLD_WIDTH,
             height: GAME_CONFIG.WORLD_HEIGHT,
             backgroundColor: LCARS_COLORS.BACKGROUND,
             resolution: window.devicePixelRatio || 1,
             autoDensity: true,
-            preference: 'webgpu',
+            preference: isE2E ? 'webgl' : 'webgpu',
             antialias: true,
+            preserveDrawingBuffer: import.meta.env.DEV,
         });
 
         this.container!.appendChild(app.canvas);

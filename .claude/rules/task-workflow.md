@@ -4,4 +4,5 @@
 - All changes must be safe, self-contained, and reversible
 - All changed lines must be covered by tests
 - Before completing: `npm run lint && npm run test && npm run build` must all pass
+- For UI changes: also run `pnpm run e2e` to verify no visual regressions
 - Generate completion report in `docs/change_notes/YYYYMMDD_<description>.md`

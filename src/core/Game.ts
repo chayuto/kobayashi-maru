@@ -695,6 +695,7 @@ export class Game {
   }
 
   // Getter methods (delegate to services)
+  getKobayashiMaruId(): number { return this.gameplayManager.getKobayashiMaruId(); }
   getCollisionSystem() { return this.collisionSystem || null; }
   getSpatialHash() { return getServices().tryGet('spatialHash'); }
   getWaveManager() { return getServices().get('waveManager'); }
