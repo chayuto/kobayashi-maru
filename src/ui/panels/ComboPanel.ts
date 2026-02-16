@@ -124,6 +124,8 @@ export class ComboPanel {
         }
     }
 
+    private popupActive: boolean = false;
+
     private showPopup(message: string): void {
         if (!this.popupText) {
             const style = new TextStyle({
@@ -144,28 +146,28 @@ export class ComboPanel {
         this.popupText.scale.set(1);
         this.popupText.visible = true;
         this.popupStartTime = performance.now();
-        this.animatePopup();
+        this.popupActive = true;
     }
 
-    private animatePopup(): void {
-        const animate = () => {
-            if (!this.popupText || !this.popupText.visible) return;
+    /**
+     * Update popup animation. Called from HUDManager.update().
+     * Uses performance.now() internally (matches WaveAnnouncement pattern).
+     */
+    update(): void {
+        if (!this.popupActive || !this.popupText || !this.popupText.visible) return;
 
-            const elapsed = (performance.now() - this.popupStartTime) / 1000;
-            const duration = this.comboConfig.POPUP_DURATION;
-            const t = Math.min(elapsed / duration, 1);
+        const elapsed = (performance.now() - this.popupStartTime) / 1000;
+        const duration = this.comboConfig.POPUP_DURATION;
+        const t = Math.min(elapsed / duration, 1);
 
-            this.popupText.y = -10 - this.comboConfig.POPUP_FLOAT_SPEED * elapsed;
-            this.popupText.alpha = 1 - t;
-            this.popupText.scale.set(1 + t * 0.3);
+        this.popupText.y = -10 - this.comboConfig.POPUP_FLOAT_SPEED * elapsed;
+        this.popupText.alpha = 1 - t;
+        this.popupText.scale.set(1 + t * 0.3);
 
-            if (t >= 1) {
-                this.popupText.visible = false;
-            } else {
-                requestAnimationFrame(animate);
-            }
-        };
-        requestAnimationFrame(animate);
+        if (t >= 1) {
+            this.popupText.visible = false;
+            this.popupActive = false;
+        }
     }
 
     setPosition(x: number, y: number): void {

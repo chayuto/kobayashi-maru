@@ -52,6 +52,7 @@ export class GameLoopManager {
     private gameTime: number = 0;
     private deltaTime: number = 0;
     private paused: boolean = false;
+    private hitStopFrames: number = 0;
 
     // Update phase callbacks
     private preUpdateCallbacks: UpdateCallback[] = [];
@@ -110,6 +111,16 @@ export class GameLoopManager {
      */
     isPaused(): boolean {
         return this.paused;
+    }
+
+    /**
+     * Trigger a hit stop (freeze frame) effect.
+     * Skips gameplay and physics for the given number of frames.
+     * Render/UI continue during the freeze.
+     * @param frames - Number of frames to freeze
+     */
+    hitStop(frames: number): void {
+        this.hitStopFrames = Math.max(this.hitStopFrames, frames);
     }
 
     /**
@@ -226,11 +237,15 @@ export class GameLoopManager {
         // Phase 1: Pre-update (always runs)
         this.runCallbacks(this.preUpdateCallbacks);
 
-        // Phase 2: Gameplay (only when not paused and not game over)
+        // Phase 2: Gameplay (only when not paused, not game over, and not in hit stop)
         const gameState = services.tryGet('gameState');
         const isGameOver = gameState?.isGameOver() ?? false;
+        const isHitStopped = this.hitStopFrames > 0;
+        if (isHitStopped) {
+            this.hitStopFrames--;
+        }
 
-        if (!this.paused && !isGameOver) {
+        if (!this.paused && !isGameOver && !isHitStopped) {
             this.gameTime += this.deltaTime;
 
             perfMon?.startMeasure('gameplay');

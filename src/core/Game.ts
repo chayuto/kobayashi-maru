@@ -153,8 +153,9 @@ export class Game {
       },
     });
 
-    // Boss kill white flash
+    // Boss/elite kill effects: white flash + hit stop
     const flashConfig = RENDERING_CONFIG.SCREEN_FLASH;
+    const hitStopConfig = RENDERING_CONFIG.HIT_STOP;
     EventBus.getInstance().on(GameEventType.ENEMY_KILLED, (payload: EnemyKilledPayload) => {
       const rank = EnemyVariant.rank[payload.entityId] ?? 0;
       if (rank === 2) {
@@ -163,6 +164,9 @@ export class Game {
           flashConfig.BOSS_KILL_INTENSITY,
           flashConfig.BOSS_KILL_DURATION
         );
+        this.loopManager.hitStop(hitStopConfig.BOSS_KILL_FRAMES);
+      } else if (rank === 1) {
+        this.loopManager.hitStop(hitStopConfig.ELITE_KILL_FRAMES);
       }
     });
 
@@ -290,7 +294,7 @@ export class Game {
     systemManager.register('enemy-combat', enemyCombatSystem, 55, { requiresGameTime: true });
     systemManager.register('projectile', projectileSystem, 60);
     systemManager.register('enemy-projectile', enemyProjectileSystem, 62);
-    systemManager.register('damage', damageSystem, 70, { requiresDelta: false });
+    systemManager.register('damage', damageSystem, 70, { requiresDelta: true });
   }
 
   /**

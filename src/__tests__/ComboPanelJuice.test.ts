@@ -142,6 +142,21 @@ describe('ComboPanel Juice', () => {
     });
   });
 
+  describe('update method (replaces rAF)', () => {
+    it('should animate popup via update() without requestAnimationFrame', () => {
+      // Trigger popup
+      comboHandlerRef.current!({ comboCount: 3, multiplier: 2, isActive: true });
+
+      // Call update - should not throw (no rAF)
+      panel.update();
+    });
+
+    it('should not throw when no popup is active', () => {
+      panel.update();
+      // Should not throw
+    });
+  });
+
   describe('combo deactivation', () => {
     it('should hide panel when combo is inactive', () => {
       comboHandlerRef.current!({ comboCount: 3, multiplier: 2, isActive: true });

@@ -27,6 +27,7 @@ import { Starfield } from '../../rendering/Starfield';
 import { ScreenShake } from '../../rendering/ScreenShake';
 import { DamageNumberRenderer } from '../../rendering/DamageNumberRenderer';
 import { ScreenFlash } from '../../rendering/ScreenFlash';
+import { HitFlashManager } from '../../rendering/HitFlashManager';
 
 import { WaveManager } from '../../game/waveManager';
 import { GameState } from '../../game/gameState';
@@ -300,6 +301,13 @@ export class GameBootstrap {
             const sf = new ScreenFlash();
             sf.init(services.get('app'));
             return sf;
+        });
+
+        // Hit flash manager (enemy sprite tinting on damage)
+        services.register('hitFlashManager', () => {
+            const hfm = new HitFlashManager(services.get('spriteManager'));
+            hfm.init();
+            return hfm;
         });
 
         // Turret upgrade visuals

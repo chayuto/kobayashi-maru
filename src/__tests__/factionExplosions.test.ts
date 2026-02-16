@@ -102,7 +102,7 @@ describe('Faction-Varied Death Explosions', () => {
     const system = createDamageSystem(particleSystem);
 
     // Act
-    system.update(world);
+    system.update(world, 0.016);
 
     // Assert
     expect(mockSpawn).toHaveBeenCalledWith(
@@ -118,7 +118,7 @@ describe('Faction-Varied Death Explosions', () => {
     const system = createDamageSystem(particleSystem);
 
     // Act
-    system.update(world);
+    system.update(world, 0.016);
 
     // Assert
     expect(mockSpawn).toHaveBeenCalledWith(
@@ -136,12 +136,11 @@ describe('Faction-Varied Death Explosions', () => {
 
   it('should use multi-stage explosion + screen shake for boss enemies (rank 2)', () => {
     // Arrange
-    vi.useFakeTimers();
     createEnemy(2);
     const system = createDamageSystem(particleSystem);
 
-    // Act
-    system.update(world);
+    // Act - Stage 1: immediate fire explosion
+    system.update(world, 0.016);
 
     // Assert - Stage 1: immediate fire explosion
     expect(mockSpawn).toHaveBeenCalledWith(
@@ -161,19 +160,38 @@ describe('Faction-Varied Death Explosions', () => {
       500, 300, 120, expect.any(Number), expect.any(Number)
     );
 
-    // Stage 2: delayed metal debris
-    vi.advanceTimersByTime(200);
+    // Only the initial fire explosion should have spawned (not the deferred ones yet)
+    const spawnCallCount = mockSpawn.mock.calls.length;
+    expect(spawnCallCount).toBe(1);
+
+    // Stage 2: advance time to trigger metal debris (delay=0.15s)
+    mockSpawn.mockClear();
+    system.update(world, 0.2);
     expect(mockSpawn).toHaveBeenCalledWith(
       expect.objectContaining({ count: 25 })
     );
 
-    // Stage 3: delayed smoke plume
-    vi.advanceTimersByTime(200);
+    // Stage 3: advance time to trigger smoke plume (delay=0.3s, minus 0.016+0.2 already elapsed)
+    mockSpawn.mockClear();
+    system.update(world, 0.15);
     expect(mockSpawn).toHaveBeenCalledWith(
       expect.objectContaining({ count: 30 })
     );
+  });
 
-    vi.useRealTimers();
+  it('should not trigger deferred spawns until delay has elapsed', () => {
+    // Arrange
+    createEnemy(2);
+    const system = createDamageSystem(particleSystem);
+
+    // Act - initial frame
+    system.update(world, 0.016);
+
+    // Small time step - not enough for deferred spawns
+    mockSpawn.mockClear();
+    system.update(world, 0.05);
+    // No new spawns from deferred queue (0.05 < 0.15 delay)
+    expect(mockSpawn).not.toHaveBeenCalled();
   });
 
   it('should not trigger shockwave for normal enemies', () => {
@@ -182,7 +200,7 @@ describe('Faction-Varied Death Explosions', () => {
     const system = createDamageSystem(particleSystem);
 
     // Act
-    system.update(world);
+    system.update(world, 0.016);
 
     // Assert
     expect(mockShockwaveCreate).not.toHaveBeenCalled();
@@ -194,9 +212,42 @@ describe('Faction-Varied Death Explosions', () => {
     const system = createDamageSystem(particleSystem);
 
     // Act
-    system.update(world);
+    system.update(world, 0.016);
 
     // Assert
     expect(mockScreenShake).not.toHaveBeenCalled();
+  });
+
+  it('should use faction-specific colors for boss shockwaves', () => {
+    // Arrange - Klingon boss
+    createEnemy(2, FactionId.KLINGON);
+    const system = createDamageSystem(particleSystem);
+
+    // Act
+    system.update(world, 0.016);
+
+    // Assert - Klingon color (0xFF3344 from FACTION_COLORS)
+    expect(mockShockwaveCreate).toHaveBeenCalledWith(
+      500, 300, 120,
+      0xFF3344,
+      expect.any(Number)
+    );
+  });
+
+  it('should use faction-specific colors for elite shockwaves', () => {
+    // Arrange - Romulan elite
+    createEnemy(1, FactionId.ROMULAN);
+    const system = createDamageSystem(particleSystem);
+
+    // Act
+    system.update(world, 0.016);
+
+    // Assert - Romulan color (0x88FF00 from FACTION_COLORS)
+    expect(mockShockwaveCreate).toHaveBeenCalledWith(
+      500, 300,
+      RENDERING_CONFIG.EXPLOSIONS.ELITE_SHOCKWAVE_RADIUS,
+      0x88FF00,
+      RENDERING_CONFIG.EXPLOSIONS.ELITE_SHOCKWAVE_DURATION
+    );
   });
 });

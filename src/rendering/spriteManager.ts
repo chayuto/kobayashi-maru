@@ -82,13 +82,19 @@ export class SpriteManager {
       [SpriteType.TURRET_BARREL_POLARON, this.textures.turretBarrelPolaron]
     ];
 
+    // Enemy sprite types need color: true for hit flash tinting
+    const enemySpriteTypes: Set<number> = new Set([
+      SpriteType.KLINGON, SpriteType.ROMULAN, SpriteType.BORG,
+      SpriteType.THOLIAN, SpriteType.SPECIES_8472,
+    ]);
+
     for (const [spriteType, texture] of factionTextures) {
       const container = new ParticleContainer({
         dynamicProperties: {
           position: true,
           scale: true,
           rotation: true,
-          color: false
+          color: enemySpriteTypes.has(spriteType)
         }
       });
       container.texture = texture;
@@ -263,6 +269,18 @@ export class SpriteManager {
     if (entry) {
       entry.particle.scaleX = scale;
       entry.particle.scaleY = scale;
+    }
+  }
+
+  /**
+   * Set tint color on a particle (requires color: true on the container).
+   * @param index - The particle index
+   * @param color - Tint color (0xFFFFFF = white/no tint)
+   */
+  setTint(index: number, color: number): void {
+    const entry = this.particles.get(index);
+    if (entry) {
+      entry.particle.tint = color;
     }
   }
 

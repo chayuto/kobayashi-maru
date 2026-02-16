@@ -256,7 +256,20 @@ export enum GameEventType {
    * @payload DamageDealtPayload
    * @timing Immediate after damage is applied
    */
-  DAMAGE_DEALT = 'DAMAGE_DEALT'
+  DAMAGE_DEALT = 'DAMAGE_DEALT',
+
+  // ============================================
+  // ALERT EVENTS
+  // ============================================
+
+  /**
+   * Fired when the alert level changes based on hull status.
+   *
+   * @emittedBy AlertStatusManager - when hull percent crosses thresholds
+   * @payload AlertLevelChangedPayload
+   * @timing After evaluation in gameplay update
+   */
+  ALERT_LEVEL_CHANGED = 'ALERT_LEVEL_CHANGED'
 }
 
 /**
@@ -351,6 +364,23 @@ export interface GestureEvent {
 }
 
 /**
+ * Alert level for hull status
+ */
+export enum AlertLevel {
+  NORMAL = 0,
+  CAUTION = 1,
+  CRITICAL = 2
+}
+
+/**
+ * Payload for ALERT_LEVEL_CHANGED event
+ */
+export interface AlertLevelChangedPayload {
+  level: AlertLevel;
+  previousLevel: AlertLevel;
+}
+
+/**
  * Payload for DAMAGE_DEALT event
  */
 export interface DamageDealtPayload {
@@ -378,4 +408,5 @@ export interface GameEventMap {
   [GameEventType.TOUCH_END]: TouchEventPayload;
   [GameEventType.GESTURE]: GestureEvent;
   [GameEventType.DAMAGE_DEALT]: DamageDealtPayload;
+  [GameEventType.ALERT_LEVEL_CHANGED]: AlertLevelChangedPayload;
 }

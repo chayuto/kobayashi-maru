@@ -84,6 +84,8 @@ export const RENDERING_CONFIG = {
         MAX_OFFSET: 10,
         /** Decay rate per frame (0.0 - 1.0) */
         DECAY_RATE: 0.9,
+        /** Simplex noise frequency for smooth shake */
+        NOISE_FREQUENCY: 8,
     },
     /**
      * Floating damage number settings.
@@ -145,6 +147,26 @@ export const RENDERING_CONFIG = {
         BOSS_KILL_DURATION: 0.5,
         /** KM damage flash duration */
         KM_DAMAGE_DURATION: 0.3,
+    },
+
+    /**
+     * Hit stop (freeze frame) settings.
+     */
+    HIT_STOP: {
+        /** Freeze frames on boss kill (~67ms at 60fps) */
+        BOSS_KILL_FRAMES: 4,
+        /** Freeze frames on elite kill (~33ms at 60fps) */
+        ELITE_KILL_FRAMES: 2,
+    },
+
+    /**
+     * Hit flash on enemy sprites.
+     */
+    HIT_FLASH: {
+        /** Flash duration in seconds */
+        DURATION: 0.08,
+        /** Flash tint color (white) */
+        COLOR: 0xFFFFFF,
     },
 } as const;
 

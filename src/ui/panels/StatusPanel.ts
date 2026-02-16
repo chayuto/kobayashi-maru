@@ -9,6 +9,9 @@
 import { Container, Graphics, Text, TextStyle } from 'pixi.js';
 import { UI_STYLES } from '../styles';
 import { HealthBar } from '../HealthBar';
+import { EventBus } from '../../core/EventBus';
+import { GameEventType, AlertLevel, AlertLevelChangedPayload } from '../../types/events';
+import { UI_CONFIG } from '../../config/ui.config';
 
 /**
  * Data required to update the status panel.
@@ -43,6 +46,9 @@ export class StatusPanel {
     private healthText: Text;
     private shieldText: Text;
     private initialized: boolean = false;
+    private alertLevel: AlertLevel = AlertLevel.NORMAL;
+    private eventBus: EventBus;
+    private boundHandleAlert: (payload: AlertLevelChangedPayload) => void;
 
     private static readonly WIDTH = 280;
     private static readonly HEIGHT = 120;
@@ -68,6 +74,8 @@ export class StatusPanel {
         });
         this.healthText = new Text({ text: 'HULL: 100%', style: labelStyle });
         this.shieldText = new Text({ text: 'SHIELDS: 100%', style: labelStyle });
+        this.eventBus = EventBus.getInstance();
+        this.boundHandleAlert = this.handleAlertChanged.bind(this);
     }
 
     /**
@@ -104,8 +112,35 @@ export class StatusPanel {
         this.container.addChild(this.healthText);
         this.container.addChild(this.shieldText);
 
+        // Subscribe to alert level changes
+        this.eventBus.on(GameEventType.ALERT_LEVEL_CHANGED, this.boundHandleAlert);
+
         parent.addChild(this.container);
         this.initialized = true;
+    }
+
+    private handleAlertChanged(payload: AlertLevelChangedPayload): void {
+        this.alertLevel = payload.level;
+        this.redrawBorder();
+    }
+
+    private getAlertBorderColor(): number {
+        const config = UI_CONFIG.ALERT_STATUS;
+        switch (this.alertLevel) {
+            case AlertLevel.CRITICAL: return config.CRITICAL_COLOR;
+            case AlertLevel.CAUTION: return config.CAUTION_COLOR;
+            default: return config.NORMAL_COLOR;
+        }
+    }
+
+    private redrawBorder(): void {
+        this.background.clear();
+        this.background.roundRect(0, 0, StatusPanel.WIDTH, StatusPanel.HEIGHT, 8);
+        this.background.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.8 });
+        this.background.stroke({
+            color: this.getAlertBorderColor(),
+            width: this.alertLevel === AlertLevel.CRITICAL ? 3 : 2
+        });
     }
 
     /**
@@ -136,6 +171,15 @@ export class StatusPanel {
 
         this.healthText.text = `HULL: ${Math.round(healthPercent * 100)}%`;
         this.shieldText.text = `SHIELDS: ${Math.round(shieldPercent * 100)}%`;
+
+        // Pulse border alpha in critical state
+        if (this.alertLevel === AlertLevel.CRITICAL) {
+            const t = performance.now() / 1000;
+            const pulse = 0.6 + 0.4 * Math.sin(t * UI_CONFIG.ALERT_STATUS.CRITICAL_PULSE_SPEED);
+            this.background.alpha = pulse;
+        } else {
+            this.background.alpha = 1;
+        }
     }
 
     getDimensions(): { width: number; height: number } {
@@ -146,6 +190,7 @@ export class StatusPanel {
     hide(): void { this.container.visible = false; }
 
     destroy(): void {
+        this.eventBus.off(GameEventType.ALERT_LEVEL_CHANGED, this.boundHandleAlert);
         this.healthBar?.destroy();
         this.shieldBar?.destroy();
         this.container.destroy({ children: true });

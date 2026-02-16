@@ -14,6 +14,8 @@ import { Health, Shield, Turret, Projectile, AIBehavior, Position } from '../../
 import { GameStateType } from '../../game/gameState';
 import { calculateScore } from '../../ui';
 import { GAME_CONFIG, GameEventType, EnemyKilledPayload, WaveStartedPayload, WaveCompletedPayload } from '../../types';
+import { AlertStatusManager } from '../../game/AlertStatusManager';
+import { AlertLevel } from '../../types/events';
 import type { GameWorld } from '../../ecs/world';
 import type { ScoreData } from '../../game/scoreManager';
 import type { WaveState } from '../../game/waveManager';
@@ -45,6 +47,9 @@ export interface GameplaySnapshot {
     kmShield: number;
     kmMaxShield: number;
 
+    // Alert status
+    alertLevel: AlertLevel;
+
     // Cheats
     godModeEnabled: boolean;
     slowModeEnabled: boolean;
@@ -70,6 +75,9 @@ export class GameplayManager {
     private previousKMHealth: number = 0;
     private killCount: number = 0;
     private gameTime: number = 0;
+
+    // Alert status
+    private alertStatusManager: AlertStatusManager = new AlertStatusManager();
 
     // Cheat modes
     private godModeEnabled: boolean = false;
@@ -167,6 +175,9 @@ export class GameplayManager {
 
         // Check for Kobayashi Maru damage (for screen shake)
         this.checkKobayashiMaruDamage();
+
+        // Evaluate alert status
+        this.evaluateAlertStatus();
     }
 
     /**
@@ -185,6 +196,25 @@ export class GameplayManager {
             // Health increased (healing)
             this.previousKMHealth = currentHealth;
         }
+    }
+
+    /**
+     * Evaluate alert status based on hull and wave state.
+     */
+    private evaluateAlertStatus(): void {
+        if (this.kobayashiMaruId === -1) return;
+
+        const currentHealth = Health.current[this.kobayashiMaruId];
+        const maxHealth = Health.max[this.kobayashiMaruId];
+        const hullPercent = maxHealth > 0 ? currentHealth / maxHealth : 1;
+
+        const services = getServices();
+        const waveManager = services.get('waveManager');
+        const waveNumber = waveManager.getCurrentWave();
+        const waveState = waveManager.getState();
+        const isBossWaveActive = waveNumber % 5 === 0 && (waveState === 'spawning' || waveState === 'active');
+
+        this.alertStatusManager.evaluate(hullPercent, isBossWaveActive);
     }
 
     // ==========================================================================
@@ -253,6 +283,7 @@ export class GameplayManager {
         // Reset local state
         this.killCount = 0;
         this.gameTime = 0;
+        this.alertStatusManager.reset();
 
         // Reset game state
         services.get('gameState').reset();
@@ -471,6 +502,7 @@ export class GameplayManager {
             kmMaxHealth,
             kmShield,
             kmMaxShield,
+            alertLevel: this.alertStatusManager.getLevel(),
             godModeEnabled: this.godModeEnabled,
             slowModeEnabled: this.slowModeEnabled,
         };

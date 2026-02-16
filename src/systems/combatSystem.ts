@@ -3,9 +3,9 @@
  * Handles turret firing logic, cooldowns, and damage application
  */
 import { query, hasComponent, World } from 'bitecs';
-import { Position, Turret, Target, Faction, Health, Shield, WeaponProperties } from '../ecs/components';
+import { Position, Turret, Target, Faction, Health, Shield, WeaponProperties, EnemyVariant } from '../ecs/components';
 import { TurretType, ProjectileType } from '../types/constants';
-import { COMBAT_CONFIG } from '../config';
+import { COMBAT_CONFIG, RENDERING_CONFIG } from '../config';
 import { createProjectile } from '../ecs/entityFactory';
 import { AudioManager, SoundType } from '../audio';
 import { ParticleSystem, EFFECTS } from '../rendering';
@@ -363,14 +363,21 @@ export class CombatSystem {
     this.damageHistory = this.damageHistory.filter(entry => currentTime - entry.time < DPS_WINDOW);
 
     // Emit damage dealt event for visual feedback (damage numbers)
+    // Filter to significant hits only to reduce visual noise
     if (actualDamage > 0) {
-      EventBus.getInstance().emit(GameEventType.DAMAGE_DEALT, {
-        entityId,
-        damage: actualDamage,
-        isShield: shieldAbsorbed && finalDamage <= 0,
-        x: hitX,
-        y: hitY
-      });
+      const isSignificant = actualDamage >= RENDERING_CONFIG.DAMAGE_NUMBERS.CRITICAL_THRESHOLD
+        || shieldAbsorbed
+        || (hasComponent(world, entityId, EnemyVariant) && EnemyVariant.rank[entityId] >= 1);
+
+      if (isSignificant) {
+        EventBus.getInstance().emit(GameEventType.DAMAGE_DEALT, {
+          entityId,
+          damage: actualDamage,
+          isShield: shieldAbsorbed && finalDamage <= 0,
+          x: hitX,
+          y: hitY
+        });
+      }
     }
 
     return actualDamage;

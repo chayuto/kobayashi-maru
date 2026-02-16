@@ -152,6 +152,11 @@ function createServiceMocks() {
       flash: vi.fn(),
       isActive: vi.fn(() => false),
     },
+    hitFlashManager: {
+      update: vi.fn(),
+      init: vi.fn(),
+      destroy: vi.fn(),
+    },
     app: new MockApplication(),
     hudManager: {
       init: vi.fn(),

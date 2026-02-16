@@ -72,6 +72,7 @@ export class RenderManager {
         services.get('hapticManager'); // Must be initialized to subscribe to game events for vibration feedback
         services.get('damageNumberRenderer'); // Must be initialized to subscribe to damage events
         services.get('screenFlash'); // Must be initialized for screen flash overlay
+        services.get('hitFlashManager'); // Must be initialized to subscribe to damage events
 
         this.initialized = true;
     }
@@ -106,6 +107,9 @@ export class RenderManager {
 
         // Update screen flash overlay
         services.get('screenFlash').update(deltaTime);
+
+        // Update hit flash tinting
+        services.get('hitFlashManager').update(deltaTime);
     }
 
     /**

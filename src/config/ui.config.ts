@@ -242,6 +242,30 @@ export const UI_CONFIG = {
         /** Number of particles for celebration effect */
         CELEBRATION_PARTICLE_COUNT: 10,
     },
+
+    /**
+     * Alert status system settings.
+     */
+    ALERT_STATUS: {
+        /** Hull percentage threshold for CRITICAL alert */
+        CRITICAL_HULL_PERCENT: 0.20,
+        /** Hull percentage threshold for CAUTION alert */
+        CAUTION_HULL_PERCENT: 0.50,
+        /** Border color for NORMAL state */
+        NORMAL_COLOR: 0x00FFFF,
+        /** Border color for CAUTION state */
+        CAUTION_COLOR: 0xFF9922,
+        /** Border color for CRITICAL state */
+        CRITICAL_COLOR: 0xFF3333,
+        /** Pulse speed for CRITICAL state (radians per second) */
+        CRITICAL_PULSE_SPEED: 3.0,
+        /** Alert banner fade-in duration */
+        FADE_IN_DURATION: 0.3,
+        /** Alert banner hold duration */
+        HOLD_DURATION: 2.0,
+        /** Alert banner fade-out duration */
+        FADE_OUT_DURATION: 0.5,
+    },
 } as const;
 
 export type UIConfig = typeof UI_CONFIG;
