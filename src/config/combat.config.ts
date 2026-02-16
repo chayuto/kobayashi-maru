@@ -47,6 +47,15 @@ export const COMBAT_CONFIG = {
             PLASMA: 8,
             DEFAULT: 8,
         },
+        /** Beam colors by turret type */
+        COLORS: {
+            PHASER: 0xFF9900,
+            DISRUPTOR: 0x00FF00,
+            TORPEDO: 0xFF0000,
+            TETRYON: 0x00CCFF,
+            PLASMA: 0xFF00FF,
+            POLARON: 0xFFFF00,
+        },
     },
 
     /**

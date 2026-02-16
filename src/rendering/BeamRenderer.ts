@@ -5,16 +5,16 @@
 import { Application, Graphics, Container } from 'pixi.js';
 import { BeamVisual } from '../systems/combatSystem';
 import { TurretType } from '../types/constants';
-import { COMBAT_CONFIG } from '../config';
+import { COMBAT_CONFIG, RENDERING_CONFIG } from '../config';
 
-// Colors for different beam types
+// Colors for different beam types — sourced from centralized config
 const BEAM_COLORS = {
-  [TurretType.PHASER_ARRAY]: 0xFF9900,    // Orange for phasers
-  [TurretType.DISRUPTOR_BANK]: 0x00FF00,  // Green for disruptors
-  [TurretType.TORPEDO_LAUNCHER]: 0xFF0000, // Red for torpedoes (if beams are added)
-  [TurretType.TETRYON_BEAM]: 0x00CCFF,    // Cyan for tetryons
-  [TurretType.PLASMA_CANNON]: 0xFF00FF,   // Magenta for plasma
-  [TurretType.POLARON_BEAM]: 0xFFFF00     // Yellow for polarons
+  [TurretType.PHASER_ARRAY]: COMBAT_CONFIG.BEAM.COLORS.PHASER,
+  [TurretType.DISRUPTOR_BANK]: COMBAT_CONFIG.BEAM.COLORS.DISRUPTOR,
+  [TurretType.TORPEDO_LAUNCHER]: COMBAT_CONFIG.BEAM.COLORS.TORPEDO,
+  [TurretType.TETRYON_BEAM]: COMBAT_CONFIG.BEAM.COLORS.TETRYON,
+  [TurretType.PLASMA_CANNON]: COMBAT_CONFIG.BEAM.COLORS.PLASMA,
+  [TurretType.POLARON_BEAM]: COMBAT_CONFIG.BEAM.COLORS.POLARON,
 } as const;
 
 /**
@@ -34,6 +34,9 @@ const MAX_CHARGE_RADIUS = COMBAT_CONFIG.BEAM.MAX_CHARGE_RADIUS;
 const BASE_CORE_ALPHA = COMBAT_CONFIG.BEAM.BASE_CORE_ALPHA;
 const PULSE_AMPLITUDE = COMBAT_CONFIG.BEAM.PULSE_AMPLITUDE;
 const PULSE_FREQUENCY = COMBAT_CONFIG.BEAM.PULSE_FREQUENCY;
+
+// Beam rendering layer constants — from centralized config
+const BEAM = RENDERING_CONFIG.BEAM_RENDERING;
 
 /**
  * BeamRenderer renders weapon beam effects
@@ -135,15 +138,15 @@ export class BeamRenderer {
   private renderCharges(): void {
     for (const charge of this.charges.values()) {
       const radius = MAX_CHARGE_RADIUS * charge.progress;
-      const alpha = (1 - charge.progress) * 0.6;
-      
+      const alpha = (1 - charge.progress) * BEAM.CHARGE.ALPHA_MULTIPLIER;
+
       // Draw expanding charge ring
       this.graphics.circle(charge.x, charge.y, radius);
-      this.graphics.stroke({ width: 2, color: charge.color, alpha });
-      
+      this.graphics.stroke({ width: BEAM.CHARGE.STROKE_WIDTH, color: charge.color, alpha });
+
       // Draw pulsing core
       const coreAlpha = BASE_CORE_ALPHA + Math.sin(charge.progress * Math.PI * PULSE_FREQUENCY) * PULSE_AMPLITUDE;
-      this.graphics.circle(charge.x, charge.y, 8);
+      this.graphics.circle(charge.x, charge.y, BEAM.CHARGE.CORE_RADIUS);
       this.graphics.fill({ color: charge.color, alpha: coreAlpha });
     }
   }
@@ -188,28 +191,28 @@ export class BeamRenderer {
     for (const segment of beam.segments) {
       this.graphics.moveTo(segment.startX, segment.startY);
       this.graphics.lineTo(segment.endX, segment.endY);
-      this.graphics.stroke({ width: 12, color, alpha: 0.15 * intensity });
+      this.graphics.stroke({ width: BEAM.OUTER_GLOW.WIDTH, color, alpha: BEAM.OUTER_GLOW.ALPHA * intensity });
     }
-    
+
     // Draw middle glow layer
     for (const segment of beam.segments) {
       this.graphics.moveTo(segment.startX, segment.startY);
       this.graphics.lineTo(segment.endX, segment.endY);
-      this.graphics.stroke({ width: 6, color, alpha: 0.4 * intensity });
+      this.graphics.stroke({ width: BEAM.MIDDLE_GLOW.WIDTH, color, alpha: BEAM.MIDDLE_GLOW.ALPHA * intensity });
     }
-    
+
     // Draw main beam segments (brightest)
     for (const segment of beam.segments) {
       this.graphics.moveTo(segment.startX, segment.startY);
       this.graphics.lineTo(segment.endX, segment.endY);
-      this.graphics.stroke({ width: 2, color, alpha: 0.9 * intensity });
+      this.graphics.stroke({ width: BEAM.MAIN_BEAM.WIDTH, color, alpha: BEAM.MAIN_BEAM.ALPHA * intensity });
     }
-    
+
     // Draw core bright line (thinnest, brightest)
     for (const segment of beam.segments) {
       this.graphics.moveTo(segment.startX, segment.startY);
       this.graphics.lineTo(segment.endX, segment.endY);
-      this.graphics.stroke({ width: 1, color: 0xFFFFFF, alpha: 0.6 * intensity });
+      this.graphics.stroke({ width: BEAM.CORE.WIDTH, color: BEAM.CORE.COLOR, alpha: BEAM.CORE.ALPHA * intensity });
     }
   }
 
@@ -220,12 +223,12 @@ export class BeamRenderer {
     // Draw glow effect first (wider, more transparent line underneath)
     this.graphics.moveTo(beam.startX, beam.startY);
     this.graphics.lineTo(beam.endX, beam.endY);
-    this.graphics.stroke({ width: 6, color, alpha: 0.3 * intensity });
+    this.graphics.stroke({ width: BEAM.SIMPLE_GLOW.WIDTH, color, alpha: BEAM.SIMPLE_GLOW.ALPHA * intensity });
 
     // Draw main beam line on top
     this.graphics.moveTo(beam.startX, beam.startY);
     this.graphics.lineTo(beam.endX, beam.endY);
-    this.graphics.stroke({ width: 2, color, alpha: 0.9 * intensity });
+    this.graphics.stroke({ width: BEAM.SIMPLE_MAIN.WIDTH, color, alpha: BEAM.SIMPLE_MAIN.ALPHA * intensity });
   }
 
   /**
@@ -233,12 +236,12 @@ export class BeamRenderer {
    */
   private renderImpactEffect(x: number, y: number, color: number, intensity: number): void {
     // Draw impact glow
-    this.graphics.circle(x, y, 8);
-    this.graphics.fill({ color, alpha: 0.3 * intensity });
-    
+    this.graphics.circle(x, y, BEAM.IMPACT_GLOW.RADIUS);
+    this.graphics.fill({ color, alpha: BEAM.IMPACT_GLOW.ALPHA * intensity });
+
     // Draw bright impact core
-    this.graphics.circle(x, y, 4);
-    this.graphics.fill({ color: 0xFFFFFF, alpha: 0.5 * intensity });
+    this.graphics.circle(x, y, BEAM.IMPACT_CORE.RADIUS);
+    this.graphics.fill({ color: BEAM.IMPACT_CORE.COLOR, alpha: BEAM.IMPACT_CORE.ALPHA * intensity });
   }
 
   /**

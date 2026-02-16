@@ -74,6 +74,25 @@ export const RENDERING_CONFIG = {
         DEFAULT_SCROLL_SPEED_X: 0,
         /** Default vertical scroll speed (pixels per second) */
         DEFAULT_SCROLL_SPEED_Y: 100,
+        /** Tile size for procedural star/nebula textures */
+        TILE_SIZE: 1024,
+        /** Star layer configs: count multiplier, parallax speed, base scale */
+        STAR_LAYERS: [
+            { COUNT_MULTIPLIER: 50, SPEED: 0.05, SCALE: 0.5 },
+            { COUNT_MULTIPLIER: 100, SPEED: 0.1, SCALE: 0.8 },
+            { COUNT_MULTIPLIER: 150, SPEED: 0.2, SCALE: 1.0 },
+        ] as readonly { COUNT_MULTIPLIER: number; SPEED: number; SCALE: number }[],
+        /** Nebula background layer settings */
+        NEBULA: {
+            SPEED: 0.02,
+            COLORS: [0x442266, 0x224466, 0x443355, 0x335544, 0x553344] as readonly number[],
+        },
+        /** Star color palettes by depth layer */
+        STAR_COLORS: {
+            BACKGROUND: [0x8888CC, 0x9999DD, 0xAAAAEE, 0x7777BB] as readonly number[],
+            MIDGROUND: [0xFFFFFF, 0xFFEEDD, 0xDDEEFF, 0xEEFFFF] as readonly number[],
+            FOREGROUND: [0xFFFFFF, 0xFFFFAA, 0xAAFFFF, 0xFFAAFF] as readonly number[],
+        },
     },
 
     /**
@@ -103,6 +122,12 @@ export const RENDERING_CONFIG = {
         END_SCALE: 0.3,
         /** Font size for damage text */
         FONT_SIZE: 20,
+        /** Font family for damage text */
+        FONT_FAMILY: 'Courier New, monospace',
+        /** Text stroke width */
+        STROKE_WIDTH: 3,
+        /** Text stroke color */
+        STROKE_COLOR: 0x000000,
         /** Color for shield damage */
         SHIELD_COLOR: 0x44BBFF,
         /** Color for health damage */
@@ -212,6 +237,50 @@ export const RENDERING_CONFIG = {
         TINT_COLOR: 0xFF0000,
         /** Vignette border width in pixels */
         BORDER_WIDTH: 100,
+    },
+
+    /**
+     * Health bar rendering settings.
+     */
+    HEALTH_BAR: {
+        /** Bar width in pixels */
+        WIDTH: 32,
+        /** Bar height in pixels */
+        HEIGHT: 4,
+        /** Y offset above entity center (negative = above) */
+        Y_OFFSET: -20,
+        /** Background bar color */
+        BACKGROUND_COLOR: 0x000000,
+        /** Health colors by status */
+        COLORS: {
+            FULL: 0x00FF00,
+            MEDIUM: 0xFFFF00,
+            CRITICAL: 0xFF0000,
+        },
+        /** Health fraction thresholds for color transitions */
+        THRESHOLDS: {
+            CRITICAL: 0.25,
+            MEDIUM: 0.5,
+        },
+    },
+
+    /**
+     * Beam rendering layer settings (widths, alphas, impact effects).
+     */
+    BEAM_RENDERING: {
+        /** Segmented beam layers (outer glow → core) */
+        OUTER_GLOW: { WIDTH: 12, ALPHA: 0.15 },
+        MIDDLE_GLOW: { WIDTH: 6, ALPHA: 0.4 },
+        MAIN_BEAM: { WIDTH: 2, ALPHA: 0.9 },
+        CORE: { WIDTH: 1, ALPHA: 0.6, COLOR: 0xFFFFFF },
+        /** Simple beam fallback layers */
+        SIMPLE_GLOW: { WIDTH: 6, ALPHA: 0.3 },
+        SIMPLE_MAIN: { WIDTH: 2, ALPHA: 0.9 },
+        /** Impact effect at beam endpoint */
+        IMPACT_GLOW: { RADIUS: 8, ALPHA: 0.3 },
+        IMPACT_CORE: { RADIUS: 4, ALPHA: 0.5, COLOR: 0xFFFFFF },
+        /** Charge-up ring effect */
+        CHARGE: { ALPHA_MULTIPLIER: 0.6, STROKE_WIDTH: 2, CORE_RADIUS: 8 },
     },
 } as const;
 

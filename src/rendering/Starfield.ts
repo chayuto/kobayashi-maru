@@ -2,15 +2,9 @@ import { Application, Container, Graphics, TilingSprite, Texture } from 'pixi.js
 import { GAME_CONFIG } from '../types';
 import { RENDERING_CONFIG } from '../config';
 
-// Star color palettes for depth
-const STAR_COLORS = {
-    BACKGROUND: [0x8888CC, 0x9999DD, 0xAAAAEE, 0x7777BB], // Distant blue/purple stars
-    MIDGROUND: [0xFFFFFF, 0xFFEEDD, 0xDDEEFF, 0xEEFFFF],  // White variations
-    FOREGROUND: [0xFFFFFF, 0xFFFFAA, 0xAAFFFF, 0xFFAAFF]  // Bright whites with color hints
-};
-
-// Nebula colors for cosmic depth
-const NEBULA_COLORS = [0x442266, 0x224466, 0x443355, 0x335544, 0x553344];
+// Star color palettes and nebula colors from centralized config
+const STAR_COLORS = RENDERING_CONFIG.STARFIELD.STAR_COLORS;
+const NEBULA_COLORS = RENDERING_CONFIG.STARFIELD.NEBULA.COLORS;
 
 export class Starfield {
     private app: Application;
@@ -34,16 +28,24 @@ export class Starfield {
         // Create nebula layer first (behind stars)
         this.createNebulaLayer();
 
-        // Create 3 layers of stars with different colors, scaled by multiplier
-        this.createStarLayer(Math.floor(50 * starCountMultiplier), 0.05, 0.5, STAR_COLORS.BACKGROUND);
-        this.createStarLayer(Math.floor(100 * starCountMultiplier), 0.1, 0.8, STAR_COLORS.MIDGROUND);
-        this.createStarLayer(Math.floor(150 * starCountMultiplier), 0.2, 1.0, STAR_COLORS.FOREGROUND);
+        // Create star layers from config
+        const layers = RENDERING_CONFIG.STARFIELD.STAR_LAYERS;
+        const palettes = [STAR_COLORS.BACKGROUND, STAR_COLORS.MIDGROUND, STAR_COLORS.FOREGROUND];
+        for (let i = 0; i < layers.length; i++) {
+            const layer = layers[i];
+            this.createStarLayer(
+                Math.floor(layer.COUNT_MULTIPLIER * starCountMultiplier),
+                layer.SPEED,
+                layer.SCALE,
+                palettes[i],
+            );
+        }
     }
 
     private createNebulaLayer(): void {
         const graphics = new Graphics();
-        const width = 1024;
-        const height = 1024;
+        const width = RENDERING_CONFIG.STARFIELD.TILE_SIZE;
+        const height = RENDERING_CONFIG.STARFIELD.TILE_SIZE;
 
         // Draw soft nebula patches
         for (let i = 0; i < 8; i++) {
@@ -73,10 +75,10 @@ export class Starfield {
         tilingSprite.tilePosition.y = Math.random() * GAME_CONFIG.WORLD_HEIGHT;
 
         this.container.addChild(tilingSprite);
-        this.layers.push({ sprite: tilingSprite, speed: 0.02 }); // Very slow parallax
+        this.layers.push({ sprite: tilingSprite, speed: RENDERING_CONFIG.STARFIELD.NEBULA.SPEED });
     }
 
-    private createStarLayer(starCount: number, speed: number, baseScale: number, colorPalette: number[]): void {
+    private createStarLayer(starCount: number, speed: number, baseScale: number, colorPalette: readonly number[]): void {
         const texture = this.generateStarTexture(baseScale, starCount, colorPalette);
         const tilingSprite = new TilingSprite({
             texture,
@@ -92,10 +94,10 @@ export class Starfield {
         this.layers.push({ sprite: tilingSprite, speed });
     }
 
-    private generateStarTexture(baseScale: number, starCount: number, colorPalette: number[]): Texture {
+    private generateStarTexture(baseScale: number, starCount: number, colorPalette: readonly number[]): Texture {
         const graphics = new Graphics();
-        const width = 1024;
-        const height = 1024;
+        const width = RENDERING_CONFIG.STARFIELD.TILE_SIZE;
+        const height = RENDERING_CONFIG.STARFIELD.TILE_SIZE;
 
         for (let i = 0; i < starCount; i++) {
             const x = Math.random() * width;
