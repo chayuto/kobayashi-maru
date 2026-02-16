@@ -9,6 +9,7 @@ import { Container, Graphics, Text, TextStyle } from 'pixi.js';
 import { UI_STYLES } from '../styles';
 import { EventBus } from '../../core/EventBus';
 import { GameEventType, AchievementUnlockedPayload } from '../../types/events';
+import { UIAnimator } from '../animation/UIAnimator';
 
 /**
  * AchievementToast displays achievement unlock notifications.
@@ -99,10 +100,12 @@ export class AchievementToast {
     private show(name: string, description: string): void {
         this.titleText.text = `ACHIEVEMENT: ${name}`;
         this.descText.text = description;
-        this.container.visible = true;
         this.container.alpha = 1;
         this.animationTimer = AchievementToast.DISPLAY_TIME;
         this.isShowing = true;
+
+        // Slide in from right instead of instant appear
+        UIAnimator.slideIn(this.container, 'right', 200, { duration: 0.25 });
     }
 
     update(deltaTime: number): void {

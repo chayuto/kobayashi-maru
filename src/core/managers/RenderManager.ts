@@ -70,6 +70,10 @@ export class RenderManager {
         services.get('starfield');
         services.get('placementRenderer'); // Must be initialized to subscribe to placement events
         services.get('hapticManager'); // Must be initialized to subscribe to game events for vibration feedback
+        services.get('damageNumberRenderer'); // Must be initialized to subscribe to damage events
+        services.get('screenFlash'); // Must be initialized for screen flash overlay
+        services.get('hitFlashManager'); // Must be initialized to subscribe to damage events
+        services.tryGet('hullDamageOverlay'); // Force lazy initialization of hull damage overlay
 
         this.initialized = true;
     }
@@ -98,6 +102,19 @@ export class RenderManager {
 
         // Update beam charge effects
         services.get('beamRenderer').updateCharges(deltaTime);
+
+        // Update floating damage numbers
+        services.get('damageNumberRenderer').update(deltaTime);
+
+        // Update screen flash overlay
+        services.get('screenFlash').update(deltaTime);
+
+        // Update hit flash tinting
+        services.get('hitFlashManager').update(deltaTime);
+
+        // Update hull damage vignette overlay
+        const hullOverlay = services.tryGet('hullDamageOverlay');
+        if (hullOverlay) hullOverlay.update(deltaTime);
     }
 
     /**
@@ -118,10 +135,11 @@ export class RenderManager {
     /**
      * Render all game visuals.
      * Called after update phase.
-     * 
+     *
      * @param activeBeams - Active beam visuals from combat system
+     * @param deltaTime - Time since last frame in seconds
      */
-    render(activeBeams: BeamVisual[] = []): void {
+    render(activeBeams: BeamVisual[] = [], deltaTime: number = 0): void {
         const services = getServices();
 
         // 1. Render entities (sprites)
@@ -136,7 +154,7 @@ export class RenderManager {
         services.get('healthBarRenderer').update(this.world);
 
         // 4. Render shields
-        services.get('shieldRenderer').update(this.world, 0);
+        services.get('shieldRenderer').update(this.world, deltaTime);
 
         // 5. Render turret upgrade visuals
         services.get('turretUpgradeVisuals').update();
@@ -169,6 +187,17 @@ export class RenderManager {
      */
     shake(intensity: number = 5, duration: number = 0.3): void {
         getServices().get('screenShake').shake(intensity, duration);
+    }
+
+    /**
+     * Trigger screen flash effect.
+     *
+     * @param color - Flash color
+     * @param intensity - Flash alpha (0-1)
+     * @param duration - Flash duration in seconds
+     */
+    flash(color: number, intensity: number, duration: number): void {
+        getServices().get('screenFlash').flash(color, intensity, duration);
     }
 
     /**

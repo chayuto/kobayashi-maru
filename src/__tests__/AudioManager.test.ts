@@ -18,6 +18,7 @@ const mockAudioContext = {
         buffer: null,
         playbackRate: { value: 1 },
         loop: false,
+        onended: null as (() => void) | null,
         connect: vi.fn(),
         start: vi.fn(),
         stop: vi.fn(),
@@ -103,7 +104,7 @@ describe('AudioManager', () => {
     it('should generate sounds on initialization', () => {
         audioManager.init();
         // Check if createBuffer was called for each sound type
-        // We have 13 sound types defined in the enum
+        // We have 16 sound types defined in the enum
         expect(mockAudioContext.createBuffer).toHaveBeenCalled();
     });
 
@@ -154,5 +155,91 @@ describe('AudioManager', () => {
         audioManager.init();
         await audioManager.resume();
         expect(mockAudioContext.resume).toHaveBeenCalled();
+    });
+
+    describe('concurrency limiting', () => {
+        beforeEach(() => {
+            audioManager.init();
+            // @ts-expect-error - Access private property for testing
+            audioManager.enabled = true;
+        });
+
+        it('should build categoryMap on init', () => {
+            // @ts-expect-error - Access private property for testing
+            const categoryMap: Map<string, string> = audioManager.categoryMap;
+            expect(categoryMap.get('phaser_fire')).toBe('WEAPONS');
+            expect(categoryMap.get('explosion_small')).toBe('COMBAT');
+            expect(categoryMap.get('turret_place')).toBe('UI');
+            expect(categoryMap.get('wave_start')).toBe('AMBIENT');
+        });
+
+        it('should allow sounds up to the concurrency limit', () => {
+            // WEAPONS limit is 3
+            audioManager.play(SoundType.PHASER_FIRE);
+            audioManager.play(SoundType.PHASER_FIRE);
+            audioManager.play(SoundType.PHASER_FIRE);
+
+            expect(mockAudioContext.createBufferSource).toHaveBeenCalledTimes(3);
+        });
+
+        it('should block sounds that exceed the concurrency limit', () => {
+            // WEAPONS limit is 3
+            audioManager.play(SoundType.PHASER_FIRE);
+            audioManager.play(SoundType.TORPEDO_FIRE);
+            audioManager.play(SoundType.DISRUPTOR_FIRE);
+            // 4th weapon sound should be blocked
+            audioManager.play(SoundType.PHASER_FIRE);
+
+            expect(mockAudioContext.createBufferSource).toHaveBeenCalledTimes(3);
+        });
+
+        it('should track concurrency per category independently', () => {
+            // Fill WEAPONS to limit (3)
+            audioManager.play(SoundType.PHASER_FIRE);
+            audioManager.play(SoundType.PHASER_FIRE);
+            audioManager.play(SoundType.PHASER_FIRE);
+
+            // COMBAT should still work (separate category, limit 2)
+            audioManager.play(SoundType.EXPLOSION_SMALL);
+            audioManager.play(SoundType.EXPLOSION_LARGE);
+
+            expect(mockAudioContext.createBufferSource).toHaveBeenCalledTimes(5);
+        });
+
+        it('should decrement active count when sound ends via onended', () => {
+            // Play 3 weapon sounds (at limit)
+            audioManager.play(SoundType.PHASER_FIRE);
+            audioManager.play(SoundType.PHASER_FIRE);
+            audioManager.play(SoundType.PHASER_FIRE);
+
+            // Get the first source's onended callback and fire it
+            const firstSource = mockAudioContext.createBufferSource.mock.results[0].value;
+            expect(firstSource.onended).toBeTypeOf('function');
+            firstSource.onended();
+
+            // Now a 4th sound should be allowed
+            audioManager.play(SoundType.PHASER_FIRE);
+            expect(mockAudioContext.createBufferSource).toHaveBeenCalledTimes(4);
+        });
+
+        it('should set onended callback on source nodes for categorized sounds', () => {
+            audioManager.play(SoundType.PHASER_FIRE);
+
+            const source = mockAudioContext.createBufferSource.mock.results[0].value;
+            expect(source.onended).toBeTypeOf('function');
+        });
+
+        it('should not go below zero when onended fires multiple times', () => {
+            audioManager.play(SoundType.PHASER_FIRE);
+
+            const source = mockAudioContext.createBufferSource.mock.results[0].value;
+            // Fire onended twice (defensive edge case)
+            source.onended();
+            source.onended();
+
+            // @ts-expect-error - Access private property for testing
+            const activeSounds: Map<string, number> = audioManager.activeSounds;
+            expect(activeSounds.get('WEAPONS')).toBe(0);
+        });
     });
 });

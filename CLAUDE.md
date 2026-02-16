@@ -12,6 +12,8 @@ npm run test         # Run all tests (Vitest)
 npm test -- <file>   # Run single test file (prefer this for speed)
 npm run lint         # ESLint check
 npm run build        # TypeScript check + Vite production build
+pnpm run e2e         # Run E2E tests (Playwright, Chromium)
+pnpm run e2e:headed  # Run E2E tests in visible browser
 ```
 
 ## Architecture

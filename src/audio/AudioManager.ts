@@ -4,6 +4,7 @@
  */
 import { SoundType, PlayOptions } from './types';
 import { SoundGenerator } from './SoundGenerator';
+import { AUDIO_CONFIG } from '../config';
 
 export class AudioManager {
     private static instance: AudioManager;
@@ -14,6 +15,8 @@ export class AudioManager {
     private sounds: Map<string, AudioBuffer> = new Map();
     private enabled: boolean = false;  // Start muted by default
     private initialized: boolean = false;
+    private activeSounds: Map<string, number> = new Map(); // category -> active count
+    private categoryMap: Map<string, string> = new Map(); // soundType -> category
 
     private constructor() {
         // Private constructor for singleton
@@ -55,6 +58,9 @@ export class AudioManager {
             // Generate procedural sounds
             this.generateSounds();
 
+            // Build sound-type-to-category lookup for concurrency limiting
+            this.buildCategoryMap();
+
             this.initialized = true;
             console.log('AudioManager initialized');
         } catch (e) {
@@ -77,6 +83,18 @@ export class AudioManager {
     }
 
     /**
+     * Build the mapping from sound type string to category name
+     */
+    private buildCategoryMap(): void {
+        const categories = AUDIO_CONFIG.CATEGORIES;
+        for (const [category, soundTypes] of Object.entries(categories)) {
+            for (const soundType of soundTypes) {
+                this.categoryMap.set(soundType, category);
+            }
+        }
+    }
+
+    /**
      * Resume AudioContext if suspended (browser policy)
      */
     async resume(): Promise<void> {
@@ -94,8 +112,29 @@ export class AudioManager {
         const buffer = this.sounds.get(key);
         if (!buffer) return;
 
+        // Concurrency limiting: check if category is at max active sounds
+        const category = this.categoryMap.get(key);
+        if (category) {
+            const limit = AUDIO_CONFIG.CONCURRENCY[category as keyof typeof AUDIO_CONFIG.CONCURRENCY];
+            if (limit !== undefined) {
+                const activeCount = this.activeSounds.get(category) ?? 0;
+                if (activeCount >= limit) {
+                    return; // Skip — category is at capacity
+                }
+                this.activeSounds.set(category, activeCount + 1);
+            }
+        }
+
         const source = this.audioContext.createBufferSource();
         source.buffer = buffer;
+
+        // Decrement active count when sound finishes
+        if (category) {
+            source.onended = () => {
+                const current = this.activeSounds.get(category) ?? 0;
+                this.activeSounds.set(category, Math.max(0, current - 1));
+            };
+        }
 
         // Apply options
         if (options.pitch) {
@@ -161,5 +200,21 @@ export class AudioManager {
      */
     isMuted(): boolean {
         return !this.enabled;
+    }
+
+    /**
+     * Get the AudioContext (for music manager to create nodes).
+     * Returns null if not initialized.
+     */
+    getAudioContext(): AudioContext | null {
+        return this.audioContext;
+    }
+
+    /**
+     * Get the music gain node (for music manager to connect stems).
+     * Returns null if not initialized.
+     */
+    getMusicGainNode(): GainNode | null {
+        return this.musicGain;
     }
 }

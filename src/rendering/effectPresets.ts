@@ -286,6 +286,27 @@ export const EFFECTS = {
         groundY: GAME_CONFIG.WORLD_HEIGHT
     },
 
+    /**
+     * Elite enemy fire explosion (reduced count for elites)
+     */
+    ELITE_FIRE_EXPLOSION: {
+        count: 30,
+        speed: { min: 80, max: 200 },
+        life: { min: 0.4, max: 1.0 },
+        size: { min: 4, max: 10 },
+        sprite: 'fire' as const,
+        colorGradient: {
+            stops: [
+                { time: 0, color: 0xFFFFFF, alpha: 1.0 },
+                { time: 0.2, color: 0xFFFF00, alpha: 1.0 },
+                { time: 0.5, color: 0xFF6600, alpha: 0.8 },
+                { time: 1.0, color: 0xFF0000, alpha: 0.0 }
+            ]
+        },
+        spread: Math.PI * 2,
+        emitterPattern: EmitterPattern.CIRCULAR
+    },
+
     SPARK_DEBRIS: {
         count: 30,
         speed: { min: 150, max: 350 },

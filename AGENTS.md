@@ -10,6 +10,8 @@ pnpm run lint       # Must pass before commit
 pnpm run test       # Must pass before commit (2,224 tests / 95 files)
 pnpm run build      # Verify build works
 pnpm run dev        # Development server
+pnpm run e2e        # Run E2E tests (Playwright, headless Chromium)
+pnpm run e2e:headed # Run E2E tests in visible browser
 ```
 
 ## Architecture Overview
@@ -249,6 +251,29 @@ Benefits:
 
 See `docs/ARCHITECTURE.md` for detailed architecture documentation.
 
+## E2E Testing
+
+E2E tests use Playwright and live in `e2e/tests/`. They test the real game running in a browser.
+
+**When modifying UI elements:**
+- If you change button positions or sizes in `src/ui/`, check if E2E tests reference those world coordinates
+- The test bridge at `src/testing/e2eTestBridge.ts` exposes game state — extend it if your feature adds new observable state
+- New interactive UI elements (buttons, panels) should be testable via the bridge or coordinate clicks
+
+**Running E2E tests:**
+```bash
+pnpm run e2e           # Headless (CI mode)
+pnpm run e2e:headed    # Watch in browser
+pnpm run e2e:ui        # Interactive Playwright UI
+pnpm run e2e:update    # Update screenshot baselines
+```
+
+**Key files:**
+- `e2e/playwright.config.ts` — Playwright configuration
+- `e2e/fixtures/game.fixture.ts` — Custom test helpers (coordinate conversion, state polling)
+- `src/testing/e2eTestBridge.ts` — Window-exposed game state API (dev mode only)
+- `e2e/tests/` — Test files
+
 ## Validation Checklist
 
 Before completing any task:
@@ -257,6 +282,7 @@ Before completing any task:
 - [ ] `pnpm run test` passes
 - [ ] `pnpm run build` succeeds
 - [ ] New code has tests where applicable
+- [ ] For UI changes: `pnpm run e2e` passes
 
 
 ## IDE Specifc

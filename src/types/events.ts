@@ -243,7 +243,90 @@ export enum GameEventType {
    * });
    * ```
    */
-  GESTURE = 'GESTURE'
+  GESTURE = 'GESTURE',
+
+  // ============================================
+  // DAMAGE EVENTS
+  // ============================================
+
+  /**
+   * Fired when damage is dealt to an entity.
+   *
+   * @emittedBy combatSystem.ts - after damage application
+   * @payload DamageDealtPayload
+   * @timing Immediate after damage is applied
+   */
+  DAMAGE_DEALT = 'DAMAGE_DEALT',
+
+  // ============================================
+  // STATUS EFFECT EVENTS
+  // ============================================
+
+  /**
+   * Fired when a status effect is applied to an entity.
+   *
+   * @emittedBy statusEffectSystem.ts - when a status effect is applied
+   * @payload StatusEffectAppliedPayload
+   * @timing Immediate after status component is set
+   */
+  STATUS_EFFECT_APPLIED = 'STATUS_EFFECT_APPLIED',
+
+  /**
+   * Fired when a status effect expires and is removed from an entity.
+   *
+   * @emittedBy statusEffectSystem.ts - when a status effect expires
+   * @payload StatusEffectRemovedPayload
+   * @timing Immediate after status component is removed
+   */
+  STATUS_EFFECT_REMOVED = 'STATUS_EFFECT_REMOVED',
+
+  // ============================================
+  // ALERT EVENTS
+  // ============================================
+
+  /**
+   * Fired when the alert level changes based on hull status.
+   *
+   * @emittedBy AlertStatusManager - when hull percent crosses thresholds
+   * @payload AlertLevelChangedPayload
+   * @timing After evaluation in gameplay update
+   */
+  ALERT_LEVEL_CHANGED = 'ALERT_LEVEL_CHANGED',
+
+  // ============================================
+  // FLAVOR / IMMERSION EVENTS
+  // ============================================
+
+  /**
+   * Fired when the technobabble generator produces a new message.
+   *
+   * @emittedBy TechnobabbleGenerator - on event triggers or periodic timer
+   * @payload TechnobabbleMessagePayload
+   * @timing After message is generated
+   */
+  TECHNOBABBLE_MESSAGE = 'TECHNOBABBLE_MESSAGE',
+
+  // ============================================
+  // TUTORIAL EVENTS
+  // ============================================
+
+  /**
+   * Fired when a tutorial step should be displayed.
+   *
+   * @emittedBy TutorialManager - when a tutorial step is triggered
+   * @payload TutorialStepPayload
+   * @timing After wave event triggers step progression
+   */
+  TUTORIAL_STEP = 'TUTORIAL_STEP',
+
+  /**
+   * Fired when the tutorial is completed or skipped.
+   *
+   * @emittedBy TutorialManager - when tutorial ends
+   * @payload TutorialCompletePayload
+   * @timing After last step or skip action
+   */
+  TUTORIAL_COMPLETE = 'TUTORIAL_COMPLETE'
 }
 
 /**
@@ -338,6 +421,88 @@ export interface GestureEvent {
 }
 
 /**
+ * Alert level for hull status
+ */
+export enum AlertLevel {
+  NORMAL = 0,
+  CAUTION = 1,
+  CRITICAL = 2
+}
+
+/**
+ * Payload for ALERT_LEVEL_CHANGED event
+ */
+export interface AlertLevelChangedPayload {
+  level: AlertLevel;
+  previousLevel: AlertLevel;
+}
+
+/**
+ * Payload for STATUS_EFFECT_APPLIED event
+ */
+export interface StatusEffectAppliedPayload {
+  entityId: number;
+  effectType: number; // 1=burn, 2=slow, 3=drain, 4=disable
+  duration: number;
+}
+
+/**
+ * Payload for STATUS_EFFECT_REMOVED event
+ */
+export interface StatusEffectRemovedPayload {
+  entityId: number;
+  effectType: number; // 1=burn, 2=slow, 3=drain, 4=disable
+}
+
+/**
+ * Payload for DAMAGE_DEALT event
+ */
+export interface DamageDealtPayload {
+  entityId: number;
+  damage: number;
+  isShield: boolean;
+  x: number;
+  y: number;
+}
+
+/**
+ * Payload for TECHNOBABBLE_MESSAGE event
+ */
+export interface TechnobabbleMessagePayload {
+  message: string;
+}
+
+/**
+ * Tutorial step position on screen
+ */
+export type TutorialStepPosition = 'top' | 'center' | 'bottom';
+
+/**
+ * Tutorial step definition
+ */
+export interface TutorialStep {
+  id: number;
+  message: string;
+  triggerWave: number;
+  duration: number;
+  position: TutorialStepPosition;
+}
+
+/**
+ * Payload for TUTORIAL_STEP event
+ */
+export interface TutorialStepPayload {
+  step: TutorialStep;
+}
+
+/**
+ * Payload for TUTORIAL_COMPLETE event
+ */
+export interface TutorialCompletePayload {
+  skipped: boolean;
+}
+
+/**
  * Map of event types to their payload types
  */
 export interface GameEventMap {
@@ -353,4 +518,11 @@ export interface GameEventMap {
   [GameEventType.TOUCH_MOVE]: TouchEventPayload;
   [GameEventType.TOUCH_END]: TouchEventPayload;
   [GameEventType.GESTURE]: GestureEvent;
+  [GameEventType.DAMAGE_DEALT]: DamageDealtPayload;
+  [GameEventType.STATUS_EFFECT_APPLIED]: StatusEffectAppliedPayload;
+  [GameEventType.STATUS_EFFECT_REMOVED]: StatusEffectRemovedPayload;
+  [GameEventType.ALERT_LEVEL_CHANGED]: AlertLevelChangedPayload;
+  [GameEventType.TECHNOBABBLE_MESSAGE]: TechnobabbleMessagePayload;
+  [GameEventType.TUTORIAL_STEP]: TutorialStepPayload;
+  [GameEventType.TUTORIAL_COMPLETE]: TutorialCompletePayload;
 }

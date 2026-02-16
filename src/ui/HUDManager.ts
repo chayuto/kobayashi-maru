@@ -14,9 +14,11 @@ import { MessageLog } from './MessageLog';
 import { AudioManager } from '../audio';
 import { ResponsiveUIManager } from './ResponsiveUIManager';
 import { HUDLayoutManager } from './HUDLayoutManager';
-import { WavePanel, ResourcePanel, StatusPanel, CombatStatsPanel, ScorePanel, TurretCountPanel, AIPanel, AIThoughtFeed } from './panels';
+import { WavePanel, ResourcePanel, StatusPanel, CombatStatsPanel, ScorePanel, TurretCountPanel, AIPanel, AIThoughtFeed, ComboPanel } from './panels';
 import { ToggleButton, IconButton } from './components';
 import { AIBrainRenderer } from '../ai/visualization';
+import { WaveAnnouncement } from './overlays/WaveAnnouncement';
+import { AlertStatusOverlay } from './overlays/AlertStatusOverlay';
 import type { AIStatusExtended, ThreatVector, SectorData } from '../ai/types';
 import type { AIMessage } from '../ai/humanization/AIMessageGenerator';
 
@@ -50,6 +52,7 @@ export class HUDManager {
   private scorePanel: ScorePanel | null = null;
   private turretCountPanel: TurretCountPanel | null = null;
   private combatStatsPanel: CombatStatsPanel | null = null;
+  private comboPanel: ComboPanel | null = null;
 
   // UI Components
   private turretMenu: TurretMenu | null = null;
@@ -76,6 +79,12 @@ export class HUDManager {
 
   // AI state
   private aiEnabled: boolean = false;
+
+  // Wave announcement overlay
+  private waveAnnouncement: WaveAnnouncement | null = null;
+
+  // Alert status overlay
+  private alertStatusOverlay: AlertStatusOverlay | null = null;
 
   // Bound event handler for cleanup
   private boundResizeHandler: (() => void) | null = null;
@@ -134,6 +143,24 @@ export class HUDManager {
     this.messageLog = new MessageLog();
     this.messageLog.setPosition(UI_STYLES.PADDING, GAME_CONFIG.WORLD_HEIGHT - 200);
     this.container.addChild(this.messageLog.container);
+
+    // Create Combo Panel (self-manages via EventBus, HUDManager drives update)
+    this.comboPanel = new ComboPanel();
+    this.comboPanel.init(this.container);
+    // Position near bottom-left, above score panel
+    const comboDims = ComboPanel.getDimensions();
+    this.comboPanel.setPosition(
+      UI_STYLES.PADDING,
+      GAME_CONFIG.WORLD_HEIGHT - 80 - UI_STYLES.PADDING - comboDims.height - UI_STYLES.PADDING
+    );
+
+    // Create Wave Announcement overlay
+    this.waveAnnouncement = new WaveAnnouncement();
+    this.waveAnnouncement.init(this.container);
+
+    // Create Alert Status overlay
+    this.alertStatusOverlay = new AlertStatusOverlay();
+    this.alertStatusOverlay.init(this.container);
 
     // Handle resize
     this.boundResizeHandler = this.handleResize.bind(this);
@@ -664,6 +691,21 @@ export class HUDManager {
     if (this.messageLog) {
       this.messageLog.update();
     }
+
+    // Update combo panel popup animation
+    if (this.comboPanel) {
+      this.comboPanel.update();
+    }
+
+    // Update wave announcement animation
+    if (this.waveAnnouncement) {
+      this.waveAnnouncement.update();
+    }
+
+    // Update alert status overlay animation
+    if (this.alertStatusOverlay) {
+      this.alertStatusOverlay.update();
+    }
   }
 
   /**
@@ -711,6 +753,9 @@ export class HUDManager {
     if (this.aiPanel) this.aiPanel.destroy();
     if (this.aiThoughtFeed) this.aiThoughtFeed.destroy();
     if (this.aiBrainRenderer) this.aiBrainRenderer.destroy();
+    if (this.comboPanel) this.comboPanel.destroy();
+    if (this.waveAnnouncement) this.waveAnnouncement.destroy();
+    if (this.alertStatusOverlay) this.alertStatusOverlay.destroy();
 
     // Remove resize listener
     if (this.boundResizeHandler) {

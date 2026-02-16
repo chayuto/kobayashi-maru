@@ -37,7 +37,7 @@ describe('Damage System', () => {
       Health.current[enemyId] = 0;
 
       // Run damage system
-      damageSystem.update(world);
+      damageSystem.update(world, 0.016);
 
       // Entity should be removed
       expect(getEntityCount()).toBe(initialCount - 1);
@@ -49,7 +49,7 @@ describe('Damage System', () => {
       const initialCount = getEntityCount();
 
       // Run damage system (health is still positive)
-      damageSystem.update(world);
+      damageSystem.update(world, 0.016);
 
       // Entity should still exist
       expect(getEntityCount()).toBe(initialCount);
@@ -63,7 +63,7 @@ describe('Damage System', () => {
       Health.current[enemyId] = 0;
 
       // Run damage system
-      damageSystem.update(world);
+      damageSystem.update(world, 0.016);
 
       // Check destroyed list
       const destroyed = damageSystem.getDestroyedThisFrame();
@@ -78,11 +78,11 @@ describe('Damage System', () => {
       Health.current[enemyId] = 0;
 
       // Run damage system
-      damageSystem.update(world);
+      damageSystem.update(world, 0.016);
       expect(damageSystem.getDestroyedThisFrame().length).toBe(1);
 
       // Run again
-      damageSystem.update(world);
+      damageSystem.update(world, 0.016);
       expect(damageSystem.getDestroyedThisFrame().length).toBe(0);
     });
   });
@@ -104,7 +104,7 @@ describe('Damage System', () => {
       Health.current[enemy2] = 0;
 
       // Run damage system
-      damageSystem.update(world);
+      damageSystem.update(world, 0.016);
 
       // Both should be removed
       expect(getEntityCount()).toBe(initialCount - 2);
@@ -127,7 +127,7 @@ describe('Damage System', () => {
       Health.current[enemyId] = 0;
 
       // Run damage system
-      damageSystem.update(world);
+      damageSystem.update(world, 0.016);
 
       // EventBus handler should be called with correct payload
       expect(eventHandler).toHaveBeenCalledTimes(1);
@@ -151,7 +151,7 @@ describe('Damage System', () => {
       Health.current[shipId] = 0;
 
       // Run damage system
-      damageSystem.update(world);
+      damageSystem.update(world, 0.016);
 
       // EventBus handler should not be called for Federation
       expect(eventHandler).not.toHaveBeenCalled();

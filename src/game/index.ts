@@ -12,3 +12,4 @@ export * from './resourceManager';
 export * from './PlacementManager';
 export * from './UpgradeManager';
 export * from './AchievementManager';
+export * from './TechnobabbleGenerator';

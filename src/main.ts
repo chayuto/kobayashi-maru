@@ -22,6 +22,12 @@ async function main(): Promise<void> {
     await game.init();
     game.start();
 
+    // Install E2E test bridge in dev mode
+    if (import.meta.env.DEV) {
+      const { installTestBridge } = await import('./testing/e2eTestBridge');
+      installTestBridge(game);
+    }
+
     console.log('Kobayashi Maru ready. Engage!');
   } catch (error) {
     console.error('Failed to initialize Kobayashi Maru:', error);

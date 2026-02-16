@@ -30,5 +30,10 @@ npm-debug.log*
 # Coverage reports
 coverage/
 
+# Playwright
+e2e/test-results/
+e2e/playwright-report/
+playwright-report/
+
 /docs/internal/*
 /docs/planning/*

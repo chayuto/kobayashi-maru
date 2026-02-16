@@ -9,6 +9,7 @@ export { HealthBar } from './HealthBar';
 export { UI_STYLES } from './styles';
 export { GameOverScreen, calculateScore } from './GameOverScreen';
 export { PauseOverlay } from './PauseOverlay';
+export { MainMenu } from './screens/MainMenu';
 export { ResponsiveUIManager } from './ResponsiveUIManager';
 export { MobileControlsOverlay } from './MobileControlsOverlay';
 export { MessageLog } from './MessageLog';

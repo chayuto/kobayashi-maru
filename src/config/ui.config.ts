@@ -203,6 +203,101 @@ export const UI_CONFIG = {
         /** Radius for enemy selection in pixels */
         ENEMY_SELECT_RADIUS: 24,
     },
+    /**
+     * Wave announcement banner settings.
+     */
+    WAVE_ANNOUNCEMENT: {
+        /** Fade-in duration in seconds */
+        FADE_IN_DURATION: 0.3,
+        /** Hold duration in seconds */
+        HOLD_DURATION: 2.0,
+        /** Fade-out duration in seconds */
+        FADE_OUT_DURATION: 0.5,
+        /** Background bar alpha */
+        BACKGROUND_ALPHA: 0.7,
+        /** Background bar height */
+        BACKGROUND_HEIGHT: 120,
+        /** Title font size */
+        TITLE_FONT_SIZE: 48,
+        /** Subtitle font size */
+        SUBTITLE_FONT_SIZE: 20,
+        /** Vertical position as ratio of screen height */
+        Y_POSITION_RATIO: 0.35,
+    },
+
+    /**
+     * Combo celebration settings.
+     */
+    COMBO: {
+        /** Scale factor for pulse animation */
+        PULSE_SCALE: 1.15,
+        /** Pulse animation duration in seconds */
+        PULSE_DURATION: 0.25,
+        /** Popup text duration in seconds */
+        POPUP_DURATION: 1.0,
+        /** Popup float speed in pixels per second */
+        POPUP_FLOAT_SPEED: 60,
+        /** Multiplier threshold for particle celebration */
+        CELEBRATION_THRESHOLD: 5,
+        /** Number of particles for celebration effect */
+        CELEBRATION_PARTICLE_COUNT: 10,
+    },
+
+    /**
+     * Alert status system settings.
+     */
+    ALERT_STATUS: {
+        /** Hull percentage threshold for CRITICAL alert */
+        CRITICAL_HULL_PERCENT: 0.20,
+        /** Hull percentage threshold for CAUTION alert */
+        CAUTION_HULL_PERCENT: 0.50,
+        /** Border color for NORMAL state */
+        NORMAL_COLOR: 0x00FFFF,
+        /** Border color for CAUTION state */
+        CAUTION_COLOR: 0xFF9922,
+        /** Border color for CRITICAL state */
+        CRITICAL_COLOR: 0xFF3333,
+        /** Pulse speed for CRITICAL state (radians per second) */
+        CRITICAL_PULSE_SPEED: 3.0,
+        /** Alert banner fade-in duration */
+        FADE_IN_DURATION: 0.3,
+        /** Alert banner hold duration */
+        HOLD_DURATION: 2.0,
+        /** Alert banner fade-out duration */
+        FADE_OUT_DURATION: 0.5,
+    },
+
+    /**
+     * Tutorial overlay settings.
+     */
+    TUTORIAL: {
+        /** Panel width in pixels */
+        PANEL_WIDTH: 700,
+        /** Panel padding in pixels */
+        PANEL_PADDING: 24,
+        /** Panel corner radius */
+        PANEL_CORNER_RADIUS: 8,
+        /** Panel background alpha */
+        PANEL_BACKGROUND_ALPHA: 0.85,
+        /** Panel border width */
+        PANEL_BORDER_WIDTH: 2,
+        /** Fade-in duration in seconds */
+        FADE_IN_DURATION: 0.3,
+        /** Fade-out duration in seconds */
+        FADE_OUT_DURATION: 0.3,
+        /** Y position for 'top' placement */
+        POSITION_TOP_Y: 100,
+        /** Y position for 'center' placement */
+        POSITION_CENTER_Y: 540,
+        /** Y position for 'bottom' placement */
+        POSITION_BOTTOM_Y: 900,
+        /** Container z-index (below pause overlay at 1000) */
+        Z_INDEX: 998,
+        /** localStorage key for tutorial completion */
+        STORAGE_KEY: 'km_tutorial_complete',
+        /** Delay in seconds before first step after start */
+        INITIAL_DELAY: 1.0,
+    },
 } as const;
 
 export type UIConfig = typeof UI_CONFIG;

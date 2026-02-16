@@ -13,6 +13,8 @@ import {
     Velocity,
     AIBehavior
 } from '../ecs/components';
+import { EventBus } from '../core/EventBus';
+import { GameEventType } from '../types/events';
 
 /**
  * Process all status effects
@@ -49,6 +51,9 @@ function processBurning(world: GameWorld, deltaTime: number): void {
             // Remove if expired
             if (BurningStatus.ticksRemaining[eid] <= 0) {
                 removeComponent(world, eid, BurningStatus);
+                EventBus.getInstance().emit(GameEventType.STATUS_EFFECT_REMOVED, {
+                    entityId: eid, effectType: 1
+                });
             }
         }
     }
@@ -79,6 +84,9 @@ function processSlowed(world: GameWorld, deltaTime: number): void {
             }
 
             removeComponent(world, eid, SlowedStatus);
+            EventBus.getInstance().emit(GameEventType.STATUS_EFFECT_REMOVED, {
+                entityId: eid, effectType: 2
+            });
         }
     }
 }
@@ -102,6 +110,9 @@ function processDrained(world: GameWorld, deltaTime: number): void {
 
             if (DrainedStatus.stacks[eid] <= 0) {
                 removeComponent(world, eid, DrainedStatus);
+                EventBus.getInstance().emit(GameEventType.STATUS_EFFECT_REMOVED, {
+                    entityId: eid, effectType: 3
+                });
             } else {
                 // Reset duration for remaining stacks
                 DrainedStatus.duration[eid] = 3.0; // 3 second duration per stack
@@ -125,6 +136,9 @@ function processDisabled(world: GameWorld, deltaTime: number): void {
         // Remove if expired
         if (DisabledStatus.duration[eid] <= 0) {
             removeComponent(world, eid, DisabledStatus);
+            EventBus.getInstance().emit(GameEventType.STATUS_EFFECT_REMOVED, {
+                entityId: eid, effectType: 4
+            });
         }
     }
 }
@@ -150,6 +164,10 @@ export function applyBurning(
     BurningStatus.ticksRemaining[eid] = ticks;
     BurningStatus.tickInterval[eid] = tickInterval;
     BurningStatus.lastTickTime[eid] = 0;
+
+    EventBus.getInstance().emit(GameEventType.STATUS_EFFECT_APPLIED, {
+        entityId: eid, effectType: 1, duration
+    });
 }
 
 /**
@@ -179,6 +197,10 @@ export function applySlowed(
     const multiplier = 1 - slowPercent;
     Velocity.x[eid] *= multiplier;
     Velocity.y[eid] *= multiplier;
+
+    EventBus.getInstance().emit(GameEventType.STATUS_EFFECT_APPLIED, {
+        entityId: eid, effectType: 2, duration
+    });
 }
 
 /**
@@ -205,6 +227,10 @@ export function applyDrained(
     const slowAmount = 0.1;
     Velocity.x[eid] *= (1 - slowAmount);
     Velocity.y[eid] *= (1 - slowAmount);
+
+    EventBus.getInstance().emit(GameEventType.STATUS_EFFECT_APPLIED, {
+        entityId: eid, effectType: 3, duration
+    });
 }
 
 /**
@@ -223,4 +249,8 @@ export function applyDisabled(
 
     DisabledStatus.duration[eid] = duration;
     DisabledStatus.disabledSystems[eid] = systems;
+
+    EventBus.getInstance().emit(GameEventType.STATUS_EFFECT_APPLIED, {
+        entityId: eid, effectType: 4, duration
+    });
 }

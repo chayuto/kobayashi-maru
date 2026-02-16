@@ -3,6 +3,7 @@
  * Manages dynamic lighting and glow effects using PixiJS filters
  */
 import { Container, BlurFilter, ColorMatrixFilter } from 'pixi.js';
+import { RENDERING_CONFIG } from '../../config';
 
 /**
  * Configuration for glow effects
@@ -49,13 +50,13 @@ export const GLOW_PRESETS: Record<string, GlowConfig> = {
   },
   weapons: {
     strength: 6,
-    blur: 10,
-    quality: 5,
+    blur: 6,
+    quality: 4,
     threshold: 0.6
   },
   shields: {
     strength: 4,
-    blur: 8,
+    blur: 5,
     quality: 4,
     threshold: 0.5
   },
@@ -94,7 +95,8 @@ export class GlowManager {
   }
 
   /**
-   * Initialize the glow manager and create layers
+   * Initialize the glow manager and create layers.
+   * If bloom is disabled via config, filters will not be applied.
    */
   init(): void {
     if (this.initialized) {
@@ -105,6 +107,11 @@ export class GlowManager {
     for (const layerType of Object.values(GlowLayer)) {
       const container = new Container();
       this.glowLayers.set(layerType as GlowLayer, container);
+    }
+
+    // Respect the bloom enabled config setting
+    if (!RENDERING_CONFIG.BLOOM.ENABLED) {
+      this.enabled = false;
     }
 
     this.initialized = true;
@@ -228,6 +235,29 @@ export class GlowManager {
    */
   isEnabled(): boolean {
     return this.enabled;
+  }
+
+  /**
+   * Set bloom intensity, adjusting all filter strengths proportionally.
+   * @param value - Intensity multiplier (0-1)
+   */
+  setIntensity(value: number): void {
+    const clamped = Math.max(0, Math.min(1, value));
+
+    for (const [layer] of this.glowLayers) {
+      const blurFilters = this.filters.get(layer);
+      const colorMatrixFilter = this.colorMatrixFilters.get(layer);
+
+      if (blurFilters && blurFilters.length > 0) {
+        const blurFilter = blurFilters[0];
+        blurFilter.strength = blurFilter.strength * clamped;
+      }
+
+      if (colorMatrixFilter) {
+        const brightnessMultiplier = 1 + clamped;
+        colorMatrixFilter.brightness(brightnessMultiplier, false);
+      }
+    }
   }
 
   /**

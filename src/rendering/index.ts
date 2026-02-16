@@ -19,3 +19,5 @@ export * from './ShockwaveRenderer';
 export * from './ExplosionManager';
 export * from './TurretUpgradeVisuals';
 export * from './filters';
+export * from './DamageNumberRenderer';
+export * from './ScreenFlash';

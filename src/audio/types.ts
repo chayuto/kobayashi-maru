@@ -7,6 +7,9 @@ export enum SoundType {
     PHASER_FIRE = 'phaser_fire',
     TORPEDO_FIRE = 'torpedo_fire',
     DISRUPTOR_FIRE = 'disruptor_fire',
+    TETRYON_FIRE = 'tetryon_fire',
+    PLASMA_FIRE = 'plasma_fire',
+    POLARON_FIRE = 'polaron_fire',
 
     // Combat
     EXPLOSION_SMALL = 'explosion_small',

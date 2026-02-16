@@ -31,3 +31,5 @@ export * from './performance.config';
 export * from './score.config';
 export * from './ai.config';
 export * from './autoplay.config';
+export * from './audio.config';
+export * from './combat.damageTypes';

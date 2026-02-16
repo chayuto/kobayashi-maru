@@ -11,6 +11,7 @@ import { Application } from 'pixi.js';
 import { createGameWorld, GameWorld } from '../../ecs';
 import { getServices, resetServices } from '../services';
 import { GAME_CONFIG, LCARS_COLORS } from '../../types';
+import { RENDERING_CONFIG } from '../../config';
 
 // Import all service classes
 import { SpriteManager } from '../../rendering/spriteManager';
@@ -25,6 +26,10 @@ import { TurretUpgradeVisuals } from '../../rendering/TurretUpgradeVisuals';
 import { PlacementRenderer } from '../../rendering/PlacementRenderer';
 import { Starfield } from '../../rendering/Starfield';
 import { ScreenShake } from '../../rendering/ScreenShake';
+import { DamageNumberRenderer } from '../../rendering/DamageNumberRenderer';
+import { ScreenFlash } from '../../rendering/ScreenFlash';
+import { HitFlashManager } from '../../rendering/HitFlashManager';
+import { HullDamageOverlay } from '../../rendering/HullDamageOverlay';
 
 import { WaveManager } from '../../game/waveManager';
 import { GameState } from '../../game/gameState';
@@ -33,12 +38,17 @@ import { HighScoreManager } from '../../game/highScoreManager';
 import { ResourceManager } from '../../game/resourceManager';
 import { PlacementManager } from '../../game/PlacementManager';
 import { UpgradeManager } from '../../game/UpgradeManager';
+import { TechnobabbleGenerator } from '../../game/TechnobabbleGenerator';
+import { TutorialManager } from '../../game/TutorialManager';
 
 import { HUDManager } from '../../ui/HUDManager';
 import { GameOverScreen } from '../../ui/GameOverScreen';
 import { PauseOverlay } from '../../ui/PauseOverlay';
+import { TutorialOverlay } from '../../ui/overlays/TutorialOverlay';
+import { MainMenu } from '../../ui/screens/MainMenu';
 
 import { AudioManager } from '../../audio/AudioManager';
+import { MusicManager } from '../../audio/MusicManager';
 import { SpatialHash } from '../../collision/spatialHash';
 import { SystemManager } from '../../systems/SystemManager';
 
@@ -144,14 +154,18 @@ export class GameBootstrap {
     private async initializePixiJS(): Promise<Application> {
         const app = new Application();
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const isE2E = (window as any).__E2E_MODE__ === true;
+
         await app.init({
             width: GAME_CONFIG.WORLD_WIDTH,
             height: GAME_CONFIG.WORLD_HEIGHT,
             backgroundColor: LCARS_COLORS.BACKGROUND,
             resolution: window.devicePixelRatio || 1,
             autoDensity: true,
-            preference: 'webgpu',
+            preference: isE2E ? 'webgl' : 'webgpu',
             antialias: true,
+            preserveDrawingBuffer: import.meta.env.DEV,
         });
 
         this.container!.appendChild(app.canvas);
@@ -283,6 +297,37 @@ export class GameBootstrap {
             );
         });
 
+        // Damage number renderer
+        services.register('damageNumberRenderer', () => {
+            const dnr = new DamageNumberRenderer();
+            const explosionsLayer = services.get('glowManager').getLayer(GlowLayer.EXPLOSIONS);
+            if (explosionsLayer) {
+                dnr.init(explosionsLayer);
+            }
+            return dnr;
+        });
+
+        // Screen flash overlay
+        services.register('screenFlash', () => {
+            const sf = new ScreenFlash();
+            sf.init(services.get('app'));
+            return sf;
+        });
+
+        // Hull damage vignette overlay
+        services.register('hullDamageOverlay', () => {
+            const hdo = new HullDamageOverlay();
+            hdo.init(services.get('app'));
+            return hdo;
+        });
+
+        // Hit flash manager (enemy sprite tinting on damage)
+        services.register('hitFlashManager', () => {
+            const hfm = new HitFlashManager(services.get('spriteManager'));
+            hfm.init();
+            return hfm;
+        });
+
         // Turret upgrade visuals
         services.register('turretUpgradeVisuals', () => {
             const weaponsLayer = services.get('glowManager').getLayer(GlowLayer.WEAPONS);
@@ -313,6 +358,11 @@ export class GameBootstrap {
         glowManager.applyPreset(GlowLayer.PROJECTILES, 'medium');
         glowManager.applyPreset(GlowLayer.EXPLOSIONS, 'explosions');
         glowManager.applyPreset(GlowLayer.SHIELDS, 'shields');
+
+        // Disable bloom if configured off
+        if (!RENDERING_CONFIG.BLOOM.ENABLED) {
+            glowManager.setEnabled(false);
+        }
     }
 
     /**
@@ -350,6 +400,20 @@ export class GameBootstrap {
                 services.get('world')
             );
         });
+
+        // Technobabble generator (immersion flavor messages)
+        services.register('technobabbleGenerator', () => {
+            const tg = new TechnobabbleGenerator();
+            tg.init();
+            return tg;
+        });
+
+        // Tutorial manager (progressive disclosure for first-time players)
+        services.register('tutorialManager', () => {
+            const tm = new TutorialManager();
+            tm.init();
+            return tm;
+        });
     }
 
     /**
@@ -369,6 +433,12 @@ export class GameBootstrap {
             po.init(services.get('app'));
             return po;
         });
+        services.register('mainMenu', () => {
+            const mm = new MainMenu();
+            mm.init(services.get('app'));
+            return mm;
+        });
+        services.register('tutorialOverlay', () => new TutorialOverlay());
     }
 
     /**
@@ -398,10 +468,22 @@ export class GameBootstrap {
 
         services.register('audioManager', () => AudioManager.getInstance());
 
+        // Music manager (depends on audioManager)
+        services.register('musicManager', () => {
+            const mm = new MusicManager(services.get('audioManager'));
+            mm.init();
+            return mm;
+        });
+
         const initAudio = () => {
             const audio = services.get('audioManager');
             audio.init();
             audio.resume();
+
+            // Initialize and start music after audio context is ready
+            const music = services.get('musicManager');
+            music.start();
+
             window.removeEventListener('click', initAudio);
             window.removeEventListener('keydown', initAudio);
             window.removeEventListener('touchstart', initAudio);

@@ -9,6 +9,8 @@ import { Container, Graphics, Text, TextStyle } from 'pixi.js';
 import { UI_STYLES } from '../styles';
 import { EventBus } from '../../core/EventBus';
 import { GameEventType, ComboUpdatedPayload } from '../../types/events';
+import { UIAnimator } from '../animation/UIAnimator';
+import { UI_CONFIG } from '../../config/ui.config';
 
 /**
  * ComboPanel displays the current combo count and multiplier.
@@ -21,6 +23,10 @@ export class ComboPanel {
     private initialized: boolean = false;
     private eventBus: EventBus;
     private boundHandleComboUpdated: (payload: ComboUpdatedPayload) => void;
+    private previousMultiplier: number = 1;
+    private popupText: Text | null = null;
+    private popupStartTime: number = 0;
+    private comboConfig = UI_CONFIG.COMBO;
 
     private static readonly WIDTH = 120;
     private static readonly HEIGHT = 60;
@@ -103,8 +109,64 @@ export class ComboPanel {
             } else {
                 this.comboText.style.fill = UI_STYLES.COLORS.PRIMARY;
             }
+
+            // Celebrate tier increase
+            if (payload.multiplier > this.previousMultiplier) {
+                UIAnimator.pulse(this.container, this.comboConfig.PULSE_SCALE, {
+                    duration: this.comboConfig.PULSE_DURATION
+                });
+                this.showPopup(`+${payload.multiplier}x COMBO!`);
+            }
+            this.previousMultiplier = payload.multiplier;
         } else {
             this.container.visible = false;
+            this.previousMultiplier = 1;
+        }
+    }
+
+    private popupActive: boolean = false;
+
+    private showPopup(message: string): void {
+        if (!this.popupText) {
+            const style = new TextStyle({
+                fontFamily: UI_STYLES.FONT_FAMILY,
+                fontSize: 18,
+                fill: UI_STYLES.COLORS.SECONDARY,
+                fontWeight: 'bold',
+                stroke: { color: 0x000000, width: 2 },
+            });
+            this.popupText = new Text({ text: '', style });
+            this.popupText.anchor.set(0.5, 0.5);
+            this.container.addChild(this.popupText);
+        }
+
+        this.popupText.text = message;
+        this.popupText.position.set(ComboPanel.WIDTH / 2, -10);
+        this.popupText.alpha = 1;
+        this.popupText.scale.set(1);
+        this.popupText.visible = true;
+        this.popupStartTime = performance.now();
+        this.popupActive = true;
+    }
+
+    /**
+     * Update popup animation. Called from HUDManager.update().
+     * Uses performance.now() internally (matches WaveAnnouncement pattern).
+     */
+    update(): void {
+        if (!this.popupActive || !this.popupText || !this.popupText.visible) return;
+
+        const elapsed = (performance.now() - this.popupStartTime) / 1000;
+        const duration = this.comboConfig.POPUP_DURATION;
+        const t = Math.min(elapsed / duration, 1);
+
+        this.popupText.y = -10 - this.comboConfig.POPUP_FLOAT_SPEED * elapsed;
+        this.popupText.alpha = 1 - t;
+        this.popupText.scale.set(1 + t * 0.3);
+
+        if (t >= 1) {
+            this.popupText.visible = false;
+            this.popupActive = false;
         }
     }
 

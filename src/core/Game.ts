@@ -9,7 +9,10 @@
 
 import { Application } from 'pixi.js';
 import { query } from 'bitecs';
-import { Turret } from '../ecs/components';
+import { Turret, Health, EnemyVariant } from '../ecs/components';
+import { GameEventType, EnemyKilledPayload, TechnobabbleMessagePayload } from '../types/events';
+import { EventBus } from './EventBus';
+import { RENDERING_CONFIG } from '../config';
 import { GameWorld } from '../ecs';
 import {
   createRenderSystem, createMovementSystem, createCollisionSystem, createTargetingSystem,
@@ -87,8 +90,8 @@ export class Game {
     // Setup resize handling
     this.setupResizeHandler();
 
-    // Initialize gameplay
-    this.gameplayManager.init();
+    // Setup MainMenu and show it (do NOT auto-start gameplay)
+    this.setupMainMenu();
 
     this.initialized = true;
     console.log('Kobayashi Maru initialized');
@@ -130,9 +133,41 @@ export class Game {
       onEnemyKilled: () => {
         // Kill logging removed intentionally - was too spammy
       },
-      onKobayashiMaruDamaged: () => {
-        this.renderManager.shake(5, 0.3);
+      onKobayashiMaruDamaged: (damage: number) => {
+        // Scale shake intensity with damage percentage
+        const kmId = this.gameplayManager.getKobayashiMaruId();
+        const maxHealth = kmId >= 0 ? Health.max[kmId] : 100;
+        const damagePercent = maxHealth > 0 ? damage / maxHealth : 0;
+        const shakeIntensity = 5 + damagePercent * 35; // 5-40 range
+        const shakeDuration = 0.3 + damagePercent * 0.3; // 0.3-0.6s
+        this.renderManager.shake(shakeIntensity, shakeDuration);
+
+        // Red flash scaled with damage
+        const flashConfig = RENDERING_CONFIG.SCREEN_FLASH;
+        const flashIntensity = 0.1 + damagePercent * 0.5;
+        this.renderManager.flash(
+          flashConfig.KM_DAMAGE_COLOR,
+          flashIntensity,
+          flashConfig.KM_DAMAGE_DURATION
+        );
       },
+    });
+
+    // Boss/elite kill effects: white flash + hit stop
+    const flashConfig = RENDERING_CONFIG.SCREEN_FLASH;
+    const hitStopConfig = RENDERING_CONFIG.HIT_STOP;
+    EventBus.getInstance().on(GameEventType.ENEMY_KILLED, (payload: EnemyKilledPayload) => {
+      const rank = EnemyVariant.rank[payload.entityId] ?? 0;
+      if (rank === 2) {
+        this.renderManager.flash(
+          flashConfig.BOSS_KILL_COLOR,
+          flashConfig.BOSS_KILL_INTENSITY,
+          flashConfig.BOSS_KILL_DURATION
+        );
+        this.loopManager.hitStop(hitStopConfig.BOSS_KILL_FRAMES);
+      } else if (rank === 1) {
+        this.loopManager.hitStop(hitStopConfig.ELITE_KILL_FRAMES);
+      }
     });
 
     // UI controller
@@ -140,7 +175,7 @@ export class Game {
     this.uiController.setCallbacks({
       onRestart: () => this.restart(),
       onResume: () => this.resume(),
-      onQuit: () => console.log('Quit to main menu (not yet implemented)'),
+      onQuit: () => this.quitToMenu(),
       onTurretSelect: (type) => {
         services.get('placementManager').startPlacing(type);
       },
@@ -149,6 +184,11 @@ export class Game {
       onToggleAI: () => this.toggleAI(),
     });
     this.uiController.init();
+
+    // Technobabble → message log (after UI controller is created)
+    EventBus.getInstance().on(GameEventType.TECHNOBABBLE_MESSAGE, (payload: TechnobabbleMessagePayload) => {
+      this.uiController.addLogMessage(payload.message, 'info');
+    });
 
     // Connect turret upgrade callbacks
     this.uiController.connectTurretUpgradeCallbacks(
@@ -259,7 +299,7 @@ export class Game {
     systemManager.register('enemy-combat', enemyCombatSystem, 55, { requiresGameTime: true });
     systemManager.register('projectile', projectileSystem, 60);
     systemManager.register('enemy-projectile', enemyProjectileSystem, 62);
-    systemManager.register('damage', damageSystem, 70, { requiresDelta: false });
+    systemManager.register('damage', damageSystem, 70, { requiresDelta: true });
   }
 
   /**
@@ -277,9 +317,33 @@ export class Game {
     this.loopManager.onGameplay((dt) => {
       this.gameplayManager.update(dt);
 
+      // Update technobabble generator for periodic messages
+      const technobabble = services.tryGet('technobabbleGenerator');
+      if (technobabble) {
+        technobabble.update(dt);
+      }
+
+      // Update tutorial manager
+      const tutorialManager = services.tryGet('tutorialManager');
+      if (tutorialManager?.isActive()) {
+        tutorialManager.update(dt);
+      }
+
       // Update AI auto-play if enabled
       if (this.aiManager?.isEnabled()) {
         this.aiManager.update(dt, this.gameplayManager.getGameTime());
+      }
+
+      // Update adaptive music based on gameplay state
+      const musicManager = services.tryGet('musicManager');
+      if (musicManager) {
+        const snapshot = this.gameplayManager.getSnapshot();
+        musicManager.update({
+          activeEnemies: snapshot.activeEnemies,
+          hullPercent: snapshot.kmMaxHealth > 0 ? snapshot.kmHealth / snapshot.kmMaxHealth : 1,
+          isBossWave: snapshot.waveNumber % 5 === 0 && (snapshot.waveState === 'spawning' || snapshot.waveState === 'active'),
+          dps: this.combatSystem?.getStats().dps ?? 0,
+        }, dt);
       }
     });
 
@@ -293,7 +357,7 @@ export class Game {
       this.renderManager.updateEffects(dt);
 
       const activeBeams = this.combatSystem?.getActiveBeams() ?? [];
-      this.renderManager.render(activeBeams as BeamVisual[]);
+      this.renderManager.render(activeBeams as BeamVisual[], dt);
     });
 
     // Post-render: screen effects
@@ -327,6 +391,12 @@ export class Game {
         this.uiController.updateAI(this.aiManager.getExtendedStatus());
       }
 
+      // Update tutorial overlay animation
+      const tutorialOverlay = services.tryGet('tutorialOverlay');
+      if (tutorialOverlay) {
+        tutorialOverlay.update();
+      }
+
       this.uiController.updateDebug(snapshot);
       this.uiController.updateEntityCount();
     });
@@ -341,7 +411,7 @@ export class Game {
     this.inputRouter.on(InputAction.PAUSE, () => this.pause());
     this.inputRouter.on(InputAction.RESUME, () => this.resume());
     this.inputRouter.on(InputAction.RESTART, () => this.restart());
-    this.inputRouter.on(InputAction.QUIT, () => console.log('Quit not implemented'));
+    this.inputRouter.on(InputAction.QUIT, () => this.quitToMenu());
 
     this.inputRouter.on(InputAction.SELECT_TURRET, ({ data }) => {
       if (data?.turretId !== undefined) {
@@ -442,6 +512,102 @@ export class Game {
   }
 
   // ==========================================================================
+  // TUTORIAL
+  // ==========================================================================
+
+  /**
+   * Initialize the tutorial system.
+   * Sets up the TutorialOverlay and starts the tutorial if applicable.
+   */
+  private initTutorial(): void {
+    const services = getServices();
+    const tutorialManager = services.get('tutorialManager');
+    const tutorialOverlay = services.get('tutorialOverlay');
+    const hudManager = services.get('hudManager');
+
+    // Initialize overlay and add to HUD container
+    tutorialOverlay.init(hudManager.container);
+
+    // Connect skip callback
+    tutorialOverlay.setOnSkip(() => {
+      tutorialManager.skip();
+    });
+
+    // Start tutorial if first-time player
+    if (tutorialManager.shouldShowTutorial()) {
+      tutorialManager.start();
+    }
+  }
+
+  // ==========================================================================
+  // MAIN MENU / SCENE MANAGEMENT
+  // ==========================================================================
+
+  /**
+   * Setup main menu and show it.
+   */
+  private setupMainMenu(): void {
+    const services = getServices();
+    const mainMenu = services.get('mainMenu');
+    mainMenu.setOnStart(() => this.startGame());
+    mainMenu.show();
+  }
+
+  /**
+   * Start the game from the main menu.
+   * Hides menu, initializes gameplay, and starts the loop.
+   */
+  startGame(): void {
+    const services = getServices();
+    const mainMenu = services.get('mainMenu');
+    mainMenu.hide();
+
+    this.gameplayManager.init();
+
+    // Eagerly initialize technobabble generator so it subscribes to events
+    services.get('technobabbleGenerator');
+
+    // Initialize tutorial system for first-time players
+    this.initTutorial();
+
+    // Start the game loop if not already running
+    if (!this.loopManager.getState().running) {
+      this.loopManager.start();
+    }
+
+    // Ensure loop is not paused
+    this.loopManager.resume();
+
+    console.log('Game started from menu');
+  }
+
+  /**
+   * Quit to the main menu from pause or game over.
+   * Clears gameplay state and shows the menu.
+   */
+  quitToMenu(): void {
+    const services = getServices();
+
+    // Hide overlays
+    this.uiController.hidePause();
+    this.uiController.hideGameOver();
+
+    // Stop gameplay: clear entities and reset state
+    this.gameplayManager.stopAndClear();
+    PoolManager.getInstance().clear();
+    this.inputRouter.deselectTurret();
+
+    // Pause the loop (rendering continues for starfield, but gameplay won't run)
+    this.loopManager.pause();
+
+    // Show main menu
+    const mainMenu = services.get('mainMenu');
+    mainMenu.show();
+
+    console.log('Returned to main menu');
+  }
+
+  // ==========================================================================
   // PUBLIC API (Backward Compatible)
   // ==========================================================================
 
@@ -529,6 +695,7 @@ export class Game {
   }
 
   // Getter methods (delegate to services)
+  getKobayashiMaruId(): number { return this.gameplayManager.getKobayashiMaruId(); }
   getCollisionSystem() { return this.collisionSystem || null; }
   getSpatialHash() { return getServices().tryGet('spatialHash'); }
   getWaveManager() { return getServices().get('waveManager'); }
