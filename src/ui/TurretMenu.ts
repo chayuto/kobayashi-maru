@@ -39,8 +39,8 @@ export class TurretMenu {
      */
     private createMenu(): void {
         const padding = UI_STYLES.PADDING;
-        const buttonWidth = 240; // Increased to fit icon
-        const buttonHeight = 75; // Reduced from 95 to fit all 6 weapons
+        const buttonWidth = UI_CONFIG.PANELS.TURRET_MENU.WIDTH;
+        const buttonHeight = 75;
         const startY = 0; // Buttons start at top of menu container
 
         // Create a button for each turret type
@@ -67,7 +67,7 @@ export class TurretMenu {
             // Turret Name
             const nameStyle = new TextStyle({
                 fontFamily: UI_STYLES.FONT_FAMILY,
-                fontSize: 13, // Slightly smaller
+                fontSize: UI_CONFIG.FONTS.SIZE_SM,
                 fill: UI_STYLES.COLORS.SECONDARY,
                 fontWeight: 'bold'
             });
@@ -78,7 +78,7 @@ export class TurretMenu {
             // Description
             const descStyle = new TextStyle({
                 fontFamily: UI_STYLES.FONT_FAMILY,
-                fontSize: 10, // Smaller
+                fontSize: UI_CONFIG.FONTS.SIZE_XS,
                 fill: 0xCCCCCC,
                 wordWrap: true,
                 wordWrapWidth: buttonWidth - 56
@@ -90,8 +90,8 @@ export class TurretMenu {
             // Stats (Damage/Range/Rate)
             const statsStyle = new TextStyle({
                 fontFamily: UI_STYLES.FONT_FAMILY,
-                fontSize: 9,
-                fill: 0x99CCFF
+                fontSize: UI_CONFIG.FONTS.SIZE_TINY,
+                fill: UI_CONFIG.COLORS.LABEL
             });
             const statsText = new Text({
                 text: `DMG:${config.damage} RNG:${config.range} RATE:${config.fireRate}/s`,
@@ -104,7 +104,7 @@ export class TurretMenu {
             if (config.special) {
                 const specialStyle = new TextStyle({
                     fontFamily: UI_STYLES.FONT_FAMILY,
-                    fontSize: 9,
+                    fontSize: UI_CONFIG.FONTS.SIZE_TINY,
                     fill: UI_STYLES.COLORS.PRIMARY,
                     fontStyle: 'italic'
                 });
@@ -116,7 +116,7 @@ export class TurretMenu {
             // Cost
             const costStyle = new TextStyle({
                 fontFamily: UI_STYLES.FONT_FAMILY,
-                fontSize: 13,
+                fontSize: UI_CONFIG.FONTS.SIZE_SM,
                 fill: UI_STYLES.COLORS.PRIMARY,
                 fontWeight: 'bold'
             });

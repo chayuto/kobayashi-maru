@@ -340,6 +340,71 @@ export const UI_CONFIG = {
     },
 
     /**
+     * Message log display settings.
+     */
+    MESSAGE_LOG: {
+        /** Maximum visible messages */
+        MAX_MESSAGES: 8,
+        /** Fade-out duration in milliseconds */
+        FADE_DURATION: 10000,
+        /** Line height in pixels */
+        LINE_HEIGHT: 22,
+        /** Spacing between messages in pixels */
+        MESSAGE_SPACING: 4,
+        /** Bottom offset from screen edge for positioning */
+        BOTTOM_OFFSET: 200,
+    },
+
+    /**
+     * Responsive UI breakpoints and scale factors.
+     */
+    RESPONSIVE: {
+        /** Screen width threshold for mobile layout */
+        MOBILE_BREAKPOINT: 768,
+        /** Screen width threshold for tablet layout */
+        TABLET_BREAKPOINT: 1024,
+        /** Scale factor for mobile devices */
+        MOBILE_SCALE: 0.8,
+        /** Scale factor for tablet devices */
+        TABLET_SCALE: 0.8,
+        /** Scale factor for desktop */
+        DESKTOP_SCALE: 1.0,
+    },
+
+    /**
+     * Pause overlay layout settings.
+     */
+    PAUSE_OVERLAY: {
+        /** Background dimming alpha */
+        BACKGROUND_ALPHA: 0.8,
+        /** Title Y position */
+        TITLE_Y: 200,
+        /** First button Y position */
+        FIRST_BUTTON_Y: 400,
+        /** Vertical spacing between buttons */
+        BUTTON_SPACING: 100,
+        /** Button width */
+        BUTTON_WIDTH: 300,
+        /** Button height */
+        BUTTON_HEIGHT: 60,
+        /** Button background alpha */
+        BUTTON_ALPHA: 0.9,
+        /** Z-index for overlay layer */
+        Z_INDEX: 1000,
+    },
+
+    /**
+     * HUD left column element heights (unscaled pixels).
+     * Used by HUDLayoutManager for stacking calculations.
+     */
+    LEFT_COLUMN: {
+        /** Mute button (IconButton) height */
+        MUTE_BUTTON_HEIGHT: 40,
+        /** Resource panel top-right height offset */
+        RESOURCE_HEIGHT_OFFSET: 70,
+    },
+
+    /**
      * Tutorial overlay settings.
      */
     TUTORIAL: {
