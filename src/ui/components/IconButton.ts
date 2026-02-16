@@ -132,12 +132,12 @@ export class IconButton {
     private drawBackground(hovered: boolean): void {
         const active = this.config.isActive();
         const borderColor = active ? this.config.activeColor : this.config.inactiveColor;
-        const borderWidth = hovered ? 3 : 2;
-        const alpha = hovered ? 0.9 : 0.7;
+        const borderWidth = hovered ? UI_CONFIG.PANEL_STYLE.HOVER_BORDER_WIDTH : UI_CONFIG.PANEL_STYLE.BORDER_WIDTH;
+        const alpha = hovered ? 0.9 : UI_CONFIG.PANEL_STYLE.BG_ALPHA;
 
         // Clear and redraw - prevents frame overlay issues
         this.background.clear();
-        this.background.roundRect(0, 0, IconButton.WIDTH, IconButton.HEIGHT, 6);
+        this.background.roundRect(0, 0, IconButton.WIDTH, IconButton.HEIGHT, UI_CONFIG.BUTTONS.CORNER_RADIUS);
         this.background.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha });
         this.background.stroke({
             color: hovered ? (active ? this.config.activeColor : UI_STYLES.COLORS.PRIMARY) : borderColor,

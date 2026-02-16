@@ -83,14 +83,14 @@ export class ComboPanel {
 
     private drawBackground(active: boolean): void {
         this.background.clear();
-        this.background.roundRect(0, 0, ComboPanel.WIDTH, ComboPanel.HEIGHT, 8);
+        this.background.roundRect(0, 0, ComboPanel.WIDTH, ComboPanel.HEIGHT, UI_CONFIG.PANEL_STYLE.CORNER_RADIUS);
         this.background.fill({
             color: active ? 0x442200 : UI_STYLES.COLORS.BACKGROUND,
             alpha: 0.8
         });
         this.background.stroke({
             color: active ? UI_STYLES.COLORS.PRIMARY : UI_STYLES.COLORS.SECONDARY,
-            width: active ? 3 : 2
+            width: active ? UI_CONFIG.PANEL_STYLE.HOVER_BORDER_WIDTH : UI_CONFIG.PANEL_STYLE.BORDER_WIDTH
         });
     }
 

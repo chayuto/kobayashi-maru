@@ -75,9 +75,9 @@ export class TurretUpgradePanel {
 
       // Button background
       const bg = new Graphics();
-      bg.roundRect(0, 0, buttonWidth, buttonHeight, 6);
+      bg.roundRect(0, 0, buttonWidth, buttonHeight, UI_CONFIG.BUTTONS.CORNER_RADIUS);
       bg.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.8 });
-      bg.stroke({ color: UI_STYLES.COLORS.SECONDARY, width: 2 });
+      bg.stroke({ color: UI_STYLES.COLORS.SECONDARY, width: UI_CONFIG.PANEL_STYLE.BORDER_WIDTH });
       button.addChild(bg);
 
       const config = UPGRADE_CONFIG[path];
@@ -130,13 +130,13 @@ export class TurretUpgradePanel {
 
       button.on('pointerover', () => {
         if (button.alpha === 1) {
-          bg.stroke({ color: UI_STYLES.COLORS.PRIMARY, width: 3 });
+          bg.stroke({ color: UI_STYLES.COLORS.PRIMARY, width: UI_CONFIG.PANEL_STYLE.HOVER_BORDER_WIDTH });
         }
       });
 
       button.on('pointerout', () => {
         if (button.alpha === 1) {
-          bg.stroke({ color: UI_STYLES.COLORS.SECONDARY, width: 2 });
+          bg.stroke({ color: UI_STYLES.COLORS.SECONDARY, width: UI_CONFIG.PANEL_STYLE.BORDER_WIDTH });
         }
       });
 
@@ -164,9 +164,9 @@ export class TurretUpgradePanel {
 
     // Button background (red-ish for sell)
     const bg = new Graphics();
-    bg.roundRect(0, 0, buttonWidth, buttonHeight, 6);
+    bg.roundRect(0, 0, buttonWidth, buttonHeight, UI_CONFIG.BUTTONS.CORNER_RADIUS);
     bg.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.9 });
-    bg.stroke({ color: UI_STYLES.COLORS.DANGER, width: 2 });
+    bg.stroke({ color: UI_STYLES.COLORS.DANGER, width: UI_CONFIG.PANEL_STYLE.BORDER_WIDTH });
     button.addChild(bg);
 
     // Sell text
@@ -195,11 +195,11 @@ export class TurretUpgradePanel {
     button.cursor = 'pointer';
 
     button.on('pointerover', () => {
-      bg.stroke({ color: 0xFF6666, width: 3 });
+      bg.stroke({ color: 0xFF6666, width: UI_CONFIG.PANEL_STYLE.HOVER_BORDER_WIDTH });
     });
 
     button.on('pointerout', () => {
-      bg.stroke({ color: UI_STYLES.COLORS.DANGER, width: 2 });
+      bg.stroke({ color: UI_STYLES.COLORS.DANGER, width: UI_CONFIG.PANEL_STYLE.BORDER_WIDTH });
     });
 
     button.on('pointerdown', () => {
@@ -342,7 +342,7 @@ export class TurretUpgradePanel {
     this.background.clear();
     this.background.roundRect(0, 0, width, height, 12);
     this.background.fill({ color: 0x000000, alpha: 0.85 });
-    this.background.stroke({ color: UI_STYLES.COLORS.PRIMARY, width: 3 });
+    this.background.stroke({ color: UI_STYLES.COLORS.PRIMARY, width: UI_CONFIG.PANEL_STYLE.HOVER_BORDER_WIDTH });
   }
 
   /**

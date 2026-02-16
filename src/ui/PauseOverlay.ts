@@ -4,6 +4,7 @@
  */
 import { Application, Container, Graphics, Text, TextStyle } from 'pixi.js';
 import { UI_STYLES } from './styles';
+import { UI_CONFIG } from '../config';
 import { GAME_CONFIG } from '../types/constants';
 
 export class PauseOverlay {
@@ -71,9 +72,9 @@ export class PauseOverlay {
 
     // Button background
     const bg = new Graphics();
-    bg.roundRect(-150, -30, 300, 60, 8);
+    bg.roundRect(-150, -30, 300, 60, UI_CONFIG.PANEL_STYLE.CORNER_RADIUS);
     bg.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.9 });
-    bg.stroke({ color: UI_STYLES.COLORS.SECONDARY, width: 2 });
+    bg.stroke({ color: UI_STYLES.COLORS.SECONDARY, width: UI_CONFIG.PANEL_STYLE.BORDER_WIDTH });
     button.addChild(bg);
 
     // Button text
@@ -90,17 +91,17 @@ export class PauseOverlay {
     // Hover effects
     button.on('pointerover', () => {
       bg.clear();
-      bg.roundRect(-150, -30, 300, 60, 8);
+      bg.roundRect(-150, -30, 300, 60, UI_CONFIG.PANEL_STYLE.CORNER_RADIUS);
       bg.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.9 });
-      bg.stroke({ color: UI_STYLES.COLORS.PRIMARY, width: 3 });
+      bg.stroke({ color: UI_STYLES.COLORS.PRIMARY, width: UI_CONFIG.PANEL_STYLE.HOVER_BORDER_WIDTH });
       buttonText.style.fill = UI_STYLES.COLORS.PRIMARY;
     });
 
     button.on('pointerout', () => {
       bg.clear();
-      bg.roundRect(-150, -30, 300, 60, 8);
+      bg.roundRect(-150, -30, 300, 60, UI_CONFIG.PANEL_STYLE.CORNER_RADIUS);
       bg.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.9 });
-      bg.stroke({ color: UI_STYLES.COLORS.SECONDARY, width: 2 });
+      bg.stroke({ color: UI_STYLES.COLORS.SECONDARY, width: UI_CONFIG.PANEL_STYLE.BORDER_WIDTH });
       buttonText.style.fill = UI_STYLES.COLORS.SECONDARY;
     });
 

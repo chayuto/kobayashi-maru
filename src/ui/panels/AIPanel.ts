@@ -120,9 +120,9 @@ export class AIPanel {
         if (this.initialized) return;
 
         // Background with border
-        this.background.roundRect(0, 0, AIPanel.WIDTH, AIPanel.HEIGHT, 8);
+        this.background.roundRect(0, 0, AIPanel.WIDTH, AIPanel.HEIGHT, UI_CONFIG.PANEL_STYLE.CORNER_RADIUS);
         this.background.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.85 });
-        this.background.stroke({ color: UI_STYLES.COLORS.PRIMARY, width: 2 });
+        this.background.stroke({ color: UI_STYLES.COLORS.PRIMARY, width: UI_CONFIG.PANEL_STYLE.BORDER_WIDTH });
         this.container.addChild(this.background);
 
         // Title
@@ -264,11 +264,11 @@ export class AIPanel {
         // Redraw background with new height
         this.background.clear();
         const height = expanded ? AIPanel.EXPANDED_HEIGHT : AIPanel.HEIGHT;
-        this.background.roundRect(0, 0, AIPanel.WIDTH, height, 8);
+        this.background.roundRect(0, 0, AIPanel.WIDTH, height, UI_CONFIG.PANEL_STYLE.CORNER_RADIUS);
         this.background.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.85 });
         this.background.stroke({
             color: expanded ? 0x00FFFF : UI_STYLES.COLORS.PRIMARY,
-            width: expanded ? 3 : 2,
+            width: expanded ? UI_CONFIG.PANEL_STYLE.HOVER_BORDER_WIDTH : UI_CONFIG.PANEL_STYLE.BORDER_WIDTH,
         });
     }
 

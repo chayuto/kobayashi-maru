@@ -111,6 +111,21 @@ export const UI_CONFIG = {
     },
 
     /**
+     * Default panel styling values.
+     * Most HUD panels use these; override per-panel where intentionally different.
+     */
+    PANEL_STYLE: {
+        /** Default corner radius for panel backgrounds */
+        CORNER_RADIUS: 8,
+        /** Default background alpha */
+        BG_ALPHA: 0.7,
+        /** Default border/stroke width */
+        BORDER_WIDTH: 2,
+        /** Border width when hovered or in active/alert state */
+        HOVER_BORDER_WIDTH: 3,
+    },
+
+    /**
      * Health and shield bar dimensions.
      */
     BARS: {
@@ -128,14 +143,28 @@ export const UI_CONFIG = {
     FONTS: {
         /** Default font family */
         FAMILY: 'Courier New, monospace',
+        /** Tiny text size (stats, fine-print) */
+        SIZE_TINY: 9,
+        /** Extra-small text size (descriptions, secondary info) */
+        SIZE_XS: 10,
         /** Small text size */
         SIZE_SMALL: 12,
+        /** Small-medium text size (names, labels) */
+        SIZE_SM: 13,
+        /** Medium-small text size (button labels, details) */
+        SIZE_MS: 14,
         /** Medium text size */
         SIZE_MEDIUM: 16,
+        /** Medium-large text size (panel headers) */
+        SIZE_ML: 18,
         /** Large text size */
         SIZE_LARGE: 24,
         /** Extra large text size */
         SIZE_XLARGE: 32,
+        /** Title text size (wave announcements, overlays) */
+        SIZE_TITLE: 48,
+        /** Hero text size (main menu title) */
+        SIZE_HERO: 72,
     },
 
     /**

@@ -4,6 +4,7 @@
  */
 import { Container, Graphics, Text, TextStyle } from 'pixi.js';
 import { UI_STYLES } from './styles';
+import { UI_CONFIG } from '../config';
 import { TURRET_CONFIG, TurretType } from '../types/constants';
 
 /**
@@ -53,9 +54,9 @@ export class TurretMenu {
 
             // Button background
             const bg = new Graphics();
-            bg.roundRect(0, 0, buttonWidth, buttonHeight, 8);
-            bg.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.7 });
-            bg.stroke({ color: UI_STYLES.COLORS.SECONDARY, width: 2 });
+            bg.roundRect(0, 0, buttonWidth, buttonHeight, UI_CONFIG.PANEL_STYLE.CORNER_RADIUS);
+            bg.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: UI_CONFIG.PANEL_STYLE.BG_ALPHA });
+            bg.stroke({ color: UI_STYLES.COLORS.SECONDARY, width: UI_CONFIG.PANEL_STYLE.BORDER_WIDTH });
             button.addChild(bg);
 
             // Turret icon/visual (simple geometric representation)
@@ -129,13 +130,13 @@ export class TurretMenu {
 
             button.on('pointerover', () => {
                 if (this.currentResources >= config.cost) {
-                    bg.stroke({ color: UI_STYLES.COLORS.PRIMARY, width: 3 });
+                    bg.stroke({ color: UI_STYLES.COLORS.PRIMARY, width: UI_CONFIG.PANEL_STYLE.HOVER_BORDER_WIDTH });
                 }
             });
 
             button.on('pointerout', () => {
                 if (this.currentResources >= config.cost) {
-                    bg.stroke({ color: UI_STYLES.COLORS.SECONDARY, width: 2 });
+                    bg.stroke({ color: UI_STYLES.COLORS.SECONDARY, width: UI_CONFIG.PANEL_STYLE.BORDER_WIDTH });
                 }
             });
 
