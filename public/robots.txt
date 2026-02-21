@@ -1,0 +1,48 @@
+# Kobayashi Maru - Star Trek Tower Defense Game
+# https://chayuto.github.io/kobayashi-maru/
+
+# Allow all standard search engine crawlers
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://chayuto.github.io/kobayashi-maru/sitemap.xml
+
+# AI / LLM Crawlers - Explicitly allowed
+# These crawlers power AI assistants and search features
+
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: Anthropic-AI
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Googlebot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Cohere-AI
+Allow: /
+
+User-agent: Meta-ExternalAgent
+Allow: /
+
+User-agent: Bytespider
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /

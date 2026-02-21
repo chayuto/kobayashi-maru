@@ -1,0 +1,33 @@
+# Kobayashi Maru
+
+> A Star Trek-themed endless tower defense game built with TypeScript, PixiJS 8, and bitECS.
+
+Play the game: https://chayuto.github.io/kobayashi-maru/
+Source code: https://github.com/chayuto/kobayashi-maru
+
+## About
+
+Kobayashi Maru is a free, browser-based tower defense game set in the Star Trek universe. Players defend the civilian freighter Kobayashi Maru against infinite waves of enemy ships by strategically placing and upgrading turrets. The game features six enemy factions, six turret types, a combo scoring system, achievements, and procedurally generated waves that increase in difficulty.
+
+## Gameplay
+
+- Defend the Kobayashi Maru from endless enemy waves
+- Place and upgrade 6 turret types: Phaser Array, Torpedo Launcher, Disruptor Bank, Tetryon Beam, Plasma Cannon, Polaron Beam
+- Fight 5 enemy factions: Klingon, Romulan, Borg, Tholian, Species 8472
+- Boss encounters every 5 waves with unique abilities
+- Combo system with kill streak multipliers up to 10x
+- 8 enemy special abilities: Teleport, Cloak, Shield Regeneration, Split on Death, Summon Reinforcements, Energy Drain, EMP Burst, Ramming Speed
+- 8 unlockable achievements with persistent progress
+
+## Technology
+
+- TypeScript (strict mode)
+- PixiJS 8 with WebGPU preferred, WebGL fallback
+- bitECS 0.4.0 entity-component-system architecture
+- Web Audio API for procedural sound generation
+- Vite build tool
+- MIT License
+
+## Extended Info
+
+For more details, see: https://chayuto.github.io/kobayashi-maru/llms-full.txt

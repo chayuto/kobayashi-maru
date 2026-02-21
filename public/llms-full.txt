@@ -1,0 +1,109 @@
+# Kobayashi Maru - Complete Reference
+
+> A Star Trek-themed endless tower defense game built with TypeScript, PixiJS 8, and bitECS.
+
+Play the game: https://chayuto.github.io/kobayashi-maru/
+Source code: https://github.com/chayuto/kobayashi-maru
+License: MIT
+
+## Overview
+
+Kobayashi Maru is a free, open-source browser game where the player defends the civilian freighter Kobayashi Maru against infinite enemy waves by placing and upgrading turrets. Named after the famous no-win scenario from Star Trek, it is an endless survival tower defense game — the goal is to survive as long as possible against ever-increasing odds.
+
+The game runs entirely in the browser with no server requirements. It uses modern web technologies including WebGPU (with WebGL fallback), procedural audio synthesis, and a high-performance entity-component-system (ECS) architecture supporting 5,000+ concurrent entities at 60 FPS.
+
+## How to Play
+
+1. Defend the Kobayashi Maru (center ship) from endless enemy waves
+2. Click turret buttons on the right panel to select a turret type
+3. Place turrets by clicking on the battlefield
+4. Earn Matter (resources) by defeating enemies
+5. Upgrade turrets by clicking on placed turrets for increased effectiveness
+6. Survive as long as possible — the game never ends
+
+### Controls
+
+- Mouse: Place turrets, select for upgrades, navigate UI
+- ESC: Cancel turret placement / Pause game
+- Backtick (`): Toggle debug overlay
+- Enter/R: Restart when game over
+
+## Turret Types
+
+| Turret | Cost | Damage | Fire Rate | Range | Special |
+|--------|------|--------|-----------|-------|---------|
+| Phaser Array | 100 | 10 | 4/sec | 200 | High fire rate |
+| Torpedo Launcher | 200 | 50 | 0.5/sec | 350 | Highest damage |
+| Disruptor Bank | 150 | 15 | 2/sec | 250 | Balanced stats |
+| Tetryon Beam | 150 | 12 | 3/sec | 220 | 3x shield damage |
+| Plasma Cannon | 180 | 8 | 1/sec | 200 | Burning DOT |
+| Polaron Beam | 160 | 11 | 2.5/sec | 230 | Stacking slow |
+
+### Upgrade Paths (5 Per Turret)
+
+- Weapon Power: +25% / +50% / +100% damage
+- Targeting Range: +20% / +40% / +80% range
+- Fire Rate: +30% / +60% / +120% fire rate
+- Multi-Target: 2 / 3 simultaneous targets
+- Special: Turret-specific unique enhancements (3 levels)
+
+## Enemy Factions
+
+| Faction | Visual | Behavior |
+|---------|--------|----------|
+| Klingon | Red Triangle | Direct assault, aggressive approach |
+| Romulan | Green Crescent | Evasive strafing movement |
+| Borg | Green Square | Coordinated swarm behavior |
+| Tholian | Orange Diamond | Flanking maneuvers |
+| Species 8472 | Purple Y-shape | Targets turrets first (Hunter) |
+
+### Enemy Variants
+
+- Normal: Base stats
+- Elite: 3x health, 1.5x damage, special glow effect
+- Boss: 10x health, 2x damage, unique abilities (every 5 waves)
+
+### Enemy Special Abilities
+
+1. Teleport: Instant relocation
+2. Cloak: Temporary invisibility
+3. Shield Regeneration: Self-healing shields
+4. Split on Death: Spawns smaller units
+5. Summon Reinforcements: Calls additional enemies
+6. Energy Drain: Reduces turret effectiveness
+7. EMP Burst: Area-of-effect disable
+8. Ramming Speed: Charges directly at target
+
+## Game Systems
+
+- Wave System: 10 predefined waves + infinite procedural generation
+- Combo System: Kill streaks with score multipliers (up to 10x)
+- Achievement System: 8 achievements with localStorage persistence
+- 50 unique Star Trek story texts displayed per wave
+
+## Technical Architecture
+
+- Language: TypeScript (strict mode)
+- Renderer: PixiJS 8 (WebGPU preferred, WebGL fallback)
+- ECS: bitECS 0.4.0 for entity-component-system architecture
+- Build: Vite
+- Audio: Web Audio API with procedural sound generation
+- Testing: Vitest (unit), Playwright (E2E)
+- Performance: 60 FPS target with 5,000+ entities, spatial hashing, entity pooling
+
+## Project Structure
+
+```
+src/
+├── core/           # Game facade, managers, loop, services
+├── ecs/            # Components, entity factory, world, templates
+├── systems/        # 14+ ECS systems (AI, combat, damage, movement, etc.)
+├── rendering/      # PixiJS sprites, beams, particles, textures
+├── audio/          # AudioManager, SoundGenerator
+├── ui/             # HUD, panels, overlays, menus
+├── game/           # WaveManager, ScoreManager, UpgradeManager
+├── config/         # Centralized configuration
+├── collision/      # SpatialHash for collision detection
+├── services/       # DamageService, EntityPoolService, StorageService
+└── types/          # Constants, events, type definitions
+```
