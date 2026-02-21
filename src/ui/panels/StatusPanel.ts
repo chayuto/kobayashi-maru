@@ -50,8 +50,8 @@ export class StatusPanel {
     private eventBus: EventBus;
     private boundHandleAlert: (payload: AlertLevelChangedPayload) => void;
 
-    private static readonly WIDTH = 280;
-    private static readonly HEIGHT = 120;
+    private static readonly WIDTH = UI_CONFIG.PANELS.STATUS.WIDTH;
+    private static readonly HEIGHT = UI_CONFIG.PANELS.STATUS.HEIGHT;
     private static readonly BAR_WIDTH = 200;
     private static readonly BAR_HEIGHT = 20;
 
@@ -85,9 +85,9 @@ export class StatusPanel {
         if (this.initialized) return;
 
         // Background
-        this.background.roundRect(0, 0, StatusPanel.WIDTH, StatusPanel.HEIGHT, 8);
+        this.background.roundRect(0, 0, StatusPanel.WIDTH, StatusPanel.HEIGHT, UI_CONFIG.PANEL_STYLE.CORNER_RADIUS);
         this.background.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.8 });
-        this.background.stroke({ color: UI_STYLES.COLORS.PRIMARY, width: 2 });
+        this.background.stroke({ color: UI_STYLES.COLORS.PRIMARY, width: UI_CONFIG.PANEL_STYLE.BORDER_WIDTH });
 
         // Title
         this.titleText.position.set(StatusPanel.WIDTH / 2 - this.titleText.width / 2, 8);
@@ -135,11 +135,11 @@ export class StatusPanel {
 
     private redrawBorder(): void {
         this.background.clear();
-        this.background.roundRect(0, 0, StatusPanel.WIDTH, StatusPanel.HEIGHT, 8);
+        this.background.roundRect(0, 0, StatusPanel.WIDTH, StatusPanel.HEIGHT, UI_CONFIG.PANEL_STYLE.CORNER_RADIUS);
         this.background.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.8 });
         this.background.stroke({
             color: this.getAlertBorderColor(),
-            width: this.alertLevel === AlertLevel.CRITICAL ? 3 : 2
+            width: this.alertLevel === AlertLevel.CRITICAL ? UI_CONFIG.PANEL_STYLE.HOVER_BORDER_WIDTH : UI_CONFIG.PANEL_STYLE.BORDER_WIDTH
         });
     }
 

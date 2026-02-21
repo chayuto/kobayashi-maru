@@ -7,6 +7,7 @@
  */
 import { Container, Graphics, Text, TextStyle } from 'pixi.js';
 import { UI_STYLES } from '../styles';
+import { UI_CONFIG } from '../../config';
 import { UIAnimator } from '../animation/UIAnimator';
 
 /**
@@ -35,8 +36,8 @@ export class ResourcePanel {
     private initialized: boolean = false;
     private previousResources: number = 0;
 
-    private static readonly WIDTH = 150;
-    private static readonly HEIGHT = 70;
+    private static readonly WIDTH = UI_CONFIG.PANELS.RESOURCE.WIDTH;
+    private static readonly HEIGHT = UI_CONFIG.PANELS.RESOURCE.HEIGHT;
 
     constructor() {
         this.container = new Container();
@@ -64,9 +65,9 @@ export class ResourcePanel {
     init(parent: Container): void {
         if (this.initialized) return;
 
-        this.background.roundRect(0, 0, ResourcePanel.WIDTH, ResourcePanel.HEIGHT, 8);
-        this.background.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.7 });
-        this.background.stroke({ color: UI_STYLES.COLORS.SECONDARY, width: 2 });
+        this.background.roundRect(0, 0, ResourcePanel.WIDTH, ResourcePanel.HEIGHT, UI_CONFIG.PANEL_STYLE.CORNER_RADIUS);
+        this.background.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: UI_CONFIG.PANEL_STYLE.BG_ALPHA });
+        this.background.stroke({ color: UI_STYLES.COLORS.SECONDARY, width: UI_CONFIG.PANEL_STYLE.BORDER_WIDTH });
 
         this.labelText.position.set(10, 8);
         this.amountText.position.set(10, 28);

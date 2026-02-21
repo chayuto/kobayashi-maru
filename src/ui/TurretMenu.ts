@@ -4,6 +4,7 @@
  */
 import { Container, Graphics, Text, TextStyle } from 'pixi.js';
 import { UI_STYLES } from './styles';
+import { UI_CONFIG } from '../config';
 import { TURRET_CONFIG, TurretType } from '../types/constants';
 
 /**
@@ -38,8 +39,8 @@ export class TurretMenu {
      */
     private createMenu(): void {
         const padding = UI_STYLES.PADDING;
-        const buttonWidth = 240; // Increased to fit icon
-        const buttonHeight = 75; // Reduced from 95 to fit all 6 weapons
+        const buttonWidth = UI_CONFIG.PANELS.TURRET_MENU.WIDTH;
+        const buttonHeight = 75;
         const startY = 0; // Buttons start at top of menu container
 
         // Create a button for each turret type
@@ -53,9 +54,9 @@ export class TurretMenu {
 
             // Button background
             const bg = new Graphics();
-            bg.roundRect(0, 0, buttonWidth, buttonHeight, 8);
-            bg.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.7 });
-            bg.stroke({ color: UI_STYLES.COLORS.SECONDARY, width: 2 });
+            bg.roundRect(0, 0, buttonWidth, buttonHeight, UI_CONFIG.PANEL_STYLE.CORNER_RADIUS);
+            bg.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: UI_CONFIG.PANEL_STYLE.BG_ALPHA });
+            bg.stroke({ color: UI_STYLES.COLORS.SECONDARY, width: UI_CONFIG.PANEL_STYLE.BORDER_WIDTH });
             button.addChild(bg);
 
             // Turret icon/visual (simple geometric representation)
@@ -66,7 +67,7 @@ export class TurretMenu {
             // Turret Name
             const nameStyle = new TextStyle({
                 fontFamily: UI_STYLES.FONT_FAMILY,
-                fontSize: 13, // Slightly smaller
+                fontSize: UI_CONFIG.FONTS.SIZE_SM,
                 fill: UI_STYLES.COLORS.SECONDARY,
                 fontWeight: 'bold'
             });
@@ -77,7 +78,7 @@ export class TurretMenu {
             // Description
             const descStyle = new TextStyle({
                 fontFamily: UI_STYLES.FONT_FAMILY,
-                fontSize: 10, // Smaller
+                fontSize: UI_CONFIG.FONTS.SIZE_XS,
                 fill: 0xCCCCCC,
                 wordWrap: true,
                 wordWrapWidth: buttonWidth - 56
@@ -89,8 +90,8 @@ export class TurretMenu {
             // Stats (Damage/Range/Rate)
             const statsStyle = new TextStyle({
                 fontFamily: UI_STYLES.FONT_FAMILY,
-                fontSize: 9,
-                fill: 0x99CCFF
+                fontSize: UI_CONFIG.FONTS.SIZE_TINY,
+                fill: UI_CONFIG.COLORS.LABEL
             });
             const statsText = new Text({
                 text: `DMG:${config.damage} RNG:${config.range} RATE:${config.fireRate}/s`,
@@ -103,7 +104,7 @@ export class TurretMenu {
             if (config.special) {
                 const specialStyle = new TextStyle({
                     fontFamily: UI_STYLES.FONT_FAMILY,
-                    fontSize: 9,
+                    fontSize: UI_CONFIG.FONTS.SIZE_TINY,
                     fill: UI_STYLES.COLORS.PRIMARY,
                     fontStyle: 'italic'
                 });
@@ -115,7 +116,7 @@ export class TurretMenu {
             // Cost
             const costStyle = new TextStyle({
                 fontFamily: UI_STYLES.FONT_FAMILY,
-                fontSize: 13,
+                fontSize: UI_CONFIG.FONTS.SIZE_SM,
                 fill: UI_STYLES.COLORS.PRIMARY,
                 fontWeight: 'bold'
             });
@@ -129,13 +130,13 @@ export class TurretMenu {
 
             button.on('pointerover', () => {
                 if (this.currentResources >= config.cost) {
-                    bg.stroke({ color: UI_STYLES.COLORS.PRIMARY, width: 3 });
+                    bg.stroke({ color: UI_STYLES.COLORS.PRIMARY, width: UI_CONFIG.PANEL_STYLE.HOVER_BORDER_WIDTH });
                 }
             });
 
             button.on('pointerout', () => {
                 if (this.currentResources >= config.cost) {
-                    bg.stroke({ color: UI_STYLES.COLORS.SECONDARY, width: 2 });
+                    bg.stroke({ color: UI_STYLES.COLORS.SECONDARY, width: UI_CONFIG.PANEL_STYLE.BORDER_WIDTH });
                 }
             });
 

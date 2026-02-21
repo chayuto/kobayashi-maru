@@ -57,11 +57,11 @@ export class DamageNumberRenderer {
 
     private createText(): Text {
         const style = new TextStyle({
-            fontFamily: 'Courier New, monospace',
+            fontFamily: this.config.FONT_FAMILY,
             fontSize: this.config.FONT_SIZE,
             fill: 0xFFFFFF,
             fontWeight: 'bold',
-            stroke: { color: 0x000000, width: 3 },
+            stroke: { color: this.config.STROKE_COLOR, width: this.config.STROKE_WIDTH },
         });
         const text = new Text({ text: '', style });
         text.anchor.set(0.5, 0.5);

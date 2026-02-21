@@ -4,10 +4,10 @@
  */
 import { query, hasComponent, World } from 'bitecs';
 import { Position, Velocity, Health, Shield, SpecialAbility, Faction } from '../ecs/components';
-import { AbilityType, ABILITY_CONFIG, GAME_CONFIG, FactionId } from '../types/constants';
+import { AbilityType, ABILITY_CONFIG as ABILITY_TYPE_CONFIG, GAME_CONFIG, FactionId } from '../types/constants';
 import type { AbilityTypeId } from '../types/constants';
 import { assertNever } from '../types/utility';
-import { AI_CONFIG } from '../config';
+import { AI_CONFIG, ABILITY_CONFIG } from '../config';
 import { createEnemy } from '../ecs/entityFactory';
 import type { GameWorld } from '../ecs/world';
 import { ParticleSystem } from '../rendering';
@@ -98,7 +98,7 @@ function processTeleportAbility(
   const healthPercent = Health.current[entity] / Health.max[entity];
   const isTargeted = isBeingTargeted();
 
-  if (healthPercent < 0.3 || isTargeted) {
+  if (healthPercent < ABILITY_CONFIG.TELEPORT.HEALTH_THRESHOLD || isTargeted) {
     // Teleport to random safe location
     const newPos = findSafePosition(spatialHash);
 
@@ -107,14 +107,14 @@ function processTeleportAbility(
       particleSystem.spawn({
         x: Position.x[entity],
         y: Position.y[entity],
-        count: 30,
-        speed: { min: 100, max: 200 },
-        life: { min: 0.3, max: 0.6 },
-        size: { min: 4, max: 10 },
+        count: ABILITY_CONFIG.TELEPORT.DEPARTURE_PARTICLES.COUNT,
+        speed: { min: ABILITY_CONFIG.TELEPORT.DEPARTURE_PARTICLES.SPEED.MIN, max: ABILITY_CONFIG.TELEPORT.DEPARTURE_PARTICLES.SPEED.MAX },
+        life: { min: ABILITY_CONFIG.TELEPORT.DEPARTURE_PARTICLES.LIFE.MIN, max: ABILITY_CONFIG.TELEPORT.DEPARTURE_PARTICLES.LIFE.MAX },
+        size: { min: ABILITY_CONFIG.TELEPORT.DEPARTURE_PARTICLES.SIZE.MIN, max: ABILITY_CONFIG.TELEPORT.DEPARTURE_PARTICLES.SIZE.MAX },
         colorGradient: {
           stops: [
-            { time: 0, color: 0xCC99FF, alpha: 1.0 },
-            { time: 1.0, color: 0x6633CC, alpha: 0.0 }
+            { time: 0, color: ABILITY_CONFIG.TELEPORT.DEPARTURE_PARTICLES.COLOR_START, alpha: 1.0 },
+            { time: 1.0, color: ABILITY_CONFIG.TELEPORT.DEPARTURE_PARTICLES.COLOR_END, alpha: 0.0 }
           ]
         },
         spread: Math.PI * 2
@@ -130,14 +130,14 @@ function processTeleportAbility(
       particleSystem.spawn({
         x: newPos.x,
         y: newPos.y,
-        count: 30,
-        speed: { min: 50, max: 150 },
-        life: { min: 0.3, max: 0.6 },
-        size: { min: 4, max: 10 },
+        count: ABILITY_CONFIG.TELEPORT.ARRIVAL_PARTICLES.COUNT,
+        speed: { min: ABILITY_CONFIG.TELEPORT.ARRIVAL_PARTICLES.SPEED.MIN, max: ABILITY_CONFIG.TELEPORT.ARRIVAL_PARTICLES.SPEED.MAX },
+        life: { min: ABILITY_CONFIG.TELEPORT.ARRIVAL_PARTICLES.LIFE.MIN, max: ABILITY_CONFIG.TELEPORT.ARRIVAL_PARTICLES.LIFE.MAX },
+        size: { min: ABILITY_CONFIG.TELEPORT.ARRIVAL_PARTICLES.SIZE.MIN, max: ABILITY_CONFIG.TELEPORT.ARRIVAL_PARTICLES.SIZE.MAX },
         colorGradient: {
           stops: [
-            { time: 0, color: 0x6633CC, alpha: 0.0 },
-            { time: 1.0, color: 0xCC99FF, alpha: 1.0 }
+            { time: 0, color: ABILITY_CONFIG.TELEPORT.ARRIVAL_PARTICLES.COLOR_START, alpha: 0.0 },
+            { time: 1.0, color: ABILITY_CONFIG.TELEPORT.ARRIVAL_PARTICLES.COLOR_END, alpha: 1.0 }
           ]
         },
         spread: Math.PI * 2
@@ -166,7 +166,7 @@ function processCloakAbility(
   const healthPercent = Health.current[entity] / Health.max[entity];
 
   // Activate cloak when health is low
-  if (healthPercent < 0.5 && SpecialAbility.active[entity] === 0) {
+  if (healthPercent < ABILITY_CONFIG.CLOAK.HEALTH_THRESHOLD && SpecialAbility.active[entity] === 0) {
     // Check cooldown
     if (gameTime - SpecialAbility.lastUsed[entity] < SpecialAbility.cooldown[entity]) {
       return;
@@ -179,7 +179,7 @@ function processCloakAbility(
     // TODO: Reduce sprite alpha when SpriteManager supports it
     // const spriteIndex = SpriteRef.index[entity];
     // if (spriteManager) {
-    //   spriteManager.setAlpha(spriteIndex, ABILITY_CONFIG[AbilityType.CLOAK].alphaWhileCloaked ?? 0.2);
+    //   spriteManager.setAlpha(spriteIndex, ABILITY_TYPE_CONFIG[AbilityType.CLOAK].alphaWhileCloaked ?? 0.2);
     // }
 
     // Cloak particles
@@ -187,14 +187,14 @@ function processCloakAbility(
       particleSystem.spawn({
         x: Position.x[entity],
         y: Position.y[entity],
-        count: 20,
-        speed: { min: 30, max: 80 },
-        life: { min: 0.5, max: 1.0 },
-        size: { min: 2, max: 6 },
+        count: ABILITY_CONFIG.CLOAK.PARTICLES.COUNT,
+        speed: { min: ABILITY_CONFIG.CLOAK.PARTICLES.SPEED.MIN, max: ABILITY_CONFIG.CLOAK.PARTICLES.SPEED.MAX },
+        life: { min: ABILITY_CONFIG.CLOAK.PARTICLES.LIFE.MIN, max: ABILITY_CONFIG.CLOAK.PARTICLES.LIFE.MAX },
+        size: { min: ABILITY_CONFIG.CLOAK.PARTICLES.SIZE.MIN, max: ABILITY_CONFIG.CLOAK.PARTICLES.SIZE.MAX },
         colorGradient: {
           stops: [
-            { time: 0, color: 0x00FF00, alpha: 0.8 },
-            { time: 1.0, color: 0x00FF00, alpha: 0.0 }
+            { time: 0, color: ABILITY_CONFIG.CLOAK.PARTICLES.COLOR, alpha: 0.8 },
+            { time: 1.0, color: ABILITY_CONFIG.CLOAK.PARTICLES.COLOR, alpha: 0.0 }
           ]
         },
         spread: Math.PI * 2
@@ -224,14 +224,14 @@ function processCloakAbility(
         particleSystem.spawn({
           x: Position.x[entity],
           y: Position.y[entity],
-          count: 20,
-          speed: { min: 30, max: 80 },
-          life: { min: 0.5, max: 1.0 },
-          size: { min: 2, max: 6 },
+          count: ABILITY_CONFIG.CLOAK.PARTICLES.COUNT,
+          speed: { min: ABILITY_CONFIG.CLOAK.PARTICLES.SPEED.MIN, max: ABILITY_CONFIG.CLOAK.PARTICLES.SPEED.MAX },
+          life: { min: ABILITY_CONFIG.CLOAK.PARTICLES.LIFE.MIN, max: ABILITY_CONFIG.CLOAK.PARTICLES.LIFE.MAX },
+          size: { min: ABILITY_CONFIG.CLOAK.PARTICLES.SIZE.MIN, max: ABILITY_CONFIG.CLOAK.PARTICLES.SIZE.MAX },
           colorGradient: {
             stops: [
-              { time: 0, color: 0x00FF00, alpha: 0.0 },
-              { time: 1.0, color: 0x00FF00, alpha: 0.8 }
+              { time: 0, color: ABILITY_CONFIG.CLOAK.PARTICLES.COLOR, alpha: 0.0 },
+              { time: 1.0, color: ABILITY_CONFIG.CLOAK.PARTICLES.COLOR, alpha: 0.8 }
             ]
           },
           spread: Math.PI * 2
@@ -256,23 +256,23 @@ function processShieldRegenAbility(
 
     if (currentShield < maxShield) {
       // Regen rate: 5% of max per second
-      const regenRate = maxShield * (ABILITY_CONFIG[AbilityType.SHIELD_REGEN].regenRate ?? 0.05);
+      const regenRate = maxShield * (ABILITY_TYPE_CONFIG[AbilityType.SHIELD_REGEN].regenRate ?? 0.05);
       Shield.current[entity] = Math.min(
         maxShield,
         currentShield + regenRate * deltaTime
       );
 
       // Visual feedback every 0.5s
-      if (Math.floor(gameTime * 2) !== Math.floor((gameTime - deltaTime) * 2)) {
+      if (Math.floor(gameTime * ABILITY_CONFIG.SHIELD_REGEN.VISUAL_FREQUENCY) !== Math.floor((gameTime - deltaTime) * ABILITY_CONFIG.SHIELD_REGEN.VISUAL_FREQUENCY)) {
         if (particleSystem) {
           particleSystem.spawn({
             x: Position.x[entity],
             y: Position.y[entity],
-            count: 5,
-            speed: { min: 20, max: 50 },
-            life: { min: 0.2, max: 0.4 },
-            size: { min: 2, max: 4 },
-            color: 0x00CCFF,
+            count: ABILITY_CONFIG.SHIELD_REGEN.PARTICLES.COUNT,
+            speed: { min: ABILITY_CONFIG.SHIELD_REGEN.PARTICLES.SPEED.MIN, max: ABILITY_CONFIG.SHIELD_REGEN.PARTICLES.SPEED.MAX },
+            life: { min: ABILITY_CONFIG.SHIELD_REGEN.PARTICLES.LIFE.MIN, max: ABILITY_CONFIG.SHIELD_REGEN.PARTICLES.LIFE.MAX },
+            size: { min: ABILITY_CONFIG.SHIELD_REGEN.PARTICLES.SIZE.MIN, max: ABILITY_CONFIG.SHIELD_REGEN.PARTICLES.SIZE.MAX },
+            color: ABILITY_CONFIG.SHIELD_REGEN.PARTICLES.COLOR,
             spread: Math.PI * 2
           });
         }
@@ -298,23 +298,23 @@ function processSplitAbility(
   const y = Position.y[entity];
   const faction = Faction.id[entity];
 
-  const config = ABILITY_CONFIG[AbilityType.SPLIT];
+  const config = ABILITY_TYPE_CONFIG[AbilityType.SPLIT];
   const splitCount = config.splitCount ?
     config.splitCount.min + Math.floor(Math.random() * (config.splitCount.max - config.splitCount.min + 1)) :
     2;
 
   for (let i = 0; i < splitCount; i++) {
     const angle = (Math.PI * 2 * i) / splitCount;
-    const offsetX = Math.cos(angle) * 50;
-    const offsetY = Math.sin(angle) * 50;
+    const offsetX = Math.cos(angle) * ABILITY_CONFIG.SPLIT.SPAWN_OFFSET;
+    const offsetY = Math.sin(angle) * ABILITY_CONFIG.SPLIT.SPAWN_OFFSET;
 
     // Spawn smaller enemy based on faction
     const newEnemy = createEnemyByFaction(world, faction, x + offsetX, y + offsetY);
 
     if (newEnemy !== -1) {
       // Reduce stats (half of original)
-      Health.max[newEnemy] *= 0.5;
-      Health.current[newEnemy] *= 0.5;
+      Health.max[newEnemy] *= ABILITY_CONFIG.SPLIT.STAT_MULTIPLIER;
+      Health.current[newEnemy] *= ABILITY_CONFIG.SPLIT.STAT_MULTIPLIER;
 
       // TODO: Scale down sprite when SpriteManager supports it
       // const spriteIndex = SpriteRef.index[newEnemy];
@@ -329,10 +329,10 @@ function processSplitAbility(
     particleSystem.spawn({
       x,
       y,
-      count: 40,
-      speed: { min: 150, max: 300 },
-      life: { min: 0.3, max: 0.6 },
-      size: { min: 3, max: 8 },
+      count: ABILITY_CONFIG.SPLIT.PARTICLES.COUNT,
+      speed: { min: ABILITY_CONFIG.SPLIT.PARTICLES.SPEED.MIN, max: ABILITY_CONFIG.SPLIT.PARTICLES.SPEED.MAX },
+      life: { min: ABILITY_CONFIG.SPLIT.PARTICLES.LIFE.MIN, max: ABILITY_CONFIG.SPLIT.PARTICLES.LIFE.MAX },
+      size: { min: ABILITY_CONFIG.SPLIT.PARTICLES.SIZE.MIN, max: ABILITY_CONFIG.SPLIT.PARTICLES.SIZE.MAX },
       color: getFactionColor(faction),
       spread: Math.PI * 2
     });
@@ -352,19 +352,19 @@ function processSummonAbility(
     return;
   }
 
-  // Check if health is below 50%
+  // Check if health is below threshold
   const healthPercent = Health.current[entity] / Health.max[entity];
-  if (healthPercent < 0.5) {
+  if (healthPercent < ABILITY_CONFIG.SUMMON.HEALTH_THRESHOLD) {
     const x = Position.x[entity];
     const y = Position.y[entity];
     const faction = Faction.id[entity];
 
-    // Spawn 2-3 reinforcements
-    const summonCount = 2 + Math.floor(Math.random() * 2);
+    // Spawn reinforcements
+    const summonCount = ABILITY_CONFIG.SUMMON.COUNT.MIN + Math.floor(Math.random() * (ABILITY_CONFIG.SUMMON.COUNT.MAX - ABILITY_CONFIG.SUMMON.COUNT.MIN));
 
     for (let i = 0; i < summonCount; i++) {
       const angle = (Math.PI * 2 * i) / summonCount;
-      const spawnRadius = ABILITY_CONFIG[AbilityType.SUMMON].range ?? 100;
+      const spawnRadius = ABILITY_TYPE_CONFIG[AbilityType.SUMMON].range ?? 100;
       const offsetX = Math.cos(angle) * spawnRadius;
       const offsetY = Math.sin(angle) * spawnRadius;
 
@@ -379,10 +379,10 @@ function processSummonAbility(
       particleSystem.spawn({
         x,
         y,
-        count: 50,
-        speed: { min: 100, max: 200 },
-        life: { min: 0.5, max: 1.0 },
-        size: { min: 4, max: 8 },
+        count: ABILITY_CONFIG.SUMMON.PARTICLES.COUNT,
+        speed: { min: ABILITY_CONFIG.SUMMON.PARTICLES.SPEED.MIN, max: ABILITY_CONFIG.SUMMON.PARTICLES.SPEED.MAX },
+        life: { min: ABILITY_CONFIG.SUMMON.PARTICLES.LIFE.MIN, max: ABILITY_CONFIG.SUMMON.PARTICLES.LIFE.MAX },
+        size: { min: ABILITY_CONFIG.SUMMON.PARTICLES.SIZE.MIN, max: ABILITY_CONFIG.SUMMON.PARTICLES.SIZE.MAX },
         color: getFactionColor(faction),
         spread: Math.PI * 2
       });
@@ -420,15 +420,15 @@ function processRammingSpeedAbility(
     const dy = centerY - Position.y[entity];
     const distance = Math.sqrt(dx * dx + dy * dy);
 
-    if (distance < 400 && gameTime - SpecialAbility.lastUsed[entity] >= SpecialAbility.cooldown[entity]) {
+    if (distance < ABILITY_CONFIG.RAMMING.ACTIVATION_DISTANCE && gameTime - SpecialAbility.lastUsed[entity] >= SpecialAbility.cooldown[entity]) {
       // Activate ramming speed
       SpecialAbility.active[entity] = 1;
       SpecialAbility.lastUsed[entity] = gameTime;
 
       // Double velocity
       if (hasComponent(world, entity, Velocity)) {
-        Velocity.x[entity] *= 2;
-        Velocity.y[entity] *= 2;
+        Velocity.x[entity] *= ABILITY_CONFIG.RAMMING.SPEED_MULTIPLIER;
+        Velocity.y[entity] *= ABILITY_CONFIG.RAMMING.SPEED_MULTIPLIER;
       }
 
       // Trail particles
@@ -436,11 +436,11 @@ function processRammingSpeedAbility(
         particleSystem.spawn({
           x: Position.x[entity],
           y: Position.y[entity],
-          count: 20,
-          speed: { min: 50, max: 100 },
-          life: { min: 0.3, max: 0.6 },
-          size: { min: 3, max: 6 },
-          color: 0xFF3300,
+          count: ABILITY_CONFIG.RAMMING.PARTICLES.COUNT,
+          speed: { min: ABILITY_CONFIG.RAMMING.PARTICLES.SPEED.MIN, max: ABILITY_CONFIG.RAMMING.PARTICLES.SPEED.MAX },
+          life: { min: ABILITY_CONFIG.RAMMING.PARTICLES.LIFE.MIN, max: ABILITY_CONFIG.RAMMING.PARTICLES.LIFE.MAX },
+          size: { min: ABILITY_CONFIG.RAMMING.PARTICLES.SIZE.MIN, max: ABILITY_CONFIG.RAMMING.PARTICLES.SIZE.MAX },
+          color: ABILITY_CONFIG.RAMMING.PARTICLES.COLOR,
           spread: Math.PI * 2
         });
       }
@@ -454,8 +454,8 @@ function processRammingSpeedAbility(
 
       // Restore normal velocity
       if (hasComponent(world, entity, Velocity)) {
-        Velocity.x[entity] *= 0.5;
-        Velocity.y[entity] *= 0.5;
+        Velocity.x[entity] *= ABILITY_CONFIG.RAMMING.RESTORE_MULTIPLIER;
+        Velocity.y[entity] *= ABILITY_CONFIG.RAMMING.RESTORE_MULTIPLIER;
       }
     }
   }
@@ -470,10 +470,10 @@ function processRammingSpeedAbility(
  */
 function findSafePosition(spatialHash?: SpatialHash): { x: number; y: number } {
   const margin = AI_CONFIG.TELEPORT.EDGE_MARGIN;
-  const safeDistance = ABILITY_CONFIG[AbilityType.TELEPORT].range ?? 300;
+  const safeDistance = ABILITY_TYPE_CONFIG[AbilityType.TELEPORT].range ?? 300;
   let attempts = 0;
 
-  while (attempts < 10) {
+  while (attempts < ABILITY_CONFIG.TELEPORT.MAX_ATTEMPTS) {
     const x = margin + Math.random() * (GAME_CONFIG.WORLD_WIDTH - margin * 2);
     const y = margin + Math.random() * (GAME_CONFIG.WORLD_HEIGHT - margin * 2);
 
@@ -547,16 +547,16 @@ function createEnemyByFaction(world: World, faction: number, x: number, y: numbe
 function getFactionColor(faction: number): number {
   switch (faction) {
     case FactionId.KLINGON:
-      return 0xDD4444;
+      return ABILITY_CONFIG.FACTION_COLORS.KLINGON;
     case FactionId.ROMULAN:
-      return 0x99CC33;
+      return ABILITY_CONFIG.FACTION_COLORS.ROMULAN;
     case FactionId.BORG:
-      return 0x22EE22;
+      return ABILITY_CONFIG.FACTION_COLORS.BORG;
     case FactionId.THOLIAN:
-      return 0xFF7700;
+      return ABILITY_CONFIG.FACTION_COLORS.THOLIAN;
     case FactionId.SPECIES_8472:
-      return 0xCC99FF;
+      return ABILITY_CONFIG.FACTION_COLORS.SPECIES_8472;
     default:
-      return 0xFFFFFF;
+      return ABILITY_CONFIG.FACTION_COLORS.DEFAULT;
   }
 }

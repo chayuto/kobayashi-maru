@@ -15,6 +15,7 @@ import {
 } from '../ecs/components';
 import { EventBus } from '../core/EventBus';
 import { GameEventType } from '../types/events';
+import { COMBAT_CONFIG } from '../config';
 
 /**
  * Process all status effects
@@ -115,7 +116,7 @@ function processDrained(world: GameWorld, deltaTime: number): void {
                 });
             } else {
                 // Reset duration for remaining stacks
-                DrainedStatus.duration[eid] = 3.0; // 3 second duration per stack
+                DrainedStatus.duration[eid] = COMBAT_CONFIG.STATUS_EFFECTS.DRAIN.DURATION; // 3 second duration per stack
             }
         }
     }
@@ -152,7 +153,7 @@ export function applyBurning(
     damagePerTick: number,
     duration: number
 ): void {
-    const tickInterval = 1.0; // 1 second per tick
+    const tickInterval = COMBAT_CONFIG.STATUS_EFFECTS.BURNING.TICK_INTERVAL; // 1 second per tick
     const ticks = Math.floor(duration / tickInterval);
 
     // Add component if not already present
@@ -211,7 +212,7 @@ export function applyDrained(
     eid: number,
     duration: number
 ): void {
-    const maxStacks = 3;
+    const maxStacks = COMBAT_CONFIG.STATUS_EFFECTS.DRAIN.MAX_STACKS;
 
     // Add component if not already present
     if (!hasComponent(world, eid, DrainedStatus)) {
@@ -224,7 +225,7 @@ export function applyDrained(
     DrainedStatus.duration[eid] = duration;
 
     // Apply speed reduction (10% per stack)
-    const slowAmount = 0.1;
+    const slowAmount = COMBAT_CONFIG.STATUS_EFFECTS.DRAIN.SLOW_PER_STACK;
     Velocity.x[eid] *= (1 - slowAmount);
     Velocity.y[eid] *= (1 - slowAmount);
 

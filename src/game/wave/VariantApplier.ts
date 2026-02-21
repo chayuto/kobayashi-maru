@@ -8,6 +8,7 @@
  */
 
 import { addComponent, hasComponent } from 'bitecs';
+import { WAVE_CONFIG } from '../../config';
 import { SpriteManager } from '../../rendering/spriteManager';
 import { EnemyRank, RANK_MULTIPLIERS, ABILITY_CONFIG } from '../../types/constants';
 import { Health, Shield, EnemyVariant, SpecialAbility, SpriteRef, EnemyWeapon } from '../../ecs/components';
@@ -52,7 +53,7 @@ export class VariantApplier {
         }
 
         // Determine elite chance (10% base + 1% per wave)
-        const eliteChance = 0.1 + (currentWave * 0.01);
+        const eliteChance = WAVE_CONFIG.ELITE_CHANCE.BASE + (currentWave * WAVE_CONFIG.ELITE_CHANCE.PER_WAVE);
         const isElite = Math.random() < eliteChance;
 
         if (isElite) {

@@ -1,6 +1,7 @@
 import { Application, Container, Graphics } from 'pixi.js';
 import { World, query } from 'bitecs';
 import { Health, Position } from '../ecs/components';
+import { RENDERING_CONFIG } from '../config';
 
 export class HealthBarRenderer {
     private container: Container;
@@ -36,7 +37,7 @@ export class HealthBarRenderer {
             // Only show health bar if damaged
             if (current < max) {
                 const x = Position.x[eid];
-                const y = Position.y[eid] - 20; // Above entity
+                const y = Position.y[eid] + RENDERING_CONFIG.HEALTH_BAR.Y_OFFSET;
                 this.showHealthBar(eid, current, max, x, y);
             } else {
                 this.hideHealthBar(eid);
@@ -52,23 +53,22 @@ export class HealthBarRenderer {
             this.bars.set(eid, bar);
         }
 
-        const width = 32;
-        const height = 4;
+        const { WIDTH: width, HEIGHT: height, BACKGROUND_COLOR, COLORS, THRESHOLDS } = RENDERING_CONFIG.HEALTH_BAR;
         const percent = Math.max(0, Math.min(1, current / max));
 
         bar.clear();
 
-        // Background (black)
-        bar.beginFill(0x000000);
+        // Background
+        bar.beginFill(BACKGROUND_COLOR);
         bar.drawRect(-width / 2, -height / 2, width, height);
         bar.endFill();
 
         // Foreground color based on health
-        let color = 0x00FF00; // Green
-        if (percent < 0.25) {
-            color = 0xFF0000; // Red
-        } else if (percent < 0.5) {
-            color = 0xFFFF00; // Yellow
+        let color: number = COLORS.FULL;
+        if (percent < THRESHOLDS.CRITICAL) {
+            color = COLORS.CRITICAL;
+        } else if (percent < THRESHOLDS.MEDIUM) {
+            color = COLORS.MEDIUM;
         }
 
         // Foreground

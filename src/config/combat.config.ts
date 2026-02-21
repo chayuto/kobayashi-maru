@@ -47,6 +47,15 @@ export const COMBAT_CONFIG = {
             PLASMA: 8,
             DEFAULT: 8,
         },
+        /** Beam colors by turret type */
+        COLORS: {
+            PHASER: 0xFF9900,
+            DISRUPTOR: 0x00FF00,
+            TORPEDO: 0xFF0000,
+            TETRYON: 0x00CCFF,
+            PLASMA: 0xFF00FF,
+            POLARON: 0xFFFF00,
+        },
     },
 
     /**
@@ -65,6 +74,27 @@ export const COMBAT_CONFIG = {
         DEFAULT_SPEED: 300,
         /** Default lifetime in seconds */
         DEFAULT_LIFETIME: 5,
+    },
+    /**
+     * Status effect parameters applied by weapons.
+     */
+    STATUS_EFFECTS: {
+        BURNING: { DAMAGE_PER_TICK: 4.0, DURATION: 5.0, TICK_INTERVAL: 1.0 },
+        SLOW: { PERCENT: 0.3, DURATION: 3.0 },
+        DRAIN: { DURATION: 3.0, MAX_STACKS: 3, SLOW_PER_STACK: 0.1 },
+        DISABLE: { DURATION: 2.0, SYSTEMS: 1 },
+    },
+
+    /**
+     * Weapon fire audio volume per turret type (0.0 – 1.0).
+     */
+    AUDIO_VOLUMES: {
+        PHASER: 0.4,
+        TORPEDO: 0.6,
+        DISRUPTOR: 0.5,
+        TETRYON: 0.45,
+        PLASMA: 0.55,
+        POLARON: 0.48,
     },
 } as const;
 

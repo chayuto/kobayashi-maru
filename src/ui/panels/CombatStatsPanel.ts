@@ -7,6 +7,7 @@
  */
 import { Container, Graphics, Text, TextStyle } from 'pixi.js';
 import { UI_STYLES } from '../styles';
+import { UI_CONFIG } from '../../config';
 
 /** Data required to update the combat stats panel */
 export interface CombatStatsPanelData {
@@ -29,8 +30,8 @@ export class CombatStatsPanel {
     private damageText: Text;
     private initialized: boolean = false;
 
-    private static readonly WIDTH = 160;
-    private static readonly HEIGHT = 90;
+    private static readonly WIDTH = UI_CONFIG.PANELS.COMBAT_STATS.WIDTH;
+    private static readonly HEIGHT = UI_CONFIG.PANELS.COMBAT_STATS.HEIGHT;
 
     constructor() {
         this.container = new Container();
@@ -51,9 +52,9 @@ export class CombatStatsPanel {
         if (this.initialized) return;
 
         // Background
-        this.background.roundRect(0, 0, CombatStatsPanel.WIDTH, CombatStatsPanel.HEIGHT, 8);
-        this.background.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.7 });
-        this.background.stroke({ color: UI_STYLES.COLORS.PRIMARY, width: 2 });
+        this.background.roundRect(0, 0, CombatStatsPanel.WIDTH, CombatStatsPanel.HEIGHT, UI_CONFIG.PANEL_STYLE.CORNER_RADIUS);
+        this.background.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: UI_CONFIG.PANEL_STYLE.BG_ALPHA });
+        this.background.stroke({ color: UI_STYLES.COLORS.PRIMARY, width: UI_CONFIG.PANEL_STYLE.BORDER_WIDTH });
         this.container.addChild(this.background);
 
         // Header

@@ -8,20 +8,18 @@
  */
 
 import { GAME_CONFIG } from '../types/constants';
+import { UI_CONFIG } from '../config';
 import { UI_STYLES } from './styles';
 import { ToggleButton } from './components';
 
 /**
  * Element heights for left column layout (unscaled pixels).
- * These match the actual component sizes.
+ * Sourced from centralized UI_CONFIG.PANELS and UI_CONFIG.LEFT_COLUMN.
  */
 const LEFT_COLUMN_HEIGHTS = {
-    /** Wave panel height */
-    WAVE_PANEL: 100,
-    /** Mute button (IconButton) height */
-    MUTE_BUTTON: 40,
-    /** Combat stats panel height */
-    COMBAT_STATS: 90,
+    WAVE_PANEL: UI_CONFIG.PANELS.WAVE.HEIGHT,
+    MUTE_BUTTON: UI_CONFIG.LEFT_COLUMN.MUTE_BUTTON_HEIGHT,
+    COMBAT_STATS: UI_CONFIG.PANELS.COMBAT_STATS.HEIGHT,
 } as const;
 
 /**
@@ -207,7 +205,7 @@ export class HUDLayoutManager {
         const padding = this.getScaledPadding(scale);
         return {
             x: this.worldWidth - menuWidth * scale - padding,
-            y: padding + 70 * scale + padding,
+            y: padding + UI_CONFIG.LEFT_COLUMN.RESOURCE_HEIGHT_OFFSET * scale + padding,
         };
     }
 

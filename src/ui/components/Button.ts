@@ -117,8 +117,8 @@ export class Button {
      */
     private drawBackground(hovered: boolean): void {
         const borderColor = this._disabled ? UI_CONFIG.COLORS.DISABLED : this.color;
-        const borderWidth = hovered && !this._disabled ? 3 : 2;
-        const alpha = hovered && !this._disabled ? 0.9 : 0.7;
+        const borderWidth = hovered && !this._disabled ? UI_CONFIG.PANEL_STYLE.HOVER_BORDER_WIDTH : UI_CONFIG.PANEL_STYLE.BORDER_WIDTH;
+        const alpha = hovered && !this._disabled ? 0.9 : UI_CONFIG.PANEL_STYLE.BG_ALPHA;
 
         this.background.clear();
         this.background.roundRect(0, 0, this.width, this.height, Button.CORNER_RADIUS);

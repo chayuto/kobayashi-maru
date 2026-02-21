@@ -4,6 +4,7 @@
  */
 import { Container, Text, TextStyle } from 'pixi.js';
 import { UI_STYLES } from './styles';
+import { UI_CONFIG } from '../config';
 
 export type MessageCategory = 'info' | 'warning' | 'damage' | 'kill' | 'wave';
 
@@ -20,10 +21,10 @@ interface LogMessage {
 export class MessageLog {
     public container: Container;
     private messages: LogMessage[] = [];
-    private readonly MAX_MESSAGES = 8;
-    private readonly FADE_DURATION = 10000; // 10 seconds in ms
-    private readonly LINE_HEIGHT = 22;
-    private readonly MESSAGE_SPACING = 4;
+    private readonly MAX_MESSAGES = UI_CONFIG.MESSAGE_LOG.MAX_MESSAGES;
+    private readonly FADE_DURATION = UI_CONFIG.MESSAGE_LOG.FADE_DURATION;
+    private readonly LINE_HEIGHT = UI_CONFIG.MESSAGE_LOG.LINE_HEIGHT;
+    private readonly MESSAGE_SPACING = UI_CONFIG.MESSAGE_LOG.MESSAGE_SPACING;
     private textPool: Text[] = [];
 
     constructor() {

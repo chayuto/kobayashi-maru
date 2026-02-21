@@ -10,6 +10,7 @@
 import { createEnemy } from '../../ecs/entityFactory';
 import { Velocity } from '../../ecs/components';
 import { GAME_CONFIG } from '../../types/constants';
+import { WAVE_CONFIG } from '../../config';
 import type { GameWorld } from '../../ecs/world';
 import type { SpawnPosition } from '../spawnPoints';
 
@@ -48,8 +49,8 @@ export class EnemySpawner {
 
         if (distance > 0) {
             // Speed range: 50-200 pixels per second, scaled by difficulty
-            const baseSpeed = 50 + Math.random() * 150;
-            const speedScale = 1 + (currentWave - 1) * 0.02; // 2% faster per wave
+            const baseSpeed = WAVE_CONFIG.ENEMY_SPEED.BASE_MIN + Math.random() * WAVE_CONFIG.ENEMY_SPEED.BASE_RANGE;
+            const speedScale = 1 + (currentWave - 1) * WAVE_CONFIG.ENEMY_SPEED.SCALE_PER_WAVE; // 2% faster per wave
             const speed = baseSpeed * speedScale;
 
             Velocity.x[eid] = (dx / distance) * speed;

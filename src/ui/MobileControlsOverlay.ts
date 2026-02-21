@@ -1,5 +1,6 @@
 import { Container, Graphics, Text, TextStyle } from 'pixi.js';
 import { UI_STYLES } from './styles';
+import { UI_CONFIG } from '../config';
 
 export class MobileControlsOverlay {
     public container: Container;
@@ -37,9 +38,9 @@ export class MobileControlsOverlay {
 
         // Background
         const bg = new Graphics();
-        bg.roundRect(0, 0, width, height, 8);
-        bg.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.7 });
-        bg.stroke({ color: UI_STYLES.COLORS.SECONDARY, width: 2 });
+        bg.roundRect(0, 0, width, height, UI_CONFIG.PANEL_STYLE.CORNER_RADIUS);
+        bg.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: UI_CONFIG.PANEL_STYLE.BG_ALPHA });
+        bg.stroke({ color: UI_STYLES.COLORS.SECONDARY, width: UI_CONFIG.PANEL_STYLE.BORDER_WIDTH });
         button.addChild(bg);
 
         // Label

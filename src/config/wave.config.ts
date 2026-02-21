@@ -55,6 +55,27 @@ export const WAVE_CONFIG = {
         /** V-formation spacing */
         V_FORMATION_SPACING: 50,
     },
+    /**
+     * Enemy base speed settings.
+     */
+    ENEMY_SPEED: {
+        /** Minimum base speed (pixels/second) */
+        BASE_MIN: 50,
+        /** Random range added to minimum */
+        BASE_RANGE: 150,
+        /** Speed increase per wave (2% per wave) */
+        SCALE_PER_WAVE: 0.02,
+    },
+
+    /**
+     * Elite variant chance settings.
+     */
+    ELITE_CHANCE: {
+        /** Base probability for elite spawns */
+        BASE: 0.1,
+        /** Additional probability per wave */
+        PER_WAVE: 0.01,
+    },
 } as const;
 
 export type WaveConfig = typeof WAVE_CONFIG;

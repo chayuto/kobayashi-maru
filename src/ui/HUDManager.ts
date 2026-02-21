@@ -4,6 +4,7 @@
  */
 import { Application, Container, Graphics } from 'pixi.js';
 import { UI_STYLES } from './styles';
+import { UI_CONFIG } from '../config';
 import { HUDData } from './types';
 
 import { GAME_CONFIG } from '../types/constants';
@@ -123,14 +124,14 @@ export class HUDManager {
 
     // Create Turret Menu
     this.turretMenu = new TurretMenu();
-    const menuX = GAME_CONFIG.WORLD_WIDTH - 180 - UI_STYLES.PADDING;
-    const menuY = UI_STYLES.PADDING + 70 + UI_STYLES.PADDING;
+    const menuX = GAME_CONFIG.WORLD_WIDTH - UI_CONFIG.PANELS.TURRET_MENU.WIDTH - UI_STYLES.PADDING;
+    const menuY = UI_STYLES.PADDING + UI_CONFIG.LEFT_COLUMN.RESOURCE_HEIGHT_OFFSET + UI_STYLES.PADDING;
     this.turretMenu.setPosition(menuX, menuY);
     this.container.addChild(this.turretMenu.container);
 
     // Create Turret Upgrade Panel (hidden by default)
     this.turretUpgradePanel = new TurretUpgradePanel();
-    const upgradePanelX = menuX - 304 - UI_STYLES.PADDING;
+    const upgradePanelX = menuX - UI_CONFIG.PANELS.UPGRADE.WIDTH - UI_STYLES.PADDING;
     const upgradePanelY = menuY;
     this.turretUpgradePanel.setPosition(upgradePanelX, upgradePanelY);
     this.container.addChild(this.turretUpgradePanel.container);
@@ -141,7 +142,7 @@ export class HUDManager {
 
     // Create Message Log
     this.messageLog = new MessageLog();
-    this.messageLog.setPosition(UI_STYLES.PADDING, GAME_CONFIG.WORLD_HEIGHT - 200);
+    this.messageLog.setPosition(UI_STYLES.PADDING, GAME_CONFIG.WORLD_HEIGHT - UI_CONFIG.MESSAGE_LOG.BOTTOM_OFFSET);
     this.container.addChild(this.messageLog.container);
 
     // Create Combo Panel (self-manages via EventBus, HUDManager drives update)
@@ -151,7 +152,7 @@ export class HUDManager {
     const comboDims = ComboPanel.getDimensions();
     this.comboPanel.setPosition(
       UI_STYLES.PADDING,
-      GAME_CONFIG.WORLD_HEIGHT - 80 - UI_STYLES.PADDING - comboDims.height - UI_STYLES.PADDING
+      GAME_CONFIG.WORLD_HEIGHT - UI_CONFIG.PANELS.SCORE.HEIGHT - UI_STYLES.PADDING - comboDims.height - UI_STYLES.PADDING
     );
 
     // Create Wave Announcement overlay
@@ -187,28 +188,28 @@ export class HUDManager {
     // Update Resource Panel (top-right)
     if (this.resourcePanel) {
       this.resourcePanel.setScale(scale);
-      const pos = layout.getResourcePanelPosition(scale, 150);
+      const pos = layout.getResourcePanelPosition(scale, UI_CONFIG.PANELS.RESOURCE.WIDTH);
       this.resourcePanel.setPosition(pos.x, pos.y);
     }
 
     // Update Score Panel (bottom-left)
     if (this.scorePanel) {
       this.scorePanel.setScale(scale);
-      const pos = layout.getScorePanelPosition(scale, 80);
+      const pos = layout.getScorePanelPosition(scale, UI_CONFIG.PANELS.SCORE.HEIGHT);
       this.scorePanel.setPosition(pos.x, pos.y);
     }
 
     // Update Turret Count Panel (bottom-right)
     if (this.turretCountPanel) {
       this.turretCountPanel.setScale(scale);
-      const pos = layout.getTurretCountPanelPosition(scale, 140, 60);
+      const pos = layout.getTurretCountPanelPosition(scale, UI_CONFIG.PANELS.TURRET_COUNT.WIDTH, UI_CONFIG.PANELS.TURRET_COUNT.HEIGHT);
       this.turretCountPanel.setPosition(pos.x, pos.y);
     }
 
     // Update Status Panel (bottom-center)
     if (this.statusPanel) {
       this.statusPanel.setScale(scale);
-      const pos = layout.getStatusPanelPosition(scale, 280, 120);
+      const pos = layout.getStatusPanelPosition(scale, UI_CONFIG.PANELS.STATUS.WIDTH, UI_CONFIG.PANELS.STATUS.HEIGHT);
       this.statusPanel.setPosition(pos.x, pos.y);
     }
 
@@ -229,14 +230,14 @@ export class HUDManager {
     // Update Turret Menu (right side)
     if (this.turretMenu) {
       this.turretMenu.container.scale.set(scale);
-      const pos = layout.getTurretMenuPosition(scale, 180);
+      const pos = layout.getTurretMenuPosition(scale, UI_CONFIG.PANELS.TURRET_MENU.WIDTH);
       this.turretMenu.container.position.set(pos.x, pos.y);
     }
 
     // Update Turret Upgrade Panel (left of turret menu)
     if (this.turretUpgradePanel) {
       this.turretUpgradePanel.container.scale.set(scale);
-      const pos = layout.getTurretUpgradePanelPosition(scale, 180, 304);
+      const pos = layout.getTurretUpgradePanelPosition(scale, UI_CONFIG.PANELS.TURRET_MENU.WIDTH, UI_CONFIG.PANELS.UPGRADE.WIDTH);
       this.turretUpgradePanel.container.position.set(pos.x, pos.y);
     }
 
@@ -248,7 +249,7 @@ export class HUDManager {
     // Update Message Log
     if (this.messageLog) {
       this.messageLog.container.scale.set(scale);
-      const pos = layout.getMessageLogPosition(scale, 200);
+      const pos = layout.getMessageLogPosition(scale, UI_CONFIG.MESSAGE_LOG.BOTTOM_OFFSET);
       this.messageLog.container.position.set(pos.x, pos.y);
     }
 
@@ -309,7 +310,7 @@ export class HUDManager {
    */
   private createTopRightPanel(): void {
     const padding = UI_STYLES.PADDING;
-    const panelWidth = 150;
+    const panelWidth = UI_CONFIG.PANELS.RESOURCE.WIDTH;
     const x = GAME_CONFIG.WORLD_WIDTH - panelWidth - padding;
 
     this.resourcePanel = new ResourcePanel();
@@ -322,7 +323,7 @@ export class HUDManager {
    */
   private createBottomLeftPanel(): void {
     const padding = UI_STYLES.PADDING;
-    const y = GAME_CONFIG.WORLD_HEIGHT - 80 - padding;
+    const y = GAME_CONFIG.WORLD_HEIGHT - UI_CONFIG.PANELS.SCORE.HEIGHT - padding;
 
     this.scorePanel = new ScorePanel();
     this.scorePanel.init(this.container);
@@ -333,8 +334,8 @@ export class HUDManager {
    * Create bottom-center panel: Kobayashi Maru status
    */
   private createBottomCenterPanel(): void {
-    const panelWidth = 280;
-    const panelHeight = 120;
+    const panelWidth = UI_CONFIG.PANELS.STATUS.WIDTH;
+    const panelHeight = UI_CONFIG.PANELS.STATUS.HEIGHT;
     const x = (GAME_CONFIG.WORLD_WIDTH - panelWidth) / 2;
     const y = GAME_CONFIG.WORLD_HEIGHT - panelHeight - UI_STYLES.PADDING;
 
@@ -348,9 +349,9 @@ export class HUDManager {
    */
   private createBottomRightPanel(): void {
     const padding = UI_STYLES.PADDING;
-    const panelWidth = 140;
+    const panelWidth = UI_CONFIG.PANELS.TURRET_COUNT.WIDTH;
     const x = GAME_CONFIG.WORLD_WIDTH - panelWidth - padding;
-    const y = GAME_CONFIG.WORLD_HEIGHT - 60 - padding;
+    const y = GAME_CONFIG.WORLD_HEIGHT - UI_CONFIG.PANELS.TURRET_COUNT.HEIGHT - padding;
 
     this.turretCountPanel = new TurretCountPanel();
     this.turretCountPanel.init(this.container);

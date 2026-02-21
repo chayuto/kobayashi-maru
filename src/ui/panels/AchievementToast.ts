@@ -7,6 +7,7 @@
  */
 import { Container, Graphics, Text, TextStyle } from 'pixi.js';
 import { UI_STYLES } from '../styles';
+import { UI_CONFIG } from '../../config';
 import { EventBus } from '../../core/EventBus';
 import { GameEventType, AchievementUnlockedPayload } from '../../types/events';
 import { UIAnimator } from '../animation/UIAnimator';
@@ -25,8 +26,8 @@ export class AchievementToast {
     private animationTimer: number = 0;
     private isShowing: boolean = false;
 
-    private static readonly WIDTH = 280;
-    private static readonly HEIGHT = 70;
+    private static readonly WIDTH = UI_CONFIG.PANELS.ACHIEVEMENT_TOAST.WIDTH;
+    private static readonly HEIGHT = UI_CONFIG.PANELS.ACHIEVEMENT_TOAST.HEIGHT;
     private static readonly DISPLAY_TIME = 4.0; // seconds
 
     constructor() {

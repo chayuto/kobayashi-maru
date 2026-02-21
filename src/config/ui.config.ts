@@ -1,19 +1,55 @@
 /**
  * UI Configuration
- * 
+ *
  * Settings for user interface elements, dimensions, and colors.
  * Centralized configuration for consistent UI appearance across the game.
- * 
+ *
  * @module config/ui
  */
 
 /**
+ * UI styling constants for Kobayashi Maru HUD System.
+ * LCARS-inspired color scheme and layout values — enhanced for premium look.
+ *
+ * Previously defined in `src/ui/styles.ts`, now centralized here as the
+ * single source of truth for all UI styling values.
+ *
+ * @example
+ * ```typescript
+ * import { UI_STYLES } from '../config';
+ *
+ * const font = UI_STYLES.FONT_FAMILY;
+ * const primary = UI_STYLES.COLORS.PRIMARY;
+ * ```
+ */
+export const UI_STYLES = {
+    FONT_FAMILY: 'monospace',
+    FONT_SIZE_LARGE: 24,
+    FONT_SIZE_MEDIUM: 18,
+    FONT_SIZE_SMALL: 14,
+    PADDING: 16,
+    BAR_HEIGHT: 20,
+    BAR_WIDTH: 300,
+    COLORS: {
+        PRIMARY: 0xFF9922,      // Warmer LCARS orange
+        SECONDARY: 0x66DDFF,    // Brighter galaxy blue
+        ACCENT: 0xFF66AA,       // Pink accent for highlights
+        HEALTH: 0x00FFAA,       // Vibrant health green
+        SHIELD: 0x44BBFF,       // Electric shield blue
+        DANGER: 0xFF4455,       // Brighter warning red
+        BACKGROUND: 0x0A0A1A,   // Deep space blue-black
+        TEXT: 0xEEFFFF,         // Slight cyan tint
+        GLOW: 0x00FFCC          // Glow effect color
+    }
+} as const;
+
+/**
  * UI configuration values.
- * 
+ *
  * @example
  * ```typescript
  * import { UI_CONFIG } from '../config';
- * 
+ *
  * const buttonWidth = UI_CONFIG.BUTTONS.TOGGLE_WIDTH;
  * const primaryColor = UI_CONFIG.COLORS.PRIMARY;
  * const panelWidth = UI_CONFIG.PANELS.RESOURCE.WIDTH;
@@ -75,6 +111,21 @@ export const UI_CONFIG = {
     },
 
     /**
+     * Default panel styling values.
+     * Most HUD panels use these; override per-panel where intentionally different.
+     */
+    PANEL_STYLE: {
+        /** Default corner radius for panel backgrounds */
+        CORNER_RADIUS: 8,
+        /** Default background alpha */
+        BG_ALPHA: 0.7,
+        /** Default border/stroke width */
+        BORDER_WIDTH: 2,
+        /** Border width when hovered or in active/alert state */
+        HOVER_BORDER_WIDTH: 3,
+    },
+
+    /**
      * Health and shield bar dimensions.
      */
     BARS: {
@@ -92,14 +143,28 @@ export const UI_CONFIG = {
     FONTS: {
         /** Default font family */
         FAMILY: 'Courier New, monospace',
+        /** Tiny text size (stats, fine-print) */
+        SIZE_TINY: 9,
+        /** Extra-small text size (descriptions, secondary info) */
+        SIZE_XS: 10,
         /** Small text size */
         SIZE_SMALL: 12,
+        /** Small-medium text size (names, labels) */
+        SIZE_SM: 13,
+        /** Medium-small text size (button labels, details) */
+        SIZE_MS: 14,
         /** Medium text size */
         SIZE_MEDIUM: 16,
+        /** Medium-large text size (panel headers) */
+        SIZE_ML: 18,
         /** Large text size */
         SIZE_LARGE: 24,
         /** Extra large text size */
         SIZE_XLARGE: 32,
+        /** Title text size (wave announcements, overlays) */
+        SIZE_TITLE: 48,
+        /** Hero text size (main menu title) */
+        SIZE_HERO: 72,
     },
 
     /**
@@ -132,7 +197,7 @@ export const UI_CONFIG = {
         SUCCESS: 0x00FF00,
         /** Disabled element color */
         DISABLED: 0x888888,
-        
+
         /** Faction colors */
         FEDERATION: 0x0066FF,
         KLINGON: 0xFF0000,
@@ -142,6 +207,7 @@ export const UI_CONFIG = {
 
     /**
      * Panel dimensions for layout calculations.
+     * These are the single source of truth — panel classes read from here.
      */
     PANELS: {
         /** Resource panel dimensions */
@@ -151,17 +217,23 @@ export const UI_CONFIG = {
         /** Score panel dimensions */
         SCORE: { WIDTH: 180, HEIGHT: 80 },
         /** Combo panel dimensions */
-        COMBO: { WIDTH: 100, HEIGHT: 70 },
+        COMBO: { WIDTH: 120, HEIGHT: 60 },
         /** Status panel dimensions */
         STATUS: { WIDTH: 280, HEIGHT: 120 },
         /** Turret menu dimensions */
-        TURRET_MENU: { WIDTH: 180, HEIGHT: 400 },
+        TURRET_MENU: { WIDTH: 240, HEIGHT: 400 },
         /** Upgrade panel dimensions */
-        UPGRADE: { WIDTH: 304, HEIGHT: 400 },
+        UPGRADE: { WIDTH: 304, HEIGHT: 480 },
         /** Combat stats panel dimensions */
-        COMBAT_STATS: { WIDTH: 120, HEIGHT: 90 },
+        COMBAT_STATS: { WIDTH: 160, HEIGHT: 90 },
         /** Turret count panel dimensions */
         TURRET_COUNT: { WIDTH: 140, HEIGHT: 60 },
+        /** Achievement toast dimensions */
+        ACHIEVEMENT_TOAST: { WIDTH: 280, HEIGHT: 70 },
+        /** AI thought feed dimensions */
+        AI_THOUGHT_FEED: { WIDTH: 280, HEIGHT: 100 },
+        /** AI panel dimensions */
+        AI_PANEL: { WIDTH: 260, HEIGHT: 160 },
     },
 
     /**
@@ -265,6 +337,71 @@ export const UI_CONFIG = {
         HOLD_DURATION: 2.0,
         /** Alert banner fade-out duration */
         FADE_OUT_DURATION: 0.5,
+    },
+
+    /**
+     * Message log display settings.
+     */
+    MESSAGE_LOG: {
+        /** Maximum visible messages */
+        MAX_MESSAGES: 8,
+        /** Fade-out duration in milliseconds */
+        FADE_DURATION: 10000,
+        /** Line height in pixels */
+        LINE_HEIGHT: 22,
+        /** Spacing between messages in pixels */
+        MESSAGE_SPACING: 4,
+        /** Bottom offset from screen edge for positioning */
+        BOTTOM_OFFSET: 200,
+    },
+
+    /**
+     * Responsive UI breakpoints and scale factors.
+     */
+    RESPONSIVE: {
+        /** Screen width threshold for mobile layout */
+        MOBILE_BREAKPOINT: 768,
+        /** Screen width threshold for tablet layout */
+        TABLET_BREAKPOINT: 1024,
+        /** Scale factor for mobile devices */
+        MOBILE_SCALE: 0.8,
+        /** Scale factor for tablet devices */
+        TABLET_SCALE: 0.8,
+        /** Scale factor for desktop */
+        DESKTOP_SCALE: 1.0,
+    },
+
+    /**
+     * Pause overlay layout settings.
+     */
+    PAUSE_OVERLAY: {
+        /** Background dimming alpha */
+        BACKGROUND_ALPHA: 0.8,
+        /** Title Y position */
+        TITLE_Y: 200,
+        /** First button Y position */
+        FIRST_BUTTON_Y: 400,
+        /** Vertical spacing between buttons */
+        BUTTON_SPACING: 100,
+        /** Button width */
+        BUTTON_WIDTH: 300,
+        /** Button height */
+        BUTTON_HEIGHT: 60,
+        /** Button background alpha */
+        BUTTON_ALPHA: 0.9,
+        /** Z-index for overlay layer */
+        Z_INDEX: 1000,
+    },
+
+    /**
+     * HUD left column element heights (unscaled pixels).
+     * Used by HUDLayoutManager for stacking calculations.
+     */
+    LEFT_COLUMN: {
+        /** Mute button (IconButton) height */
+        MUTE_BUTTON_HEIGHT: 40,
+        /** Resource panel top-right height offset */
+        RESOURCE_HEIGHT_OFFSET: 70,
     },
 
     /**

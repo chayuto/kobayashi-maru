@@ -117,11 +117,11 @@ export class ToggleButton {
      */
     private drawBackground(enabled: boolean, hovered: boolean = false): void {
         const borderColor = enabled ? this.config.enabledColor : 0x888888;
-        const borderWidth = hovered ? 3 : 2;
-        const alpha = hovered ? 0.9 : 0.7;
+        const borderWidth = hovered ? UI_CONFIG.PANEL_STYLE.HOVER_BORDER_WIDTH : UI_CONFIG.PANEL_STYLE.BORDER_WIDTH;
+        const alpha = hovered ? 0.9 : UI_CONFIG.PANEL_STYLE.BG_ALPHA;
 
         this.background.clear();
-        this.background.roundRect(0, 0, ToggleButton.WIDTH, ToggleButton.HEIGHT, 6);
+        this.background.roundRect(0, 0, ToggleButton.WIDTH, ToggleButton.HEIGHT, UI_CONFIG.BUTTONS.CORNER_RADIUS);
         this.background.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha });
         this.background.stroke({
             color: hovered ? (enabled ? this.config.enabledColor : UI_STYLES.COLORS.PRIMARY) : borderColor,

@@ -1,3 +1,4 @@
+import { UI_CONFIG } from '../config';
 
 export enum DeviceType {
     MOBILE = 'MOBILE',
@@ -17,19 +18,20 @@ export class ResponsiveUIManager {
     private updateDimensions(): void {
         const width = window.innerWidth;
         const height = window.innerHeight;
+        const { MOBILE_BREAKPOINT, TABLET_BREAKPOINT, MOBILE_SCALE, TABLET_SCALE, DESKTOP_SCALE } = UI_CONFIG.RESPONSIVE;
 
         // Check orientation (if mobile/tablet)
         const isPortrait = height > width;
 
-        if (width < 768 || (width < 1024 && isPortrait)) { // Mobile or Tablet Portrait
+        if (width < MOBILE_BREAKPOINT || (width < TABLET_BREAKPOINT && isPortrait)) {
             this.currentDeviceType = DeviceType.MOBILE;
-            this.scaleFactor = 0.8;
-        } else if (width < 1024) { // Tablet Landscape
+            this.scaleFactor = MOBILE_SCALE;
+        } else if (width < TABLET_BREAKPOINT) {
             this.currentDeviceType = DeviceType.TABLET;
-            this.scaleFactor = 0.8;
+            this.scaleFactor = TABLET_SCALE;
         } else {
             this.currentDeviceType = DeviceType.DESKTOP;
-            this.scaleFactor = 1.0;
+            this.scaleFactor = DESKTOP_SCALE;
         }
     }
 

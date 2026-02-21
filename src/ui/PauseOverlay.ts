@@ -4,6 +4,7 @@
  */
 import { Application, Container, Graphics, Text, TextStyle } from 'pixi.js';
 import { UI_STYLES } from './styles';
+import { UI_CONFIG } from '../config';
 import { GAME_CONFIG } from '../types/constants';
 
 export class PauseOverlay {
@@ -26,34 +27,37 @@ export class PauseOverlay {
   constructor() {
     this.container = new Container();
     this.container.visible = false;
-    this.container.zIndex = 1000; // Ensure it's on top
+    this.container.zIndex = UI_CONFIG.PAUSE_OVERLAY.Z_INDEX;
   }
 
   public init(app: Application): void {
     this.app = app;
 
+    const pauseCfg = UI_CONFIG.PAUSE_OVERLAY;
+
     // Create semi-transparent overlay
     this.overlay = new Graphics();
     this.overlay.rect(0, 0, GAME_CONFIG.WORLD_WIDTH, GAME_CONFIG.WORLD_HEIGHT);
-    this.overlay.fill({ color: 0x000000, alpha: 0.8 });
+    this.overlay.fill({ color: 0x000000, alpha: pauseCfg.BACKGROUND_ALPHA });
     this.container.addChild(this.overlay);
 
     // Create title
     const titleStyle = new TextStyle({
       fontFamily: UI_STYLES.FONT_FAMILY,
-      fontSize: 48,
+      fontSize: UI_CONFIG.FONTS.SIZE_TITLE,
       fill: UI_STYLES.COLORS.PRIMARY,
       fontWeight: 'bold'
     });
     this.titleText = new Text({ text: 'PAUSED', style: titleStyle });
     this.titleText.anchor.set(0.5);
-    this.titleText.position.set(GAME_CONFIG.WORLD_WIDTH / 2, 200);
+    this.titleText.position.set(GAME_CONFIG.WORLD_WIDTH / 2, pauseCfg.TITLE_Y);
     this.container.addChild(this.titleText);
 
     // Create buttons
-    this.resumeButton = this.createButton('RESUME (ESC)', GAME_CONFIG.WORLD_WIDTH / 2, 400, 'resume');
-    this.restartButton = this.createButton('RESTART (R)', GAME_CONFIG.WORLD_WIDTH / 2, 500, 'restart');
-    this.quitButton = this.createButton('QUIT (Q)', GAME_CONFIG.WORLD_WIDTH / 2, 600, 'quit');
+    const centerX = GAME_CONFIG.WORLD_WIDTH / 2;
+    this.resumeButton = this.createButton('RESUME (ESC)', centerX, pauseCfg.FIRST_BUTTON_Y, 'resume');
+    this.restartButton = this.createButton('RESTART (R)', centerX, pauseCfg.FIRST_BUTTON_Y + pauseCfg.BUTTON_SPACING, 'restart');
+    this.quitButton = this.createButton('QUIT (Q)', centerX, pauseCfg.FIRST_BUTTON_Y + pauseCfg.BUTTON_SPACING * 2, 'quit');
 
     this.container.addChild(this.resumeButton);
     this.container.addChild(this.restartButton);
@@ -69,11 +73,15 @@ export class PauseOverlay {
     button.eventMode = 'static';
     button.cursor = 'pointer';
 
+    const { BUTTON_WIDTH: bw, BUTTON_HEIGHT: bh, BUTTON_ALPHA: bAlpha } = UI_CONFIG.PAUSE_OVERLAY;
+    const halfW = bw / 2;
+    const halfH = bh / 2;
+
     // Button background
     const bg = new Graphics();
-    bg.roundRect(-150, -30, 300, 60, 8);
-    bg.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.9 });
-    bg.stroke({ color: UI_STYLES.COLORS.SECONDARY, width: 2 });
+    bg.roundRect(-halfW, -halfH, bw, bh, UI_CONFIG.PANEL_STYLE.CORNER_RADIUS);
+    bg.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: bAlpha });
+    bg.stroke({ color: UI_STYLES.COLORS.SECONDARY, width: UI_CONFIG.PANEL_STYLE.BORDER_WIDTH });
     button.addChild(bg);
 
     // Button text
@@ -90,17 +98,17 @@ export class PauseOverlay {
     // Hover effects
     button.on('pointerover', () => {
       bg.clear();
-      bg.roundRect(-150, -30, 300, 60, 8);
-      bg.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.9 });
-      bg.stroke({ color: UI_STYLES.COLORS.PRIMARY, width: 3 });
+      bg.roundRect(-halfW, -halfH, bw, bh, UI_CONFIG.PANEL_STYLE.CORNER_RADIUS);
+      bg.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: bAlpha });
+      bg.stroke({ color: UI_STYLES.COLORS.PRIMARY, width: UI_CONFIG.PANEL_STYLE.HOVER_BORDER_WIDTH });
       buttonText.style.fill = UI_STYLES.COLORS.PRIMARY;
     });
 
     button.on('pointerout', () => {
       bg.clear();
-      bg.roundRect(-150, -30, 300, 60, 8);
-      bg.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: 0.9 });
-      bg.stroke({ color: UI_STYLES.COLORS.SECONDARY, width: 2 });
+      bg.roundRect(-halfW, -halfH, bw, bh, UI_CONFIG.PANEL_STYLE.CORNER_RADIUS);
+      bg.fill({ color: UI_STYLES.COLORS.BACKGROUND, alpha: bAlpha });
+      bg.stroke({ color: UI_STYLES.COLORS.SECONDARY, width: UI_CONFIG.PANEL_STYLE.BORDER_WIDTH });
       buttonText.style.fill = UI_STYLES.COLORS.SECONDARY;
     });
 
