@@ -7,9 +7,9 @@ Instructions for AI coding agents working on this codebase.
 ```bash
 pnpm install        # Install dependencies (project uses pnpm)
 pnpm run lint       # Must pass before commit
-pnpm run test       # Must pass before commit (2,224 tests / 95 files)
+pnpm run test       # Must pass before commit (2,500+ tests / 113+ files)
 pnpm run build      # Verify build works
-pnpm run dev        # Development server
+pnpm run dev        # Development server at http://localhost:3000
 pnpm run e2e        # Run E2E tests (Playwright, headless Chromium)
 pnpm run e2e:headed # Run E2E tests in visible browser
 ```
@@ -40,13 +40,18 @@ Game.ts (facade)
 
 | Directory | Purpose |
 |-----------|---------|
-| `src/ecs/` | ECS core: components, entities, world |
-| `src/systems/` | ECS game systems (ai, combat, ability, etc.) |
+| `src/ecs/` | ECS core: components, entities, world, PoolManager |
+| `src/systems/` | ECS game systems (ai, combat, ability, etc.) + SystemManager |
 | `src/game/` | Managers: Wave, Score, Upgrade, Achievement |
 | `src/config/` | Centralized configuration files |
-| `src/rendering/` | PixiJS rendering, textures, effects |
-| `src/ui/` | HUD, panels, overlays |
+| `src/rendering/` | PixiJS rendering, textures, effects, particles |
+| `src/ui/` | HUD, panels, overlays, screens, components |
+| `src/ai/` | AI autoplay: threat analysis, spatial maps, behaviors |
 | `src/types/config/` | Type definitions: turrets, enemies, factions |
+| `src/types/interfaces/` | Service interfaces (IWaveManager, IGameState, etc.) |
+| `src/collision/` | SpatialHash for collision detection |
+| `src/pathfinding/` | Pathfinding algorithms |
+| `src/testing/` | E2E test bridge |
 
 ## Common Tasks
 
@@ -122,14 +127,12 @@ Game.ts (facade)
 
 1. **Create system** - `src/systems/newSystem.ts`
    ```typescript
-   import { defineQuery, IWorld } from 'bitecs';
+   import { query, World } from 'bitecs';
    import { Position, NewComponent } from '../ecs/components';
 
-   const query = defineQuery([Position, NewComponent]);
-
    export function createNewSystem() {
-     return function newSystem(world: IWorld, deltaTime: number): IWorld {
-       const entities = query(world);
+     return function newSystem(world: World, deltaTime: number): World {
+       const entities = query(world, [Position, NewComponent]);
        for (const eid of entities) {
          // Process entity
        }
@@ -140,9 +143,7 @@ Game.ts (facade)
 
 2. **Register in Game.ts** - `registerSystems()` method
    ```typescript
-   this.systemManager.register('newSystem', {
-     update: createNewSystem()
-   }, 150); // priority
+   systemManager.register('newSystem', newSystem, 150); // priority (lower = earlier)
    ```
 
 ## Configuration System
@@ -188,10 +189,10 @@ Available events:
 
 ```typescript
 import { describe, it, expect, beforeEach } from 'vitest';
-import { createWorld } from 'bitecs';
+import { createWorld, addEntity, World } from 'bitecs';
 
 describe('NewFeature', () => {
-  let world: ReturnType<typeof createWorld>;
+  let world: World;
 
   beforeEach(() => {
     world = createWorld();
@@ -285,5 +286,5 @@ Before completing any task:
 - [ ] For UI changes: `pnpm run e2e` passes
 
 
-## IDE Specifc
+## IDE Specific
 - IF YOU ARE KIRO, dont edit code or run command, you can only read files, searches files and update docs

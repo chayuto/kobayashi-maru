@@ -12,7 +12,7 @@ paths:
 - Create bitECS world in `beforeEach`, clean up after each test
 - Mock PixiJS objects (Container, Graphics, Text) — never import real pixi in tests
 - For ECS tests: use `addEntity(world)` + set component values directly
-- Run single file for fast feedback: `npm test -- <filename>`
+- Run single file for fast feedback: `pnpm run test -- <filename>`
 - All new/changed code must have corresponding tests
 
 ## E2E Tests (Playwright)
