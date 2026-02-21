@@ -7,6 +7,7 @@ import { GAME_CONFIG, TURRET_CONFIG, TurretType } from '../types/constants';
 import { Position, Turret } from '../ecs/components';
 import { createTurret } from '../ecs/entityFactory';
 import { AudioManager, SoundType } from '../audio';
+import { AUDIO_CONFIG } from '../config';
 import { ResourceManager } from './resourceManager';
 import type { GameWorld } from '../ecs/world';
 import { query } from 'bitecs';
@@ -78,7 +79,7 @@ export class PlacementManager {
     this.emit('start', { type: 'start', turretType });
 
     // Play select sound
-    AudioManager.getInstance().play(SoundType.TURRET_SELECT, { volume: 0.5 });
+    AudioManager.getInstance().play(SoundType.TURRET_SELECT, { volume: AUDIO_CONFIG.SFX.TURRET_SELECT });
   }
 
   /**
@@ -160,7 +161,7 @@ export class PlacementManager {
         reason: 'Invalid placement position'
       });
       // Play error sound
-      AudioManager.getInstance().play(SoundType.ERROR_BEEP, { volume: 0.5 });
+      AudioManager.getInstance().play(SoundType.ERROR_BEEP, { volume: AUDIO_CONFIG.SFX.ERROR_BEEP });
       return { success: false, entityId: -1, reason: 'Invalid placement position' };
     }
 
@@ -174,7 +175,7 @@ export class PlacementManager {
         reason: 'Insufficient resources'
       });
       // Play error sound
-      AudioManager.getInstance().play(SoundType.ERROR_BEEP, { volume: 0.5 });
+      AudioManager.getInstance().play(SoundType.ERROR_BEEP, { volume: AUDIO_CONFIG.SFX.ERROR_BEEP });
       return { success: false, entityId: -1, reason: 'Insufficient resources' };
     }
 
@@ -182,7 +183,7 @@ export class PlacementManager {
     this.resourceManager.spendResources(config.cost);
 
     // Play placement sound
-    AudioManager.getInstance().play(SoundType.TURRET_PLACE, { volume: 0.6 });
+    AudioManager.getInstance().play(SoundType.TURRET_PLACE, { volume: AUDIO_CONFIG.SFX.TURRET_PLACE });
 
     // Create turret
     const eid = createTurret(this.world, x, y, this.currentTurretType);

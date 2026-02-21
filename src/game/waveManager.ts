@@ -10,7 +10,7 @@
  */
 import { ParticleSystem } from '../rendering/ParticleSystem';
 import { SpriteManager } from '../rendering/spriteManager';
-import { WAVE_CONFIG } from '../config';
+import { WAVE_CONFIG, AUDIO_CONFIG } from '../config';
 import { GameEventType } from '../types/events';
 import type { IWaveManager, WaveState } from '../types/interfaces';
 import { AudioManager, SoundType } from '../audio';
@@ -141,7 +141,7 @@ export class WaveManager implements IWaveManager {
 
 
     // Play wave start sound
-    AudioManager.getInstance().play(SoundType.WAVE_START, { volume: 0.7 });
+    AudioManager.getInstance().play(SoundType.WAVE_START, { volume: AUDIO_CONFIG.SFX.WAVE_START });
 
     console.log(`Wave ${waveNumber} started with ${this.getTotalEnemyCount()} enemies`);
   }
@@ -298,7 +298,7 @@ export class WaveManager implements IWaveManager {
 
 
     // Play wave complete sound
-    AudioManager.getInstance().play(SoundType.WAVE_COMPLETE, { volume: 0.7 });
+    AudioManager.getInstance().play(SoundType.WAVE_COMPLETE, { volume: AUDIO_CONFIG.SFX.WAVE_COMPLETE });
 
     console.log(`Wave ${this.currentWave} complete!`);
   }

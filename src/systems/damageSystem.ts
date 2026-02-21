@@ -6,7 +6,7 @@ import { query, removeEntity, World } from 'bitecs';
 import { Health, Faction, Position, SpriteRef, CompositeSpriteRef, EnemyVariant } from '../ecs/components';
 import { FactionId } from '../types/constants';
 import { FACTION_COLORS } from '../types/config/factions';
-import { RENDERING_CONFIG } from '../config';
+import { RENDERING_CONFIG, AUDIO_CONFIG } from '../config';
 import { GameEventType } from '../types/events';
 import { AudioManager, SoundType } from '../audio';
 import { decrementEntityCount } from '../ecs/world';
@@ -89,7 +89,7 @@ export function createDamageSystem(particleSystem?: ParticleSystem, spriteManage
       const audioManager = AudioManager.getInstance();
       if (factionId === FactionId.FEDERATION) {
         // Turret/Player explosion
-        audioManager.play(SoundType.EXPLOSION_LARGE, { volume: 0.7 });
+        audioManager.play(SoundType.EXPLOSION_LARGE, { volume: AUDIO_CONFIG.SFX.EXPLOSION_LARGE });
 
         if (particleSystem) {
           particleSystem.spawn({
@@ -105,7 +105,7 @@ export function createDamageSystem(particleSystem?: ParticleSystem, spriteManage
 
         if (rank === 2) {
           // Boss: multi-stage explosion + screen shake
-          audioManager.play(SoundType.EXPLOSION_LARGE, { volume: 0.8 });
+          audioManager.play(SoundType.EXPLOSION_LARGE, { volume: AUDIO_CONFIG.SFX.EXPLOSION_LARGE });
 
           if (particleSystem) {
             // Stage 1: fire explosion
@@ -142,7 +142,7 @@ export function createDamageSystem(particleSystem?: ParticleSystem, spriteManage
           }
         } else if (rank === 1) {
           // Elite: fire explosion + small shockwave
-          audioManager.play(SoundType.EXPLOSION_SMALL, { volume: 0.6 });
+          audioManager.play(SoundType.EXPLOSION_SMALL, { volume: AUDIO_CONFIG.SFX.EXPLOSION_SMALL });
 
           if (particleSystem) {
             particleSystem.spawn({
@@ -164,8 +164,8 @@ export function createDamageSystem(particleSystem?: ParticleSystem, spriteManage
             );
           }
         } else {
-          // Normal: unchanged
-          audioManager.play(SoundType.EXPLOSION_SMALL, { volume: 0.5 });
+          // Normal enemy explosion
+          audioManager.play(SoundType.EXPLOSION_SMALL, { volume: AUDIO_CONFIG.SFX.EXPLOSION_SMALL });
 
           if (particleSystem) {
             particleSystem.spawn({

@@ -27,6 +27,8 @@ export const AI_CONFIG = {
     BEHAVIOR: {
         /** Distance threshold for flank angle calculation */
         FLANK_DISTANCE_THRESHOLD: 500,
+        /** Maximum flank angle in radians (45 degrees) */
+        FLANK_ANGLE: Math.PI / 4,
         /** Strafe oscillation frequency (Hz) */
         STRAFE_FREQUENCY: 3,
         /** Strafe oscillation amplitude (0-1) */
@@ -35,6 +37,22 @@ export const AI_CONFIG = {
         SWARM_NOISE_FREQUENCY: 0.5,
         /** Swarm noise amplitude */
         SWARM_NOISE_AMPLITUDE: 0.2,
+        /** Entity ID multiplier for swarm phase offset */
+        SWARM_PHASE_MULTIPLIER: 0.1,
+    },
+
+    /**
+     * Orbit behavior parameters (Tholian)
+     */
+    ORBIT: {
+        /** Distance buffer before entering orbit phase (pixels) */
+        DISTANCE_BUFFER: 20,
+        /** Radius error correction strength (0-1) */
+        CORRECTION_STRENGTH: 0.3,
+        /** Oscillation frequency for orbit variation (Hz) */
+        OSCILLATION_FREQUENCY: 0.5,
+        /** Oscillation amplitude for orbit variation (0-1) */
+        OSCILLATION_AMPLITUDE: 0.1,
     },
 
     /**

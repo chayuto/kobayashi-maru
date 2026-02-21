@@ -7,7 +7,7 @@ import { Turret, TurretUpgrade, CompositeSpriteRef } from '../ecs/components';
 import { TURRET_CONFIG, UPGRADE_CONFIG, UpgradePath, TURRET_SELL_REFUND_PERCENT } from '../types/constants';
 import type { UpgradePathId } from '../types/constants';
 import { assertNever } from '../types/utility';
-import { RENDERING_CONFIG } from '../config';
+import { RENDERING_CONFIG, AUDIO_CONFIG } from '../config';
 import { ResourceManager } from './resourceManager';
 import { GameWorld, decrementEntityCount } from '../ecs/world';
 import { AudioManager, SoundType } from '../audio';
@@ -282,7 +282,7 @@ export class UpgradeManager {
     }
 
     // Play upgrade sound
-    AudioManager.getInstance().play(SoundType.TURRET_PLACE, { volume: 0.7 });
+    AudioManager.getInstance().play(SoundType.TURRET_PLACE, { volume: AUDIO_CONFIG.SFX.TURRET_UPGRADE });
 
     return { success: true };
   }
@@ -347,7 +347,7 @@ export class UpgradeManager {
     decrementEntityCount();
 
     // Play sell sound
-    AudioManager.getInstance().play(SoundType.ERROR_BEEP, { volume: 0.5 });
+    AudioManager.getInstance().play(SoundType.ERROR_BEEP, { volume: AUDIO_CONFIG.SFX.ERROR_BEEP });
 
     return refund;
   }
