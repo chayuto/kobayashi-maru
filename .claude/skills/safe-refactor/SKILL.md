@@ -15,8 +15,8 @@ Safely refactor the specified module or file ($ARGUMENTS). Follow this process:
 - Document current behavior
 
 ## 2. Verify Baseline
-- Run existing tests: `npm test -- $ARGUMENTS`
-- Run full suite: `npm run test`
+- Run existing tests: `pnpm run test -- $ARGUMENTS`
+- Run full suite: `pnpm run test`
 - Note current test count and pass rate
 
 ## 3. Refactor
@@ -27,7 +27,7 @@ Safely refactor the specified module or file ($ARGUMENTS). Follow this process:
 ## 4. Verify
 - Run tests after each change
 - Ensure test count has not decreased
-- Run `npm run lint && npm run test && npm run build`
+- Run `pnpm run lint && pnpm run test && pnpm run build`
 
 ## 5. Report
 - Summarize what changed and why
