@@ -51,7 +51,7 @@ pnpm run e2e:headed         # Run E2E tests in visible browser
 │   │   ├── bootstrap/     # GameBootstrap (initialization sequence)
 │   │   └── services/      # ServiceContainer (typed DI with lazy init)
 │   ├── ecs/               # ECS: components.ts, entityFactory.ts, PoolManager.ts, world.ts
-│   ├── systems/           # 16 ECS systems + SystemManager (ai, combat, ability, targeting, etc.)
+│   ├── systems/           # 15 ECS systems + SystemManager (ai, combat, ability, targeting, etc.)
 │   ├── ai/                # AI autoplay: ThreatAnalyzer, ActionPlanner, spatial maps, behaviors
 │   ├── rendering/         # PixiJS: SpriteManager, BeamRenderer, ParticleSystem
 │   │   ├── textures/      # Texture generation (faction, turret, utils)
