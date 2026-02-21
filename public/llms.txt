@@ -7,7 +7,7 @@ Source code: https://github.com/chayuto/kobayashi-maru
 
 ## About
 
-Kobayashi Maru is a free, browser-based tower defense game set in the Star Trek universe. Players defend the civilian freighter Kobayashi Maru against infinite waves of enemy ships by strategically placing and upgrading turrets. The game features six enemy factions, six turret types, a combo scoring system, achievements, and procedurally generated waves that increase in difficulty.
+Kobayashi Maru is a free, browser-based tower defense game set in the Star Trek universe. Players defend the civilian freighter Kobayashi Maru against infinite waves of enemy ships by strategically placing and upgrading turrets. The game features five enemy factions, six turret types, a combo scoring system, achievements, and procedurally generated waves that increase in difficulty.
 
 ## Gameplay
 
