@@ -180,7 +180,7 @@ function updateStrafeBehavior(eid: number, posX: number, posY: number, targetX: 
     if (dist > 0) {
         const currentVx = Velocity.x[eid];
         const currentVy = Velocity.y[eid];
-        const speed = Math.sqrt(currentVx * currentVx + currentVy * currentVy) || 80;
+        const speed = Math.sqrt(currentVx * currentVx + currentVy * currentVy) || AI_CONFIG.SPEED.STRAFE;
 
         // Normalized direction to target
         const dirX = dx / dist;
@@ -191,8 +191,8 @@ function updateStrafeBehavior(eid: number, posX: number, posY: number, targetX: 
         const perpY = dirX;
 
         // Strafe calculation
-        const frequency = 3; // Hz
-        const amplitude = 0.5; // Strength of strafe
+        const frequency = AI_CONFIG.BEHAVIOR.STRAFE_FREQUENCY;
+        const amplitude = AI_CONFIG.BEHAVIOR.STRAFE_AMPLITUDE;
         const strafe = Math.sin(gameTime * frequency + eid) * amplitude;
 
         // Combine forward and strafe
@@ -228,7 +228,7 @@ function updateFlankBehavior(eid: number, posX: number, posY: number, targetX: n
         // Far away: approach at 45 degrees
         // Close: approach directly
         const flankFactor = Math.min(1, dist / AI_CONFIG.BEHAVIOR.FLANK_DISTANCE_THRESHOLD);
-        const angle = (Math.PI / 4) * flankFactor * flankSide;
+        const angle = AI_CONFIG.BEHAVIOR.FLANK_ANGLE * flankFactor * flankSide;
 
         // Rotate vector
         const cos = Math.cos(angle);
@@ -257,16 +257,16 @@ function updateSwarmBehavior(eid: number, posX: number, posY: number, targetX: n
     if (dist > 0) {
         const currentVx = Velocity.x[eid];
         const currentVy = Velocity.y[eid];
-        const speed = Math.sqrt(currentVx * currentVx + currentVy * currentVy) || 90;
+        const speed = Math.sqrt(currentVx * currentVx + currentVy * currentVy) || AI_CONFIG.SPEED.SWARM;
 
         const dirX = dx / dist;
         const dirY = dy / dist;
 
         // Add noise
-        const noiseFreq = 0.5;
-        const noiseAmp = 0.2;
-        const noiseX = Math.sin(gameTime * noiseFreq + eid * 0.1) * noiseAmp;
-        const noiseY = Math.cos(gameTime * noiseFreq + eid * 0.1) * noiseAmp;
+        const noiseFreq = AI_CONFIG.BEHAVIOR.SWARM_NOISE_FREQUENCY;
+        const noiseAmp = AI_CONFIG.BEHAVIOR.SWARM_NOISE_AMPLITUDE;
+        const noiseX = Math.sin(gameTime * noiseFreq + eid * AI_CONFIG.BEHAVIOR.SWARM_PHASE_MULTIPLIER) * noiseAmp;
+        const noiseY = Math.cos(gameTime * noiseFreq + eid * AI_CONFIG.BEHAVIOR.SWARM_PHASE_MULTIPLIER) * noiseAmp;
 
         Velocity.x[eid] = (dirX + noiseX) * speed;
         Velocity.y[eid] = (dirY + noiseY) * speed;
@@ -321,7 +321,7 @@ function updateOrbitBehavior(eid: number, posX: number, posY: number, targetX: n
     const orbitSpeed = GAME_CONFIG.ORBIT_SPEED;
     const approachSpeed = GAME_CONFIG.ORBIT_APPROACH_SPEED;
 
-    if (dist > orbitRadius + 20) {
+    if (dist > orbitRadius + AI_CONFIG.ORBIT.DISTANCE_BUFFER) {
         // Phase 1: Approach slowly until reaching orbit distance
         // Move directly toward target at slow speed
         const dirX = dx / dist;
@@ -341,10 +341,10 @@ function updateOrbitBehavior(eid: number, posX: number, posY: number, targetX: n
 
         // Also add slight inward/outward correction to maintain orbit radius
         const radiusError = dist - orbitRadius;
-        const correctionStrength = 0.3;
+        const correctionStrength = AI_CONFIG.ORBIT.CORRECTION_STRENGTH;
 
         // Add slight oscillation for more interesting movement
-        const oscillation = Math.sin(gameTime * 0.5 + eid) * 0.1;
+        const oscillation = Math.sin(gameTime * AI_CONFIG.ORBIT.OSCILLATION_FREQUENCY + eid) * AI_CONFIG.ORBIT.OSCILLATION_AMPLITUDE;
 
         // Combine tangent motion with radius correction
         Velocity.x[eid] = (tangentX + dirX * radiusError * correctionStrength * 0.1 + oscillation * -dirY) * orbitSpeed;

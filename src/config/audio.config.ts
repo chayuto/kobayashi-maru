@@ -37,6 +37,25 @@ export const AUDIO_CONFIG = {
         UI: ['turret_place', 'turret_select', 'resource_gain', 'error_beep'] as string[],
         AMBIENT: ['space_ambient', 'alert_klaxon', 'wave_start', 'wave_complete', 'game_over'] as string[],
     },
+    /** Sound effect volume levels (0-1) */
+    SFX: {
+        /** Turret selection feedback */
+        TURRET_SELECT: 0.5,
+        /** Turret placement confirmation */
+        TURRET_PLACE: 0.6,
+        /** Turret upgrade confirmation */
+        TURRET_UPGRADE: 0.7,
+        /** Error/invalid action feedback */
+        ERROR_BEEP: 0.5,
+        /** Wave lifecycle announcements */
+        WAVE_START: 0.7,
+        /** Wave completion announcement */
+        WAVE_COMPLETE: 0.7,
+        /** Large explosion (turret/player destruction, boss death) */
+        EXPLOSION_LARGE: 0.8,
+        /** Small explosion (normal/elite enemy death, collision) */
+        EXPLOSION_SMALL: 0.6,
+    },
     /** Adaptive music layering settings */
     MUSIC: {
         /** Enable adaptive music */

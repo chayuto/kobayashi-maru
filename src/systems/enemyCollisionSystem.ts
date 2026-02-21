@@ -8,6 +8,7 @@ import { Position, Health, Faction, AIBehavior } from '../ecs/components';
 import { FactionId, GAME_CONFIG } from '../types/constants';
 import { ParticleSystem, EFFECTS } from '../rendering';
 import { AudioManager, SoundType } from '../audio';
+import { AUDIO_CONFIG } from '../config';
 import { applyDamage } from '../services';
 
 /**
@@ -90,7 +91,7 @@ export function createEnemyCollisionSystem(
 
         // Play explosion sound
         try {
-          AudioManager.getInstance().play(SoundType.EXPLOSION_SMALL, { volume: 0.6 });
+          AudioManager.getInstance().play(SoundType.EXPLOSION_SMALL, { volume: AUDIO_CONFIG.SFX.EXPLOSION_SMALL });
         } catch (e) {
           console.error('Failed to play explosion sound:', e);
         }
