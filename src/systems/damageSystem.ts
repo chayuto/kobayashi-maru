@@ -164,7 +164,7 @@ export function createDamageSystem(particleSystem?: ParticleSystem, spriteManage
             );
           }
         } else {
-          // Normal: unchanged
+          // Normal enemy explosion
           audioManager.play(SoundType.EXPLOSION_SMALL, { volume: AUDIO_CONFIG.SFX.EXPLOSION_SMALL });
 
           if (particleSystem) {
