@@ -33,6 +33,7 @@ import type { DamageNumberRenderer } from '../../rendering/DamageNumberRenderer'
 import type { ScreenFlash } from '../../rendering/ScreenFlash';
 import type { HitFlashManager } from '../../rendering/HitFlashManager';
 import type { HullDamageOverlay } from '../../rendering/HullDamageOverlay';
+import type { ChromaticAberrationEffect } from '../../rendering/ChromaticAberrationEffect';
 
 import type { WaveManager } from '../../game/waveManager';
 import type { GameState } from '../../game/gameState';
@@ -43,6 +44,7 @@ import type { PlacementManager } from '../../game/PlacementManager';
 import type { UpgradeManager } from '../../game/UpgradeManager';
 import type { TechnobabbleGenerator } from '../../game/TechnobabbleGenerator';
 import type { TutorialManager } from '../../game/TutorialManager';
+import type { PrestigeManager } from '../../game/PrestigeManager';
 
 import type { HUDManager } from '../../ui/HUDManager';
 import type { GameOverScreen } from '../../ui/GameOverScreen';
@@ -92,6 +94,7 @@ export interface ServiceRegistry {
     screenFlash: ScreenFlash;
     hitFlashManager: HitFlashManager;
     hullDamageOverlay: HullDamageOverlay;
+    chromaticAberration: ChromaticAberrationEffect;
 
     // Game Logic
     waveManager: WaveManager;
@@ -103,6 +106,7 @@ export interface ServiceRegistry {
     upgradeManager: UpgradeManager;
     technobabbleGenerator: TechnobabbleGenerator;
     tutorialManager: TutorialManager;
+    prestigeManager: PrestigeManager;
 
     // Systems
     systemManager: SystemManager;

@@ -142,18 +142,28 @@ describe('ComboPanel Juice', () => {
     });
   });
 
-  describe('update method (replaces rAF)', () => {
-    it('should animate popup via update() without requestAnimationFrame', () => {
+  describe('update method (tick-based)', () => {
+    it('should animate popup via update(deltaTime)', () => {
       // Trigger popup
       comboHandlerRef.current!({ comboCount: 3, multiplier: 2, isActive: true });
 
-      // Call update - should not throw (no rAF)
-      panel.update();
+      // Call update with deltaTime - should not throw
+      panel.update(0.016);
     });
 
     it('should not throw when no popup is active', () => {
-      panel.update();
+      panel.update(0.016);
       // Should not throw
+    });
+
+    it('should freeze popup when deltaTime is 0', () => {
+      // Trigger popup
+      comboHandlerRef.current!({ comboCount: 3, multiplier: 2, isActive: true });
+
+      // Update with 0 deltaTime — popup should remain at initial state
+      panel.update(0);
+      panel.update(0);
+      // Should not throw, popup stays visible
     });
   });
 

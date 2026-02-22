@@ -13,10 +13,12 @@ import { EventBus } from '../core/EventBus';
  */
 export class ResourceManager implements IResourceManager {
   private resources: number;
+  private initialAmount: number;
   private eventBus: EventBus;
 
   constructor(initialResources: number = GAME_CONFIG.INITIAL_RESOURCES) {
     this.resources = initialResources;
+    this.initialAmount = initialResources;
     this.eventBus = EventBus.getInstance();
   }
 
@@ -88,7 +90,7 @@ export class ResourceManager implements IResourceManager {
    */
   reset(): void {
     const previous = this.resources;
-    this.resources = GAME_CONFIG.INITIAL_RESOURCES;
+    this.resources = this.initialAmount;
     this.emitResourceUpdate(this.resources - previous);
   }
 }

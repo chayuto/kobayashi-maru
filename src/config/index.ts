@@ -37,3 +37,4 @@ export * from './ability.config';
 export * from './achievement.config';
 export * from './quality.config';
 export * from './input.config';
+export * from './prestige.config';

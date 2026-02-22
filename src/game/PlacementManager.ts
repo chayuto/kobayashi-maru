@@ -51,6 +51,7 @@ export interface PlacementResult {
 export class PlacementManager {
   private world: GameWorld;
   private resourceManager: ResourceManager;
+  private costModifier: (cost: number) => number;
   private state: PlacementState = PlacementState.IDLE;
   private currentTurretType: number = TurretType.PHASER_ARRAY;
   private cursorX: number = 0;
@@ -58,9 +59,10 @@ export class PlacementManager {
   private isValidPosition: boolean = false;
   private listeners: Map<PlacementEventType, PlacementListener[]>;
 
-  constructor(world: GameWorld, resourceManager: ResourceManager) {
+  constructor(world: GameWorld, resourceManager: ResourceManager, costModifier?: (cost: number) => number) {
     this.world = world;
     this.resourceManager = resourceManager;
+    this.costModifier = costModifier ?? ((c) => c);
     this.listeners = new Map();
   }
 
@@ -132,9 +134,10 @@ export class PlacementManager {
       }
     }
 
-    // Check if player can afford
+    // Check if player can afford (with prestige discount applied)
     const config = TURRET_CONFIG[this.currentTurretType];
-    if (!this.resourceManager.canAfford(config.cost)) {
+    const adjustedCost = this.costModifier(config.cost);
+    if (!this.resourceManager.canAfford(adjustedCost)) {
       return false;
     }
 
@@ -166,7 +169,8 @@ export class PlacementManager {
     }
 
     const config = TURRET_CONFIG[this.currentTurretType];
-    if (!this.resourceManager.canAfford(config.cost)) {
+    const adjustedCost = this.costModifier(config.cost);
+    if (!this.resourceManager.canAfford(adjustedCost)) {
       this.emit('invalid', {
         type: 'invalid',
         turretType: this.currentTurretType,
@@ -179,8 +183,8 @@ export class PlacementManager {
       return { success: false, entityId: -1, reason: 'Insufficient resources' };
     }
 
-    // Deduct resources
-    this.resourceManager.spendResources(config.cost);
+    // Deduct resources (with prestige discount applied)
+    this.resourceManager.spendResources(adjustedCost);
 
     // Play placement sound
     AudioManager.getInstance().play(SoundType.TURRET_PLACE, { volume: AUDIO_CONFIG.SFX.TURRET_PLACE });

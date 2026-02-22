@@ -30,6 +30,7 @@ import { DamageNumberRenderer } from '../../rendering/DamageNumberRenderer';
 import { ScreenFlash } from '../../rendering/ScreenFlash';
 import { HitFlashManager } from '../../rendering/HitFlashManager';
 import { HullDamageOverlay } from '../../rendering/HullDamageOverlay';
+import { ChromaticAberrationEffect } from '../../rendering/ChromaticAberrationEffect';
 
 import { WaveManager } from '../../game/waveManager';
 import { GameState } from '../../game/gameState';
@@ -40,6 +41,7 @@ import { PlacementManager } from '../../game/PlacementManager';
 import { UpgradeManager } from '../../game/UpgradeManager';
 import { TechnobabbleGenerator } from '../../game/TechnobabbleGenerator';
 import { TutorialManager } from '../../game/TutorialManager';
+import { PrestigeManager } from '../../game/PrestigeManager';
 
 import { HUDManager } from '../../ui/HUDManager';
 import { GameOverScreen } from '../../ui/GameOverScreen';
@@ -321,6 +323,13 @@ export class GameBootstrap {
             return hdo;
         });
 
+        // Chromatic aberration effect at low hull
+        services.register('chromaticAberration', () => {
+            const ca = new ChromaticAberrationEffect();
+            ca.init(services.get('app'));
+            return ca;
+        });
+
         // Hit flash manager (enemy sprite tinting on damage)
         services.register('hitFlashManager', () => {
             const hfm = new HitFlashManager(services.get('spriteManager'));
@@ -371,10 +380,17 @@ export class GameBootstrap {
     private registerGameServices(): void {
         const services = getServices();
 
+        services.register('prestigeManager', () => new PrestigeManager());
+
         services.register('gameState', () => new GameState());
         services.register('scoreManager', () => new ScoreManager());
         services.register('highScoreManager', () => new HighScoreManager());
-        services.register('resourceManager', () => new ResourceManager());
+        services.register('resourceManager', () => {
+            const prestige = services.get('prestigeManager');
+            const boost = prestige.getBonus('resource_boost');
+            const initial = Math.floor(GAME_CONFIG.INITIAL_RESOURCES * (1 + boost));
+            return new ResourceManager(initial);
+        });
         services.register('waveManager', () => new WaveManager());
 
         services.register('upgradeManager', () => {
@@ -387,9 +403,15 @@ export class GameBootstrap {
         });
 
         services.register('placementManager', () => {
+            const prestige = services.get('prestigeManager');
+            const discount = prestige.getBonus('turret_discount');
+            const modifier = discount > 0
+                ? (cost: number) => Math.floor(cost * (1 - discount))
+                : undefined;
             return new PlacementManager(
                 services.get('world'),
-                services.get('resourceManager')
+                services.get('resourceManager'),
+                modifier
             );
         });
 
@@ -426,6 +448,7 @@ export class GameBootstrap {
         services.register('gameOverScreen', () => {
             const gos = new GameOverScreen();
             gos.init(services.get('app'));
+            gos.setPrestigeManager(services.get('prestigeManager'));
             return gos;
         });
         services.register('pauseOverlay', () => {

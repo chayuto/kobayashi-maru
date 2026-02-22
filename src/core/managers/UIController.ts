@@ -120,7 +120,8 @@ export class UIController {
     updateHUD(
         snapshot: GameplaySnapshot,
         combatSystem?: CombatSystem | null,
-        turretCount: number = 0
+        turretCount: number = 0,
+        deltaTime: number = 0
     ): void {
         const services = getServices();
         const hudManager = services.get('hudManager');
@@ -148,9 +149,7 @@ export class UIController {
             slowModeEnabled: snapshot.slowModeEnabled,
         };
 
-
-
-        hudManager.update(hudData);
+        hudManager.update(hudData, deltaTime);
     }
 
     /**
@@ -219,13 +218,14 @@ export class UIController {
 
     /**
      * Show game over screen.
-     * 
+     *
      * @param score - Final score data
      * @param isHighScore - Whether this is a new high score
      * @param previousBest - Previous best score for comparison
+     * @param commendationsEarned - Prestige commendations earned this run
      */
-    showGameOver(score: ScoreData, isHighScore: boolean, previousBest: number): void {
-        getServices().get('gameOverScreen').show(score, isHighScore, previousBest);
+    showGameOver(score: ScoreData, isHighScore: boolean, previousBest: number, commendationsEarned: number = 0): void {
+        getServices().get('gameOverScreen').show(score, isHighScore, previousBest, commendationsEarned);
     }
 
     /**

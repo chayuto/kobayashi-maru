@@ -363,11 +363,7 @@ describe('UIAnimator', () => {
 
     beforeEach(() => {
         container = new Container();
-        vi.useFakeTimers();
-    });
-
-    afterEach(() => {
-        vi.useRealTimers();
+        UIAnimator.clearAll();
     });
 
     describe('fadeIn', () => {
@@ -381,12 +377,31 @@ describe('UIAnimator', () => {
             UIAnimator.fadeIn(container);
             expect(container.visible).toBe(true);
         });
+
+        it('should complete after ticking past duration', () => {
+            const onComplete = vi.fn();
+            UIAnimator.fadeIn(container, { duration: 0.3, onComplete });
+            expect(UIAnimator.getActiveCount()).toBe(1);
+
+            UIAnimator.tick(0.4);
+            expect(container.alpha).toBeGreaterThan(0);
+            expect(onComplete).toHaveBeenCalled();
+            expect(UIAnimator.getActiveCount()).toBe(0);
+        });
     });
 
     describe('fadeOut', () => {
         it('should start animation', () => {
             container.alpha = 1;
             expect(() => UIAnimator.fadeOut(container)).not.toThrow();
+            expect(UIAnimator.getActiveCount()).toBe(1);
+        });
+
+        it('should hide container after completion', () => {
+            container.alpha = 1;
+            UIAnimator.fadeOut(container, { duration: 0.3 });
+            UIAnimator.tick(0.4);
+            expect(container.visible).toBe(false);
         });
     });
 
@@ -401,6 +416,43 @@ describe('UIAnimator', () => {
     describe('pulse', () => {
         it('should start animation', () => {
             expect(() => UIAnimator.pulse(container)).not.toThrow();
+            expect(UIAnimator.getActiveCount()).toBe(1);
+        });
+
+        it('should restore scale after completion', () => {
+            UIAnimator.pulse(container, 1.2, { duration: 0.2 });
+            UIAnimator.tick(0.3);
+            expect(container.scale.set).toHaveBeenCalled();
+            expect(UIAnimator.getActiveCount()).toBe(0);
+        });
+    });
+
+    describe('tick', () => {
+        it('should advance all active animations', () => {
+            const container2 = new Container();
+            UIAnimator.fadeIn(container, { duration: 0.3 });
+            UIAnimator.fadeIn(container2, { duration: 0.5 });
+            expect(UIAnimator.getActiveCount()).toBe(2);
+
+            UIAnimator.tick(0.4);
+            // First completed, second still active
+            expect(UIAnimator.getActiveCount()).toBe(1);
+        });
+
+        it('should not advance animations when deltaTime is 0', () => {
+            UIAnimator.fadeIn(container, { duration: 0.3 });
+            UIAnimator.tick(0);
+            UIAnimator.tick(0);
+            expect(container.alpha).toBe(0);
+            expect(UIAnimator.getActiveCount()).toBe(1);
+        });
+
+        it('should cancel existing animation on same target', () => {
+            UIAnimator.fadeIn(container, { duration: 0.5 });
+            expect(UIAnimator.getActiveCount()).toBe(1);
+
+            UIAnimator.fadeOut(container, { duration: 0.3 });
+            expect(UIAnimator.getActiveCount()).toBe(1);
         });
     });
 });
