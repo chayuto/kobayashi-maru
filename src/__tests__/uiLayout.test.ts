@@ -2,7 +2,7 @@
  * Tests for UI Infrastructure: Layout, UIAnimator, HUDLayoutManager, HUDPanelManager
  * @vitest-environment jsdom
  */
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 vi.mock('pixi.js', async () => {
     const { setupPixiMock } = await import('./helpers/mockPixi');
@@ -420,26 +420,14 @@ describe('Layout Utilities', () => {
 });
 
 // ---------------------------------------------------------------------------
-// UIAnimator (src/ui/animation/UIAnimator.ts)
+// UIAnimator (src/ui/animation/UIAnimator.ts) — tick-based animation queue
 // ---------------------------------------------------------------------------
 describe('UIAnimator', () => {
     let container: Container;
-    let rafCallbacks: Array<(time: number) => void>;
 
     beforeEach(() => {
         container = new Container();
-        rafCallbacks = [];
-        // Capture requestAnimationFrame callbacks
-        vi.spyOn(globalThis, 'requestAnimationFrame').mockImplementation(
-            (cb: FrameRequestCallback) => {
-                rafCallbacks.push(cb as (time: number) => void);
-                return rafCallbacks.length;
-            }
-        );
-    });
-
-    afterEach(() => {
-        vi.restoreAllMocks();
+        UIAnimator.clearAll();
     });
 
     describe('fadeIn', () => {
@@ -454,50 +442,28 @@ describe('UIAnimator', () => {
             expect(container.visible).toBe(true);
         });
 
-        it('should request an animation frame', () => {
+        it('should add an active animation', () => {
             UIAnimator.fadeIn(container);
-            expect(requestAnimationFrame).toHaveBeenCalledTimes(1);
+            expect(UIAnimator.getActiveCount()).toBe(1);
         });
 
         it('should call onComplete callback when animation finishes', () => {
             const onComplete = vi.fn();
-            // Mock performance.now to simulate time passing beyond duration
-            const performanceNow = vi.spyOn(performance, 'now');
-            performanceNow.mockReturnValueOnce(0); // startTime
-            performanceNow.mockReturnValueOnce(500); // elapsed > 300ms default duration
-
             UIAnimator.fadeIn(container, { onComplete });
-
-            // Execute the first rAF callback
-            expect(rafCallbacks).toHaveLength(1);
-            rafCallbacks[0](500);
-
+            UIAnimator.tick(0.5); // past default 0.3s
             expect(onComplete).toHaveBeenCalledTimes(1);
         });
 
-        it('should continue animation when not yet complete', () => {
-            const performanceNow = vi.spyOn(performance, 'now');
-            performanceNow.mockReturnValueOnce(0); // startTime
-            performanceNow.mockReturnValueOnce(100); // 100ms < 300ms
-
+        it('should keep animation active when not yet complete', () => {
             UIAnimator.fadeIn(container, { duration: 0.3 });
-
-            // Execute the first rAF callback
-            rafCallbacks[0](100);
-
-            // Should request another frame
-            expect(requestAnimationFrame).toHaveBeenCalledTimes(2);
+            UIAnimator.tick(0.1); // 100ms < 300ms
+            expect(UIAnimator.getActiveCount()).toBe(1);
         });
 
         it('should accept custom duration', () => {
             const onComplete = vi.fn();
-            const performanceNow = vi.spyOn(performance, 'now');
-            performanceNow.mockReturnValueOnce(0);
-            performanceNow.mockReturnValueOnce(600); // 600ms > 500ms custom duration
-
             UIAnimator.fadeIn(container, { duration: 0.5, onComplete });
-
-            rafCallbacks[0](600);
+            UIAnimator.tick(0.6);
             expect(onComplete).toHaveBeenCalled();
         });
     });
@@ -506,45 +472,30 @@ describe('UIAnimator', () => {
         it('should start from current alpha value', () => {
             container.alpha = 0.8;
             UIAnimator.fadeOut(container);
-            // Alpha should still be 0.8 initially (animation hasn't ticked yet)
+            // Alpha should still be 0.8 initially (tick hasn't run yet)
             expect(container.alpha).toBe(0.8);
         });
 
         it('should set visible to false when animation completes', () => {
             container.alpha = 1;
-            const performanceNow = vi.spyOn(performance, 'now');
-            performanceNow.mockReturnValueOnce(0);
-            performanceNow.mockReturnValueOnce(500); // past default 300ms
-
             UIAnimator.fadeOut(container);
-            rafCallbacks[0](500);
-
+            UIAnimator.tick(0.5); // past default 0.3s
             expect(container.visible).toBe(false);
         });
 
         it('should call onComplete when animation finishes', () => {
             const onComplete = vi.fn();
             container.alpha = 1;
-            const performanceNow = vi.spyOn(performance, 'now');
-            performanceNow.mockReturnValueOnce(0);
-            performanceNow.mockReturnValueOnce(500);
-
             UIAnimator.fadeOut(container, { onComplete });
-            rafCallbacks[0](500);
-
+            UIAnimator.tick(0.5);
             expect(onComplete).toHaveBeenCalledTimes(1);
         });
 
-        it('should continue animation when not yet complete', () => {
+        it('should keep animation active when not yet complete', () => {
             container.alpha = 1;
-            const performanceNow = vi.spyOn(performance, 'now');
-            performanceNow.mockReturnValueOnce(0);
-            performanceNow.mockReturnValueOnce(50);
-
             UIAnimator.fadeOut(container, { duration: 0.3 });
-            rafCallbacks[0](50);
-
-            expect(requestAnimationFrame).toHaveBeenCalledTimes(2);
+            UIAnimator.tick(0.05);
+            expect(UIAnimator.getActiveCount()).toBe(1);
         });
     });
 
@@ -558,37 +509,31 @@ describe('UIAnimator', () => {
         it('should offset container to the left for left slide-in', () => {
             container.x = 50;
             UIAnimator.slideIn(container, 'left', 100);
-            // After setup, x should be targetX - distance = 50 - 100 = -50
             expect(container.x).toBe(-50);
         });
 
         it('should offset container to the right for right slide-in', () => {
             container.x = 50;
             UIAnimator.slideIn(container, 'right', 100);
-            expect(container.x).toBe(150); // 50 + 100
+            expect(container.x).toBe(150);
         });
 
         it('should offset container upward for top slide-in', () => {
             container.y = 100;
             UIAnimator.slideIn(container, 'top', 80);
-            expect(container.y).toBe(20); // 100 - 80
+            expect(container.y).toBe(20);
         });
 
         it('should offset container downward for bottom slide-in', () => {
             container.y = 100;
             UIAnimator.slideIn(container, 'bottom', 80);
-            expect(container.y).toBe(180); // 100 + 80
+            expect(container.y).toBe(180);
         });
 
         it('should call onComplete when animation finishes', () => {
             const onComplete = vi.fn();
-            const performanceNow = vi.spyOn(performance, 'now');
-            performanceNow.mockReturnValueOnce(0);
-            performanceNow.mockReturnValueOnce(500); // past default 250ms
-
             UIAnimator.slideIn(container, 'left', 100, { onComplete });
-            rafCallbacks[0](500);
-
+            UIAnimator.tick(0.5); // past default 0.25s
             expect(onComplete).toHaveBeenCalledTimes(1);
         });
     });
@@ -596,121 +541,74 @@ describe('UIAnimator', () => {
     describe('slideOut', () => {
         it('should set visible to false when animation completes', () => {
             container.x = 50;
-            const performanceNow = vi.spyOn(performance, 'now');
-            performanceNow.mockReturnValueOnce(0);
-            performanceNow.mockReturnValueOnce(500);
-
             UIAnimator.slideOut(container, 'left', 100);
-            rafCallbacks[0](500);
-
+            UIAnimator.tick(0.5);
             expect(container.visible).toBe(false);
         });
 
         it('should reset position after slide-out completes', () => {
             container.x = 50;
             container.y = 100;
-            const performanceNow = vi.spyOn(performance, 'now');
-            performanceNow.mockReturnValueOnce(0);
-            performanceNow.mockReturnValueOnce(500);
-
             UIAnimator.slideOut(container, 'left', 100);
-            rafCallbacks[0](500);
-
-            // Position should be reset to original
+            UIAnimator.tick(0.5);
             expect(container.x).toBe(50);
             expect(container.y).toBe(100);
         });
 
         it('should call onComplete when animation finishes', () => {
             const onComplete = vi.fn();
-            const performanceNow = vi.spyOn(performance, 'now');
-            performanceNow.mockReturnValueOnce(0);
-            performanceNow.mockReturnValueOnce(500);
-
             UIAnimator.slideOut(container, 'right', 100, { onComplete });
-            rafCallbacks[0](500);
-
+            UIAnimator.tick(0.5);
             expect(onComplete).toHaveBeenCalledTimes(1);
         });
 
         it('should animate slide to the left when direction is left', () => {
             container.x = 200;
-            const performanceNow = vi.spyOn(performance, 'now');
-            performanceNow.mockReturnValueOnce(0);
-            performanceNow.mockReturnValueOnce(100); // mid-animation
-
             UIAnimator.slideOut(container, 'left', 100);
-            rafCallbacks[0](100);
-
-            // Container should have moved toward left
+            UIAnimator.tick(0.1); // mid-animation
             expect(container.x).toBeLessThan(200);
         });
 
         it('should animate slide downward for bottom direction', () => {
             container.y = 50;
-            const performanceNow = vi.spyOn(performance, 'now');
-            performanceNow.mockReturnValueOnce(0);
-            performanceNow.mockReturnValueOnce(100);
-
             UIAnimator.slideOut(container, 'bottom', 100);
-            rafCallbacks[0](100);
-
+            UIAnimator.tick(0.1);
             expect(container.y).toBeGreaterThan(50);
         });
 
         it('should animate slide upward for top direction', () => {
             container.y = 200;
-            const performanceNow = vi.spyOn(performance, 'now');
-            performanceNow.mockReturnValueOnce(0);
-            performanceNow.mockReturnValueOnce(100);
-
             UIAnimator.slideOut(container, 'top', 100);
-            rafCallbacks[0](100);
-
+            UIAnimator.tick(0.1);
             expect(container.y).toBeLessThan(200);
         });
     });
 
     describe('pulse', () => {
-        it('should request an animation frame', () => {
+        it('should add an active animation', () => {
             UIAnimator.pulse(container);
-            expect(requestAnimationFrame).toHaveBeenCalledTimes(1);
+            expect(UIAnimator.getActiveCount()).toBe(1);
         });
 
         it('should restore original scale when complete', () => {
             container.scale.x = 1;
             container.scale.y = 1;
-            const performanceNow = vi.spyOn(performance, 'now');
-            performanceNow.mockReturnValueOnce(0);
-            performanceNow.mockReturnValueOnce(500); // past 200ms default
-
             UIAnimator.pulse(container, 1.5);
-            rafCallbacks[0](500);
-
+            UIAnimator.tick(0.5); // past 200ms default
             expect(container.scale.set).toHaveBeenCalledWith(1, 1);
         });
 
         it('should call onComplete when animation finishes', () => {
             const onComplete = vi.fn();
-            const performanceNow = vi.spyOn(performance, 'now');
-            performanceNow.mockReturnValueOnce(0);
-            performanceNow.mockReturnValueOnce(500);
-
             UIAnimator.pulse(container, 1.1, { onComplete });
-            rafCallbacks[0](500);
-
+            UIAnimator.tick(0.5);
             expect(onComplete).toHaveBeenCalledTimes(1);
         });
 
         it('should accept custom duration', () => {
             const onComplete = vi.fn();
-            const performanceNow = vi.spyOn(performance, 'now');
-            performanceNow.mockReturnValueOnce(0);
-            performanceNow.mockReturnValueOnce(1100); // past 1000ms custom duration
-
             UIAnimator.pulse(container, 1.2, { duration: 1.0, onComplete });
-            rafCallbacks[0](1100);
-
+            UIAnimator.tick(1.1);
             expect(onComplete).toHaveBeenCalled();
         });
     });

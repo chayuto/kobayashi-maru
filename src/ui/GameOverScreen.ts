@@ -1,11 +1,14 @@
 /**
  * Game Over Screen for Kobayashi Maru
- * Displays final score breakdown and provides restart functionality
+ * Displays final score breakdown, prestige commendations, and provides restart functionality
  */
 import { Application, Container, Graphics, Text, TextStyle } from 'pixi.js';
 import { UI_STYLES } from './styles';
 import { GAME_CONFIG } from '../types/constants';
+import { PRESTIGE_CONFIG } from '../config/prestige.config';
+import type { PrestigeUpgradeId } from '../config/prestige.config';
 import type { ScoreData } from '../game/scoreManager';
+import type { PrestigeManager } from '../game/PrestigeManager';
 
 /**
  * Score multipliers for final score calculation
@@ -16,16 +19,21 @@ const SCORE_MULTIPLIERS = {
   WAVE: 500      // 500 points per wave reached
 } as const;
 
+/** Amber color for commendation text */
+const COMMENDATION_COLOR = 0xFFBB33;
+
 /**
  * Calculates the total score from score data
  * @param data - Score data
+ * @param scoreMultiplierBonus - Optional prestige score multiplier bonus (e.g. 0.1 = +10%)
  * @returns Total calculated score
  */
-export function calculateScore(data: ScoreData): number {
+export function calculateScore(data: ScoreData, scoreMultiplierBonus: number = 0): number {
   const timeScore = Math.floor(data.timeSurvived) * SCORE_MULTIPLIERS.TIME;
   const killScore = data.enemiesDefeated * SCORE_MULTIPLIERS.KILLS;
   const waveScore = data.waveReached * SCORE_MULTIPLIERS.WAVE;
-  return timeScore + killScore + waveScore;
+  const baseScore = timeScore + killScore + waveScore;
+  return Math.floor(baseScore * (1 + scoreMultiplierBonus));
 }
 
 /**
@@ -53,9 +61,14 @@ export class GameOverScreen {
   private previousHighText: Text | null = null;
   private restartPromptText: Text | null = null;
 
+  // Prestige UI elements
+  private commendationsEarnedText: Text | null = null;
+  private commendationsTotalText: Text | null = null;
+  private upgradeTexts: Text[] = [];
+  private prestigeManager: PrestigeManager | null = null;
+
   // Event handler references for cleanup
   private boundKeyHandler: ((e: KeyboardEvent) => void) | null = null;
-  private boundClickHandler: (() => void) | null = null;
 
   constructor() {
     this.container = new Container();
@@ -69,15 +82,23 @@ export class GameOverScreen {
    */
   init(app: Application): void {
     this.app = app;
-    
+
     // Add container to stage
     this.app.stage.addChild(this.container);
-    
+
     // Create UI elements
     this.createOverlay();
     this.createTitle();
     this.createScorePanel();
+    this.createPrestigePanel();
     this.createRestartPrompt();
+  }
+
+  /**
+   * Set the prestige manager for upgrade purchasing.
+   */
+  setPrestigeManager(manager: PrestigeManager): void {
+    this.prestigeManager = manager;
   }
 
   /**
@@ -102,7 +123,7 @@ export class GameOverScreen {
     });
     this.titleText = new Text({ text: 'SIMULATION ENDED', style: titleStyle });
     this.titleText.anchor.set(0.5, 0.5);
-    this.titleText.position.set(GAME_CONFIG.WORLD_WIDTH / 2, 180);
+    this.titleText.position.set(GAME_CONFIG.WORLD_WIDTH / 2, 150);
     this.container.addChild(this.titleText);
   }
 
@@ -111,8 +132,8 @@ export class GameOverScreen {
    */
   private createScorePanel(): void {
     const centerX = GAME_CONFIG.WORLD_WIDTH / 2;
-    const startY = 280;
-    const lineHeight = 40;
+    const startY = 240;
+    const lineHeight = 36;
 
     // Score breakdown style
     const scoreStyle = new TextStyle({
@@ -171,7 +192,7 @@ export class GameOverScreen {
     });
     this.highScoreText = new Text({ text: '', style: highScoreStyle });
     this.highScoreText.anchor.set(0.5, 0.5);
-    this.highScoreText.position.set(centerX, startY + lineHeight * 5.5);
+    this.highScoreText.position.set(centerX, startY + lineHeight * 5);
     this.container.addChild(this.highScoreText);
 
     // Previous high score
@@ -182,8 +203,106 @@ export class GameOverScreen {
     });
     this.previousHighText = new Text({ text: '', style: prevHighStyle });
     this.previousHighText.anchor.set(0.5, 0.5);
-    this.previousHighText.position.set(centerX, startY + lineHeight * 6.5);
+    this.previousHighText.position.set(centerX, startY + lineHeight * 6);
     this.container.addChild(this.previousHighText);
+  }
+
+  /**
+   * Create the prestige panel with commendation info and upgrade rows
+   */
+  private createPrestigePanel(): void {
+    const centerX = GAME_CONFIG.WORLD_WIDTH / 2;
+    const startY = 560;
+    const lineHeight = 32;
+
+    // Commendations earned
+    const earnedStyle = new TextStyle({
+      fontFamily: UI_STYLES.FONT_FAMILY,
+      fontSize: UI_STYLES.FONT_SIZE_MEDIUM,
+      fill: COMMENDATION_COLOR,
+      fontWeight: 'bold'
+    });
+    this.commendationsEarnedText = new Text({ text: '', style: earnedStyle });
+    this.commendationsEarnedText.anchor.set(0.5, 0.5);
+    this.commendationsEarnedText.position.set(centerX, startY);
+    this.container.addChild(this.commendationsEarnedText);
+
+    // Total commendations
+    const totalStyle = new TextStyle({
+      fontFamily: UI_STYLES.FONT_FAMILY,
+      fontSize: UI_STYLES.FONT_SIZE_SMALL,
+      fill: COMMENDATION_COLOR
+    });
+    this.commendationsTotalText = new Text({ text: '', style: totalStyle });
+    this.commendationsTotalText.anchor.set(0.5, 0.5);
+    this.commendationsTotalText.position.set(centerX, startY + lineHeight);
+    this.container.addChild(this.commendationsTotalText);
+
+    // Upgrade rows
+    const upgradeStyle = new TextStyle({
+      fontFamily: UI_STYLES.FONT_FAMILY,
+      fontSize: UI_STYLES.FONT_SIZE_SMALL,
+      fill: UI_STYLES.COLORS.TEXT
+    });
+
+    const upgradeStartY = startY + lineHeight * 2.5;
+    for (let i = 0; i < PRESTIGE_CONFIG.UPGRADES.length; i++) {
+      const text = new Text({ text: '', style: upgradeStyle.clone() });
+      text.anchor.set(0.5, 0.5);
+      text.position.set(centerX, upgradeStartY + i * lineHeight);
+      text.eventMode = 'static';
+      text.cursor = 'pointer';
+      const upgradeId = PRESTIGE_CONFIG.UPGRADES[i].id;
+      text.on('pointerdown', () => this.handleUpgradeClick(upgradeId));
+      this.container.addChild(text);
+      this.upgradeTexts.push(text);
+    }
+  }
+
+  /**
+   * Handle click on an upgrade row
+   */
+  private handleUpgradeClick(upgradeId: PrestigeUpgradeId): void {
+    if (!this.prestigeManager) return;
+
+    const success = this.prestigeManager.purchaseUpgrade(upgradeId);
+    if (success) {
+      this.refreshPrestigeDisplay();
+    }
+  }
+
+  /**
+   * Refresh the prestige section after a purchase
+   */
+  private refreshPrestigeDisplay(): void {
+    if (!this.prestigeManager) return;
+
+    const data = this.prestigeManager.getPrestigeData();
+
+    if (this.commendationsTotalText) {
+      this.commendationsTotalText.text = `TOTAL COMMENDATIONS: ${data.commendations}`;
+    }
+
+    for (let i = 0; i < PRESTIGE_CONFIG.UPGRADES.length; i++) {
+      const upgrade = PRESTIGE_CONFIG.UPGRADES[i];
+      const level = this.prestigeManager.getUpgradeLevel(upgrade.id);
+      const text = this.upgradeTexts[i];
+      if (!text) continue;
+
+      if (level >= upgrade.maxLevel) {
+        text.text = `${upgrade.name}  Lv.${level}/${upgrade.maxLevel}  MAXED`;
+        text.style.fill = UI_STYLES.COLORS.SECONDARY;
+        text.eventMode = 'none';
+        text.cursor = 'default';
+      } else {
+        const cost = upgrade.costs[level];
+        const canAfford = data.commendations >= cost;
+        text.text = `${upgrade.name}  Lv.${level}/${upgrade.maxLevel}  Cost: ${cost}`;
+        text.style.fill = canAfford ? UI_STYLES.COLORS.TEXT : UI_STYLES.COLORS.DANGER;
+        text.eventMode = 'static';
+        text.cursor = canAfford ? 'pointer' : 'not-allowed';
+      }
+    }
   }
 
   /**
@@ -197,7 +316,7 @@ export class GameOverScreen {
     });
     this.restartPromptText = new Text({ text: 'PRESS ENTER OR R TO RESTART', style: promptStyle });
     this.restartPromptText.anchor.set(0.5, 0.5);
-    this.restartPromptText.position.set(GAME_CONFIG.WORLD_WIDTH / 2, GAME_CONFIG.WORLD_HEIGHT - 150);
+    this.restartPromptText.position.set(GAME_CONFIG.WORLD_WIDTH / 2, GAME_CONFIG.WORLD_HEIGHT - 100);
     this.container.addChild(this.restartPromptText);
   }
 
@@ -227,8 +346,9 @@ export class GameOverScreen {
    * @param scoreData - Final score data
    * @param isHighScore - Whether this is a new high score
    * @param previousHighScore - Previous high score for comparison (optional)
+   * @param commendationsEarned - Prestige commendations earned this run
    */
-  show(scoreData: ScoreData, isHighScore: boolean, previousHighScore?: number): void {
+  show(scoreData: ScoreData, isHighScore: boolean, previousHighScore?: number, commendationsEarned: number = 0): void {
     if (!this.app) return;
 
     this.visible = true;
@@ -264,6 +384,26 @@ export class GameOverScreen {
       }
     }
 
+    // Update prestige display
+    if (this.commendationsEarnedText) {
+      this.commendationsEarnedText.text = `COMMENDATIONS EARNED: +${commendationsEarned}`;
+    }
+
+    if (this.prestigeManager) {
+      if (this.commendationsTotalText) {
+        this.commendationsTotalText.text = `TOTAL COMMENDATIONS: ${this.prestigeManager.getCommendations()}`;
+      }
+      this.refreshPrestigeDisplay();
+    } else {
+      // No prestige manager — hide upgrade rows
+      if (this.commendationsTotalText) {
+        this.commendationsTotalText.text = '';
+      }
+      for (const text of this.upgradeTexts) {
+        text.text = '';
+      }
+    }
+
     // Add event listeners
     this.setupEventListeners();
   }
@@ -280,14 +420,16 @@ export class GameOverScreen {
     };
     document.addEventListener('keydown', this.boundKeyHandler);
 
-    // Click handler on the container
-    if (this.app?.canvas) {
-      this.boundClickHandler = () => {
-        if (this.visible) {
-          this.triggerRestart();
-        }
-      };
-      this.app.canvas.addEventListener('click', this.boundClickHandler);
+    // Click handler on the overlay (not on upgrade texts)
+    // Note: We do NOT add a blanket canvas click handler here
+    // because it would conflict with upgrade button clicks.
+    // Restart is triggered by keyboard or the restart prompt text.
+    if (this.restartPromptText) {
+      this.restartPromptText.eventMode = 'static';
+      this.restartPromptText.cursor = 'pointer';
+      this.restartPromptText.on('pointerdown', () => {
+        if (this.visible) this.triggerRestart();
+      });
     }
   }
 
@@ -299,9 +441,9 @@ export class GameOverScreen {
       document.removeEventListener('keydown', this.boundKeyHandler);
       this.boundKeyHandler = null;
     }
-    if (this.boundClickHandler && this.app?.canvas) {
-      this.app.canvas.removeEventListener('click', this.boundClickHandler);
-      this.boundClickHandler = null;
+    if (this.restartPromptText) {
+      this.restartPromptText.removeAllListeners();
+      this.restartPromptText.eventMode = 'auto';
     }
   }
 

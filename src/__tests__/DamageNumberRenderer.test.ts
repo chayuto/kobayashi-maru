@@ -7,9 +7,9 @@ import { Container } from 'pixi.js';
 
 // Mock PixiJS
 vi.mock('pixi.js', async () => {
-  class MockText {
+  class MockBitmapText {
     text = '';
-    style: Record<string, unknown> = { fill: 0xFFFFFF };
+    tint = 0xFFFFFF;
     visible = true;
     alpha = 1;
     x = 0;
@@ -23,12 +23,10 @@ vi.mock('pixi.js', async () => {
     }
   }
 
-  class MockTextStyle {
-    fill: number;
-    constructor(opts?: Record<string, unknown>) {
-      this.fill = (opts?.fill as number) ?? 0xFFFFFF;
-    }
-  }
+  const MockBitmapFont = {
+    install: vi.fn(),
+    uninstall: vi.fn(),
+  };
 
   class MockContainer {
     children: unknown[] = [];
@@ -38,8 +36,8 @@ vi.mock('pixi.js', async () => {
 
   return {
     Container: MockContainer,
-    Text: MockText,
-    TextStyle: MockTextStyle,
+    BitmapText: MockBitmapText,
+    BitmapFont: MockBitmapFont,
   };
 });
 

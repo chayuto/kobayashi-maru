@@ -113,8 +113,8 @@ export class Game {
     // Gameplay manager
     this.gameplayManager = new GameplayManager(this.world);
     this.gameplayManager.setCallbacks({
-      onGameOver: (score, isHighScore) => {
-        this.uiController.showGameOver(score, isHighScore, 0);
+      onGameOver: (score, isHighScore, commendationsEarned) => {
+        this.uiController.showGameOver(score, isHighScore, 0, commendationsEarned);
       },
       onWaveStart: (waveNumber, enemyCount) => {
         this.uiController.addLogMessage(`⚠ Wave ${waveNumber} started!`, 'wave');
@@ -371,11 +371,12 @@ export class Game {
     });
 
     // UI: HUD and debug
-    this.loopManager.onUI(() => {
+    this.loopManager.onUI((dt) => {
+      const uiDeltaTime = this.loopManager.isPaused() ? 0 : dt;
       const snapshot = this.gameplayManager.getSnapshot();
       const turretCount = query(this.world, [Turret]).length;
 
-      this.uiController.updateHUD(snapshot, this.combatSystem, turretCount);
+      this.uiController.updateHUD(snapshot, this.combatSystem, turretCount, uiDeltaTime);
 
       // Update AI HUD (shows AI panel when enabled)
       if (this.aiManager) {
@@ -394,7 +395,7 @@ export class Game {
       // Update tutorial overlay animation
       const tutorialOverlay = services.tryGet('tutorialOverlay');
       if (tutorialOverlay) {
-        tutorialOverlay.update();
+        tutorialOverlay.update(uiDeltaTime);
       }
 
       this.uiController.updateDebug(snapshot);

@@ -123,7 +123,7 @@ describe('WaveAnnouncement', () => {
   describe('animation phases', () => {
     it('should start in IDLE and not animate', () => {
       announcement.init(parent);
-      announcement.update();
+      announcement.update(0.016);
       expect(announcement.getPhase()).toBe('IDLE');
     });
 
@@ -132,14 +132,9 @@ describe('WaveAnnouncement', () => {
       announcement.show(1);
       expect(announcement.getPhase()).toBe('FADE_IN');
 
-      // Mock performance.now to advance time past FADE_IN_DURATION (0.3s)
-      const startTime = performance.now();
-      vi.spyOn(performance, 'now').mockReturnValue(startTime + 400);
-
-      announcement.update();
+      // Advance past FADE_IN_DURATION (0.3s)
+      announcement.update(0.4);
       expect(announcement.getPhase()).toBe('HOLD');
-
-      vi.restoreAllMocks();
     });
 
     it('should progress from HOLD to FADE_OUT', () => {
@@ -147,17 +142,12 @@ describe('WaveAnnouncement', () => {
       announcement.show(1);
 
       // Past FADE_IN
-      const startTime = performance.now();
-      vi.spyOn(performance, 'now').mockReturnValue(startTime + 400);
-      announcement.update();
+      announcement.update(0.4);
       expect(announcement.getPhase()).toBe('HOLD');
 
       // Past HOLD (2.0s)
-      vi.spyOn(performance, 'now').mockReturnValue(startTime + 400 + 2100);
-      announcement.update();
+      announcement.update(2.1);
       expect(announcement.getPhase()).toBe('FADE_OUT');
-
-      vi.restoreAllMocks();
     });
 
     it('should return to IDLE after FADE_OUT completes', () => {
@@ -165,20 +155,30 @@ describe('WaveAnnouncement', () => {
       announcement.show(1);
 
       // Past FADE_IN
-      const startTime = performance.now();
-      vi.spyOn(performance, 'now').mockReturnValue(startTime + 400);
-      announcement.update();
+      announcement.update(0.4);
 
       // Past HOLD
-      vi.spyOn(performance, 'now').mockReturnValue(startTime + 400 + 2100);
-      announcement.update();
+      announcement.update(2.1);
 
       // Past FADE_OUT (0.5s)
-      vi.spyOn(performance, 'now').mockReturnValue(startTime + 400 + 2100 + 600);
-      announcement.update();
+      announcement.update(0.6);
       expect(announcement.getPhase()).toBe('IDLE');
+    });
 
-      vi.restoreAllMocks();
+    it('should freeze animation when deltaTime is 0', () => {
+      announcement.init(parent);
+      announcement.show(1);
+      expect(announcement.getPhase()).toBe('FADE_IN');
+
+      // Update with 0 deltaTime — animation should not advance
+      announcement.update(0);
+      announcement.update(0);
+      announcement.update(0);
+      expect(announcement.getPhase()).toBe('FADE_IN');
+
+      // Now advance past FADE_IN
+      announcement.update(0.4);
+      expect(announcement.getPhase()).toBe('HOLD');
     });
   });
 

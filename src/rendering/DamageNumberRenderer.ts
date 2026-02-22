@@ -5,27 +5,31 @@
  * Blue for shield damage, red for health, orange for critical hits.
  * Numbers float upward, scale down, and fade out.
  *
+ * Uses BitmapText for high-performance rendering with tint-based coloring.
+ *
  * @module rendering/DamageNumberRenderer
  */
-import { Container, Text, TextStyle } from 'pixi.js';
+import { Container, BitmapText, BitmapFont } from 'pixi.js';
 import { EventBus } from '../core/EventBus';
 import { GameEventType, DamageDealtPayload } from '../types/events';
 import { RENDERING_CONFIG } from '../config/rendering.config';
 
+const DAMAGE_FONT_NAME = 'DamageNumber';
+
 interface ActiveNumber {
-    text: Text;
+    text: BitmapText;
     elapsed: number;
     startX: number;
     startY: number;
 }
 
 /**
- * Renders floating damage numbers using a pooled Text approach.
+ * Renders floating damage numbers using a pooled BitmapText approach.
  * Subscribes to DAMAGE_DEALT events via EventBus.
  */
 export class DamageNumberRenderer {
     private container: Container;
-    private pool: Text[] = [];
+    private pool: BitmapText[] = [];
     private active: ActiveNumber[] = [];
     private eventBus: EventBus;
     private boundHandler: (payload: DamageDealtPayload) => void;
@@ -43,6 +47,19 @@ export class DamageNumberRenderer {
     init(parent: Container): void {
         parent.addChild(this.container);
 
+        // Install a bitmap font for damage numbers (white fill, colorized via tint)
+        BitmapFont.install({
+            name: DAMAGE_FONT_NAME,
+            style: {
+                fontFamily: this.config.FONT_FAMILY,
+                fontSize: this.config.FONT_SIZE,
+                fill: 0xFFFFFF,
+                fontWeight: 'bold',
+                stroke: { color: this.config.STROKE_COLOR, width: this.config.STROKE_WIDTH },
+            },
+            chars: [['0', '9'], ' -'],
+        });
+
         // Pre-populate pool
         for (let i = 0; i < this.config.POOL_SIZE; i++) {
             const text = this.createText();
@@ -55,15 +72,14 @@ export class DamageNumberRenderer {
         this.eventBus.on(GameEventType.DAMAGE_DEALT, this.boundHandler);
     }
 
-    private createText(): Text {
-        const style = new TextStyle({
-            fontFamily: this.config.FONT_FAMILY,
-            fontSize: this.config.FONT_SIZE,
-            fill: 0xFFFFFF,
-            fontWeight: 'bold',
-            stroke: { color: this.config.STROKE_COLOR, width: this.config.STROKE_WIDTH },
+    private createText(): BitmapText {
+        const text = new BitmapText({
+            text: '',
+            style: {
+                fontFamily: DAMAGE_FONT_NAME,
+                fontSize: this.config.FONT_SIZE,
+            },
         });
-        const text = new Text({ text: '', style });
         text.anchor.set(0.5, 0.5);
         return text;
     }
@@ -75,13 +91,13 @@ export class DamageNumberRenderer {
         const damage = Math.round(payload.damage);
         text.text = damage.toString();
 
-        // Color based on damage type
+        // Color based on damage type (use tint for BitmapText)
         if (payload.isShield) {
-            text.style.fill = this.config.SHIELD_COLOR;
+            text.tint = this.config.SHIELD_COLOR;
         } else if (damage >= this.config.CRITICAL_THRESHOLD) {
-            text.style.fill = this.config.CRITICAL_COLOR;
+            text.tint = this.config.CRITICAL_COLOR;
         } else {
-            text.style.fill = this.config.HEALTH_COLOR;
+            text.tint = this.config.HEALTH_COLOR;
         }
 
         text.position.set(payload.x, payload.y);
@@ -97,7 +113,7 @@ export class DamageNumberRenderer {
         });
     }
 
-    private acquire(): Text | null {
+    private acquire(): BitmapText | null {
         if (this.pool.length > 0) {
             return this.pool.pop()!;
         }

@@ -9,11 +9,11 @@
 
 import { query, removeEntity } from 'bitecs';
 import { getServices } from '../services';
-import { createKobayashiMaru, getEntityCount } from '../../ecs';
+import { createKobayashiMaru, createTurret, getEntityCount } from '../../ecs';
 import { Health, Shield, Turret, Projectile, AIBehavior, Position } from '../../ecs/components';
 import { GameStateType } from '../../game/gameState';
 import { calculateScore } from '../../ui';
-import { GAME_CONFIG, GameEventType, EnemyKilledPayload, WaveStartedPayload, WaveCompletedPayload } from '../../types';
+import { GAME_CONFIG, TurretType, GameEventType, EnemyKilledPayload, WaveStartedPayload, WaveCompletedPayload } from '../../types';
 import { AlertStatusManager } from '../../game/AlertStatusManager';
 import { AlertLevel } from '../../types/events';
 import type { GameWorld } from '../../ecs/world';
@@ -59,7 +59,7 @@ export interface GameplaySnapshot {
  * Gameplay event callbacks
  */
 export interface GameplayCallbacks {
-    onGameOver?: (score: ScoreData, isHighScore: boolean) => void;
+    onGameOver?: (score: ScoreData, isHighScore: boolean, commendationsEarned: number) => void;
     onWaveStart?: (waveNumber: number, enemyCount: number) => void;
     onWaveComplete?: (waveNumber: number) => void;
     onEnemyKilled?: (reward: number) => void;
@@ -139,13 +139,33 @@ export class GameplayManager {
 
     /**
      * Spawn Kobayashi Maru at center.
+     * Applies prestige bonuses (hull integrity, starting turret) if available.
      */
     private spawnKobayashiMaru(): void {
+        const services = getServices();
         const centerX = GAME_CONFIG.WORLD_WIDTH / 2;
         const centerY = GAME_CONFIG.WORLD_HEIGHT / 2;
 
         this.kobayashiMaruId = createKobayashiMaru(this.world, centerX, centerY);
+
+        // Apply hull integrity prestige bonus
+        const prestige = services.tryGet('prestigeManager');
+        if (prestige) {
+            const hullBonus = prestige.getBonus('hull_integrity');
+            if (hullBonus > 0) {
+                const multiplier = 1 + hullBonus;
+                Health.max[this.kobayashiMaruId] = Math.floor(Health.max[this.kobayashiMaruId] * multiplier);
+                Health.current[this.kobayashiMaruId] = Health.max[this.kobayashiMaruId];
+            }
+        }
+
         this.previousKMHealth = Health.max[this.kobayashiMaruId];
+
+        // Apply starting turret prestige bonus
+        if (prestige && prestige.getBonus('starting_turret') > 0) {
+            const turretOffset = 120;
+            createTurret(this.world, centerX + turretOffset, centerY, TurretType.TORPEDO_LAUNCHER);
+        }
 
         console.log('Kobayashi Maru spawned at center');
     }
@@ -219,6 +239,10 @@ export class GameplayManager {
         // Update hull damage overlay with current hull percent
         const hullOverlay = services.tryGet('hullDamageOverlay');
         if (hullOverlay) hullOverlay.setHullPercent(hullPercent);
+
+        // Update chromatic aberration effect with current hull percent
+        const chromaticAberration = services.tryGet('chromaticAberration');
+        if (chromaticAberration) chromaticAberration.setHullPercent(hullPercent);
     }
 
     // ==========================================================================
@@ -260,14 +284,28 @@ export class GameplayManager {
         const finalScore = scoreManager.getScoreData();
         const isHighScore = highScoreManager.saveScore(finalScore);
 
+        // Award prestige commendations
+        let commendationsEarned = 0;
+        const prestige = services.tryGet('prestigeManager');
+        if (prestige) {
+            commendationsEarned = prestige.awardCommendations({
+                waveNumber: finalScore.waveReached,
+                enemiesDefeated: finalScore.enemiesDefeated,
+                timeSurvived: finalScore.timeSurvived,
+            });
+        }
+
         console.log('Game Over!');
         console.log(`Previous Best: ${previousBestScore}`);
         console.log(`Time Survived: ${finalScore.timeSurvived.toFixed(2)}s`);
         console.log(`Wave Reached: ${finalScore.waveReached}`);
         console.log(`Enemies Defeated: ${finalScore.enemiesDefeated}`);
+        if (commendationsEarned > 0) {
+            console.log(`Commendations Earned: +${commendationsEarned}`);
+        }
 
         // Notify callback
-        this.callbacks.onGameOver?.(finalScore, isHighScore);
+        this.callbacks.onGameOver?.(finalScore, isHighScore, commendationsEarned);
     }
 
     /**

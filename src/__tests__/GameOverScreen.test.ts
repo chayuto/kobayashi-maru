@@ -10,14 +10,18 @@ import type { ScoreData } from '../game/scoreManager';
 // Mock PixiJS
 vi.mock('pixi.js', async () => {
   const actual = await vi.importActual('pixi.js') as object;
-  
+
   // Mock Text class
   class MockText {
     text: string = '';
-    style: { fill?: number } = {};
+    style: { fill?: number; clone?: () => MockText['style'] } = {};
     anchor = { set: vi.fn() };
     position = { set: vi.fn() };
-    constructor(options?: { text?: string; style?: { fill?: number } }) {
+    eventMode: string = 'auto';
+    cursor: string = 'default';
+    on = vi.fn();
+    removeAllListeners = vi.fn();
+    constructor(options?: { text?: string; style?: { fill?: number; clone?: () => MockText['style'] } }) {
       this.text = options?.text ?? '';
       this.style = options?.style ?? {};
     }
@@ -78,6 +82,14 @@ vi.mock('pixi.js', async () => {
           this.fill = opts.fill;
           this.fontWeight = opts.fontWeight;
         }
+      }
+      clone() {
+        return new MockTextStyle({
+          fontFamily: this.fontFamily,
+          fontSize: this.fontSize,
+          fill: this.fill,
+          fontWeight: this.fontWeight,
+        });
       }
     }
   };
@@ -148,6 +160,10 @@ describe('GameOverScreen', () => {
     it('should not throw when showing with previous high score', () => {
       expect(() => gameOverScreen.show(mockScoreData, false, 5000)).not.toThrow();
     });
+
+    it('should not throw when showing with commendations earned', () => {
+      expect(() => gameOverScreen.show(mockScoreData, false, 0, 42)).not.toThrow();
+    });
   });
 
   describe('hide', () => {
@@ -164,7 +180,7 @@ describe('GameOverScreen', () => {
       };
       gameOverScreen.show(mockScoreData, false);
       gameOverScreen.hide();
-      
+
       expect(gameOverScreen.isVisible()).toBe(false);
       expect(gameOverScreen.container.visible).toBe(false);
     });
@@ -183,7 +199,7 @@ describe('GameOverScreen', () => {
     it('should trigger restart callback on Enter key', () => {
       const mockCallback = vi.fn();
       gameOverScreen.setOnRestart(mockCallback);
-      
+
       const mockScoreData: ScoreData = {
         timeSurvived: 100,
         waveReached: 5,
@@ -191,18 +207,18 @@ describe('GameOverScreen', () => {
         civiliansSaved: 0
       };
       gameOverScreen.show(mockScoreData, false);
-      
+
       // Simulate Enter key
       const event = new KeyboardEvent('keydown', { key: 'Enter' });
       document.dispatchEvent(event);
-      
+
       expect(mockCallback).toHaveBeenCalled();
     });
 
     it('should trigger restart callback on R key', () => {
       const mockCallback = vi.fn();
       gameOverScreen.setOnRestart(mockCallback);
-      
+
       const mockScoreData: ScoreData = {
         timeSurvived: 100,
         waveReached: 5,
@@ -210,18 +226,18 @@ describe('GameOverScreen', () => {
         civiliansSaved: 0
       };
       gameOverScreen.show(mockScoreData, false);
-      
+
       // Simulate R key
       const event = new KeyboardEvent('keydown', { key: 'r' });
       document.dispatchEvent(event);
-      
+
       expect(mockCallback).toHaveBeenCalled();
     });
 
     it('should trigger restart callback on uppercase R key', () => {
       const mockCallback = vi.fn();
       gameOverScreen.setOnRestart(mockCallback);
-      
+
       const mockScoreData: ScoreData = {
         timeSurvived: 100,
         waveReached: 5,
@@ -229,18 +245,18 @@ describe('GameOverScreen', () => {
         civiliansSaved: 0
       };
       gameOverScreen.show(mockScoreData, false);
-      
+
       // Simulate uppercase R key
       const event = new KeyboardEvent('keydown', { key: 'R' });
       document.dispatchEvent(event);
-      
+
       expect(mockCallback).toHaveBeenCalled();
     });
 
     it('should not trigger restart on other keys', () => {
       const mockCallback = vi.fn();
       gameOverScreen.setOnRestart(mockCallback);
-      
+
       const mockScoreData: ScoreData = {
         timeSurvived: 100,
         waveReached: 5,
@@ -248,18 +264,18 @@ describe('GameOverScreen', () => {
         civiliansSaved: 0
       };
       gameOverScreen.show(mockScoreData, false);
-      
+
       // Simulate Space key
       const event = new KeyboardEvent('keydown', { key: ' ' });
       document.dispatchEvent(event);
-      
+
       expect(mockCallback).not.toHaveBeenCalled();
     });
 
     it('should remove event listeners when hidden', () => {
       const mockCallback = vi.fn();
       gameOverScreen.setOnRestart(mockCallback);
-      
+
       const mockScoreData: ScoreData = {
         timeSurvived: 100,
         waveReached: 5,
@@ -268,11 +284,11 @@ describe('GameOverScreen', () => {
       };
       gameOverScreen.show(mockScoreData, false);
       gameOverScreen.hide();
-      
+
       // Simulate Enter key after hiding
       const event = new KeyboardEvent('keydown', { key: 'Enter' });
       document.dispatchEvent(event);
-      
+
       // Should not trigger callback since event listener was removed
       expect(mockCallback).not.toHaveBeenCalled();
     });
@@ -289,7 +305,7 @@ describe('GameOverScreen', () => {
       const mockCallback = vi.fn();
       gameOverScreen.init(mockApp);
       gameOverScreen.setOnRestart(mockCallback);
-      
+
       const mockScoreData: ScoreData = {
         timeSurvived: 100,
         waveReached: 5,
@@ -298,12 +314,27 @@ describe('GameOverScreen', () => {
       };
       gameOverScreen.show(mockScoreData, false);
       gameOverScreen.destroy();
-      
+
       // Simulate Enter key after destroy
       const event = new KeyboardEvent('keydown', { key: 'Enter' });
       document.dispatchEvent(event);
-      
+
       expect(mockCallback).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('prestige integration', () => {
+    it('should accept prestige manager', () => {
+      gameOverScreen.init(mockApp);
+      const mockPrestige = {
+        getCommendations: vi.fn().mockReturnValue(100),
+        getPrestigeData: vi.fn().mockReturnValue({ commendations: 100, totalEarned: 200, totalRuns: 5, upgradeLevels: {} }),
+        getUpgradeLevel: vi.fn().mockReturnValue(0),
+        purchaseUpgrade: vi.fn().mockReturnValue(true),
+        getBonus: vi.fn().mockReturnValue(0),
+      };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect(() => gameOverScreen.setPrestigeManager(mockPrestige as any)).not.toThrow();
     });
   });
 });
@@ -350,5 +381,27 @@ describe('calculateScore', () => {
     };
     // Total = 6000 + 50000 + 25000 = 81000
     expect(calculateScore(scoreData)).toBe(81000);
+  });
+
+  it('should apply score multiplier bonus', () => {
+    const scoreData: ScoreData = {
+      timeSurvived: 100,   // 100 * 10 = 1000
+      waveReached: 2,      // 2 * 500 = 1000
+      enemiesDefeated: 10, // 10 * 100 = 1000
+      civiliansSaved: 0
+    };
+    // Base = 3000, with 0.5 bonus = 3000 * 1.5 = 4500
+    expect(calculateScore(scoreData, 0.5)).toBe(4500);
+  });
+
+  it('should floor score after multiplier', () => {
+    const scoreData: ScoreData = {
+      timeSurvived: 10,    // 10 * 10 = 100
+      waveReached: 1,      // 1 * 500 = 500
+      enemiesDefeated: 3,  // 3 * 100 = 300
+      civiliansSaved: 0
+    };
+    // Base = 900, with 0.1 bonus = 900 * 1.1 = 990
+    expect(calculateScore(scoreData, 0.1)).toBe(990);
   });
 });

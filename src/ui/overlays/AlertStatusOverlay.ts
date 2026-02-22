@@ -24,7 +24,7 @@ export class AlertStatusOverlay {
     private background: Graphics;
     private alertText: Text;
     private phase: AnimationPhase = AnimationPhase.IDLE;
-    private phaseStartTime: number = 0;
+    private elapsedTime: number = 0;
     private eventBus: EventBus;
     private boundHandler: (payload: AlertLevelChangedPayload) => void;
     private config = UI_CONFIG.ALERT_STATUS;
@@ -100,33 +100,33 @@ export class AlertStatusOverlay {
         this.container.alpha = 0;
         this.container.scale.set(1);
         this.phase = AnimationPhase.FADE_IN;
-        this.phaseStartTime = performance.now();
+        this.elapsedTime = 0;
     }
 
-    update(): void {
+    update(deltaTime: number = 0): void {
         if (this.phase === AnimationPhase.IDLE) return;
 
-        const elapsed = (performance.now() - this.phaseStartTime) / 1000;
+        this.elapsedTime += deltaTime;
 
         switch (this.phase) {
             case AnimationPhase.FADE_IN: {
-                const t = Math.min(elapsed / this.config.FADE_IN_DURATION, 1);
+                const t = Math.min(this.elapsedTime / this.config.FADE_IN_DURATION, 1);
                 this.container.alpha = t;
                 if (t >= 1) {
                     this.phase = AnimationPhase.HOLD;
-                    this.phaseStartTime = performance.now();
+                    this.elapsedTime = 0;
                 }
                 break;
             }
             case AnimationPhase.HOLD: {
-                if (elapsed >= this.config.HOLD_DURATION) {
+                if (this.elapsedTime >= this.config.HOLD_DURATION) {
                     this.phase = AnimationPhase.FADE_OUT;
-                    this.phaseStartTime = performance.now();
+                    this.elapsedTime = 0;
                 }
                 break;
             }
             case AnimationPhase.FADE_OUT: {
-                const t = Math.min(elapsed / this.config.FADE_OUT_DURATION, 1);
+                const t = Math.min(this.elapsedTime / this.config.FADE_OUT_DURATION, 1);
                 this.container.alpha = 1 - t;
                 if (t >= 1) {
                     this.container.visible = false;

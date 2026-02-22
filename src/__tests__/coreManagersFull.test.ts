@@ -647,7 +647,8 @@ describe('UIController', () => {
           resources: 500,
           kobayashiMaruHealth: 100,
           turretCount: 0,
-        })
+        }),
+        0
       );
     });
 
@@ -679,7 +680,8 @@ describe('UIController', () => {
           accuracy: 0.75,
           dps: 25,
           turretCount: 3,
-        })
+        }),
+        0
       );
     });
   });
@@ -729,7 +731,7 @@ describe('UIController', () => {
       uiController.showGameOver(score, true, 500);
 
       // Assert
-      expect(svcMocks.gameOverScreen.show).toHaveBeenCalledWith(score, true, 500);
+      expect(svcMocks.gameOverScreen.show).toHaveBeenCalledWith(score, true, 500, 0);
     });
 
     it('should hide game over screen', () => {

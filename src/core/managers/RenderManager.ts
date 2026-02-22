@@ -74,6 +74,7 @@ export class RenderManager {
         services.get('screenFlash'); // Must be initialized for screen flash overlay
         services.get('hitFlashManager'); // Must be initialized to subscribe to damage events
         services.tryGet('hullDamageOverlay'); // Force lazy initialization of hull damage overlay
+        services.tryGet('chromaticAberration'); // Force lazy initialization of chromatic aberration
 
         this.initialized = true;
     }
@@ -115,6 +116,10 @@ export class RenderManager {
         // Update hull damage vignette overlay
         const hullOverlay = services.tryGet('hullDamageOverlay');
         if (hullOverlay) hullOverlay.update(deltaTime);
+
+        // Update chromatic aberration effect
+        const chromaticAberration = services.tryGet('chromaticAberration');
+        if (chromaticAberration) chromaticAberration.update(deltaTime);
     }
 
     /**

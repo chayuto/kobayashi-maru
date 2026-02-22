@@ -20,6 +20,7 @@ import { ToggleButton, IconButton } from './components';
 import { AIBrainRenderer } from '../ai/visualization';
 import { WaveAnnouncement } from './overlays/WaveAnnouncement';
 import { AlertStatusOverlay } from './overlays/AlertStatusOverlay';
+import { UIAnimator } from './animation/UIAnimator';
 import type { AIStatusExtended, ThreatVector, SectorData } from '../ai/types';
 import type { AIMessage } from '../ai/humanization/AIMessageGenerator';
 
@@ -622,9 +623,13 @@ export class HUDManager {
   /**
    * Update all HUD elements with new data
    * @param data - HUD data to display
+   * @param deltaTime - Time since last frame in seconds
    */
-  update(data: HUDData): void {
+  update(data: HUDData, deltaTime: number = 0): void {
     if (!this.visible) return;
+
+    // Advance tick-based UI animations
+    UIAnimator.tick(deltaTime);
 
     // Update wave panel
     if (this.wavePanel) {
@@ -695,17 +700,17 @@ export class HUDManager {
 
     // Update combo panel popup animation
     if (this.comboPanel) {
-      this.comboPanel.update();
+      this.comboPanel.update(deltaTime);
     }
 
     // Update wave announcement animation
     if (this.waveAnnouncement) {
-      this.waveAnnouncement.update();
+      this.waveAnnouncement.update(deltaTime);
     }
 
     // Update alert status overlay animation
     if (this.alertStatusOverlay) {
-      this.alertStatusOverlay.update();
+      this.alertStatusOverlay.update(deltaTime);
     }
   }
 

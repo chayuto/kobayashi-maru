@@ -25,7 +25,7 @@ export class ComboPanel {
     private boundHandleComboUpdated: (payload: ComboUpdatedPayload) => void;
     private previousMultiplier: number = 1;
     private popupText: Text | null = null;
-    private popupStartTime: number = 0;
+    private popupElapsed: number = 0;
     private comboConfig = UI_CONFIG.COMBO;
 
     private static readonly WIDTH = UI_CONFIG.PANELS.COMBO.WIDTH;
@@ -145,22 +145,22 @@ export class ComboPanel {
         this.popupText.alpha = 1;
         this.popupText.scale.set(1);
         this.popupText.visible = true;
-        this.popupStartTime = performance.now();
+        this.popupElapsed = 0;
         this.popupActive = true;
     }
 
     /**
      * Update popup animation. Called from HUDManager.update().
-     * Uses performance.now() internally (matches WaveAnnouncement pattern).
+     * @param deltaTime - Time since last frame in seconds
      */
-    update(): void {
+    update(deltaTime: number = 0): void {
         if (!this.popupActive || !this.popupText || !this.popupText.visible) return;
 
-        const elapsed = (performance.now() - this.popupStartTime) / 1000;
+        this.popupElapsed += deltaTime;
         const duration = this.comboConfig.POPUP_DURATION;
-        const t = Math.min(elapsed / duration, 1);
+        const t = Math.min(this.popupElapsed / duration, 1);
 
-        this.popupText.y = -10 - this.comboConfig.POPUP_FLOAT_SPEED * elapsed;
+        this.popupText.y = -10 - this.comboConfig.POPUP_FLOAT_SPEED * this.popupElapsed;
         this.popupText.alpha = 1 - t;
         this.popupText.scale.set(1 + t * 0.3);
 

@@ -240,6 +240,21 @@ export const RENDERING_CONFIG = {
     },
 
     /**
+     * Chromatic aberration effect at low hull.
+     * Offsets R/B channels for a distortion effect.
+     */
+    CHROMATIC_ABERRATION: {
+        /** Start showing at this hull fraction (50%) */
+        ENABLE_THRESHOLD: 0.50,
+        /** Maximum pixel offset for R/B channels */
+        MAX_OFFSET: 4,
+        /** Pulse speed (radians/second) at critical hull */
+        PULSE_SPEED: 1.5,
+        /** Hull fraction below which pulsing intensifies */
+        CRITICAL_THRESHOLD: 0.25,
+    },
+
+    /**
      * Health bar rendering settings.
      */
     HEALTH_BAR: {
