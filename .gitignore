@@ -36,5 +36,9 @@ e2e/test-results/
 e2e/playwright-report/
 playwright-report/
 
+# Visual-check skill output (screenshots are ephemeral, not source)
+.claude/skills/visual-check/screenshots/*
+!.claude/skills/visual-check/screenshots/.gitkeep
+
 /docs/internal/*
 /docs/planning/*
