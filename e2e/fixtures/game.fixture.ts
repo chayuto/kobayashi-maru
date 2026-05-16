@@ -11,8 +11,11 @@ export interface GameHelpers {
   waitForState(state: string, timeout?: number): Promise<void>;
   waitForEnemies(timeout?: number): Promise<void>;
   startGame(): Promise<void>;
+  startDeterministic(): Promise<void>;
   freezeStarfield(): Promise<void>;
   clickCanvas(worldX: number, worldY: number): Promise<void>;
+  stepFrames(frames: number, deltaMs?: number): Promise<void>;
+  seedRandom(seed: number): Promise<void>;
 }
 
 export const test = base.extend<{ game: GameHelpers }>({
@@ -82,6 +85,12 @@ export const test = base.extend<{ game: GameHelpers }>({
         );
       },
 
+      startDeterministic: async () => {
+        await page.evaluate(
+          () => (window as unknown as { __GAME__: { startDeterministic(): void } }).__GAME__.startDeterministic()
+        );
+      },
+
       freezeStarfield: async () => {
         await page.evaluate(
           () => (window as unknown as { __GAME__: { freezeStarfield(): void } }).__GAME__.freezeStarfield()
@@ -96,6 +105,24 @@ export const test = base.extend<{ game: GameHelpers }>({
         await page.mouse.click(
           box.x + worldX * scaleX,
           box.y + worldY * scaleY
+        );
+      },
+
+      stepFrames: async (frames: number, deltaMs?: number) => {
+        await page.evaluate(
+          ({ frames, deltaMs }) => (window as unknown as {
+            __GAME__: { stepFrames(f: number, d?: number): void }
+          }).__GAME__.stepFrames(frames, deltaMs),
+          { frames, deltaMs }
+        );
+      },
+
+      seedRandom: async (seed: number) => {
+        await page.evaluate(
+          (s) => (window as unknown as {
+            __GAME__: { seedRandom(s: number): void }
+          }).__GAME__.seedRandom(s),
+          seed
         );
       },
     };

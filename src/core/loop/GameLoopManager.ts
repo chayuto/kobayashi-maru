@@ -225,14 +225,34 @@ export class GameLoopManager {
      * Main update loop - called by PixiJS ticker.
      */
     private update(): void {
+        // Calculate delta time in seconds from the wall-clock ticker
+        this.deltaTime = this.app.ticker.deltaMS / 1000;
+        this.tick();
+    }
+
+    /**
+     * Advance the simulation by a fixed number of frames, each with an
+     * identical delta. Bypasses the wall-clock ticker so E2E tests get
+     * reproducible, frame-exact results. Stop the ticker before stepping.
+     * @param deltaSeconds - per-frame delta in seconds
+     * @param frames - number of frames to advance
+     */
+    step(deltaSeconds: number, frames: number = 1): void {
+        for (let i = 0; i < frames; i++) {
+            this.deltaTime = deltaSeconds;
+            this.tick();
+        }
+    }
+
+    /**
+     * Run one frame of all update phases using the current deltaTime.
+     */
+    private tick(): void {
         const services = getServices();
         const perfMon = services.tryGet('performanceMonitor');
 
         // Start frame timing
         perfMon?.startFrame();
-
-        // Calculate delta time in seconds
-        this.deltaTime = this.app.ticker.deltaMS / 1000;
 
         // Phase 1: Pre-update (always runs)
         this.runCallbacks(this.preUpdateCallbacks);

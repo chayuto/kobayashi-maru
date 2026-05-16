@@ -3,3 +3,4 @@
  * Contains utility data structures and helpers
  */
 export * from './BinaryHeap';
+export * from './gameplayRng';

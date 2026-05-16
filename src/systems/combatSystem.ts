@@ -6,6 +6,7 @@ import { query, hasComponent, World } from 'bitecs';
 import { Position, Turret, Target, Faction, Health, Shield, WeaponProperties, EnemyVariant } from '../ecs/components';
 import { TurretType, ProjectileType } from '../types/constants';
 import { COMBAT_CONFIG, RENDERING_CONFIG, TURRET_DAMAGE_TYPE, FACTION_RESISTANCES } from '../config';
+import { randomFloat } from '../utils';
 import { createProjectile } from '../ecs/entityFactory';
 import { AudioManager, SoundType } from '../audio';
 import { ParticleSystem, EFFECTS } from '../rendering';
@@ -357,7 +358,7 @@ export class CombatSystem {
       const statusType = WeaponProperties.statusEffectType[turretEid];
       const statusChance = WeaponProperties.statusEffectChance[turretEid];
 
-      if (statusType > 0 && Math.random() < statusChance) {
+      if (statusType > 0 && randomFloat() < statusChance) {
         if (statusType === 1) {
           applyBurning(world, entityId, COMBAT_CONFIG.STATUS_EFFECTS.BURNING.DAMAGE_PER_TICK, COMBAT_CONFIG.STATUS_EFFECTS.BURNING.DURATION);
         } else if (statusType === 2) {

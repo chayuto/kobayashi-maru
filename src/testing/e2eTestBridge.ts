@@ -13,6 +13,7 @@ import { EventBus } from '../core/EventBus';
 import { GameEventType } from '../types/events';
 import { query } from 'bitecs';
 import { Turret, Health, Shield } from '../ecs/components';
+import { seedGameplayRng } from '../utils/gameplayRng';
 
 interface CapturedEvent {
   type: string;
@@ -67,6 +68,16 @@ export function installTestBridge(game: Game): void {
     clearEvents: () => { events.length = 0; },
 
     startGame: () => game.startGame(),
+
+    // Start a game and immediately freeze the wall-clock ticker, so the
+    // simulation only advances via stepFrames(). This eliminates the variable
+    // number of real-time frames that would otherwise tick between async test
+    // steps — required for frame-exact reproducible E2E runs.
+    startDeterministic: () => {
+      game.startGame();
+      game.stepFrames(0); // stops the ticker, advances zero frames
+    },
+
     pause: () => game.pause(),
     resume: () => game.resume(),
     restart: () => game.restart(),
@@ -100,6 +111,18 @@ export function installTestBridge(game: Game): void {
 
     freezeStarfield: () => {
       getServices().get('starfield').frozen = true;
+    },
+
+    stepFrames: (frames: number, deltaMs?: number) => {
+      game.stepFrames(frames, deltaMs);
+    },
+
+    // Seed the gameplay RNG so the simulation becomes reproducible. Only the
+    // gameplay random stream is affected — rendering and particle randomness
+    // stay on Math.random — so visual effects cannot desync the simulation.
+    // Combine with stepFrames() for frame-exact deterministic runs.
+    seedRandom: (seed: number) => {
+      seedGameplayRng(seed);
     },
 
     isReady: () => true,
