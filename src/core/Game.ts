@@ -658,6 +658,17 @@ export class Game {
     return this.loopManager.isPaused();
   }
 
+  /**
+   * Deterministically advance the simulation by N fixed-delta frames.
+   * Stops the wall-clock ticker so E2E tests get frame-exact reproducibility.
+   * @param frames - number of frames to advance
+   * @param deltaMs - per-frame delta in milliseconds (default 1/60s)
+   */
+  stepFrames(frames: number, deltaMs: number = 1000 / 60): void {
+    this.loopManager.stop();
+    this.loopManager.step(deltaMs / 1000, frames);
+  }
+
   // Cheat mode methods (delegate to gameplay manager)
   setGodMode(enabled: boolean): void {
     if (enabled) {

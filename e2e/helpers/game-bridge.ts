@@ -41,6 +41,8 @@ export interface GameBridge {
   clearEvents(): void;
 
   startGame(): void;
+  /** Start a game with the wall-clock ticker frozen — advance only via stepFrames(). */
+  startDeterministic(): void;
   pause(): void;
   resume(): void;
   restart(): void;
@@ -55,6 +57,11 @@ export interface GameBridge {
   getEntityCounts(): EntityCounts;
 
   freezeStarfield(): void;
+
+  /** Deterministically advance the simulation by N fixed-delta frames. */
+  stepFrames(frames: number, deltaMs?: number): void;
+  /** Seed Math.random with a reproducible PRNG (mulberry32). */
+  seedRandom(seed: number): void;
 
   isReady(): boolean;
 }

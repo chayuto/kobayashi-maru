@@ -4,6 +4,7 @@
  */
 import { GAME_CONFIG } from '../types/constants';
 import { WAVE_CONFIG } from '../config';
+import { randomFloat } from '../utils';
 import { FormationType } from './waveConfig';
 
 /**
@@ -29,7 +30,7 @@ const EDGE_MARGIN = WAVE_CONFIG.SPAWN.EDGE_MARGIN;
  */
 export function getRandomEdge(): EdgeType {
   const edges: EdgeType[] = ['top', 'right', 'bottom', 'left'];
-  return edges[Math.floor(Math.random() * edges.length)];
+  return edges[Math.floor(randomFloat() * edges.length)];
 }
 
 /**
@@ -39,7 +40,7 @@ export function getRandomEdge(): EdgeType {
  * @returns A spawn position
  */
 export function getEdgePosition(edge: EdgeType, positionAlongEdge?: number): SpawnPosition {
-  const pos = positionAlongEdge ?? Math.random();
+  const pos = positionAlongEdge ?? randomFloat();
   const width = GAME_CONFIG.WORLD_WIDTH;
   const height = GAME_CONFIG.WORLD_HEIGHT;
 
@@ -77,8 +78,8 @@ export function getClusterPositions(count: number, clusterRadius: number = WAVE_
 
   for (let i = 0; i < count; i++) {
     // Random offset within cluster radius
-    const angle = Math.random() * Math.PI * 2;
-    const distance = Math.random() * clusterRadius;
+    const angle = randomFloat() * Math.PI * 2;
+    const distance = randomFloat() * clusterRadius;
 
     positions.push({
       x: centerPos.x + Math.cos(angle) * distance,

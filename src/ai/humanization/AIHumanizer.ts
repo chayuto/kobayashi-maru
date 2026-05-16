@@ -8,6 +8,7 @@
  */
 
 import type { AIAction } from '../types';
+import { randomFloat } from '../../utils';
 
 export interface HumanizationConfig {
     /** Base reaction delay in ms (AI thinks before acting) */
@@ -46,7 +47,7 @@ export class AIHumanizer {
      */
     humanizeAction(action: AIAction, currentTime: number): AIAction | null {
         // Check if we should skip (distraction)
-        if (Math.random() < this.config.skipChance) {
+        if (randomFloat() < this.config.skipChance) {
             return null;
         }
 
@@ -75,7 +76,7 @@ export class AIHumanizer {
      */
     private calculateDelay(): number {
         const base = this.config.reactionDelay;
-        const variation = base * this.config.delayVariation * (Math.random() * 2 - 1);
+        const variation = base * this.config.delayVariation * (randomFloat() * 2 - 1);
         return Math.max(50, base + variation);
     }
 
@@ -86,7 +87,7 @@ export class AIHumanizer {
         const result = { ...action };
 
         // Maybe make suboptimal choice (affects priority, executor can use this)
-        if (Math.random() < this.config.suboptimalChance) {
+        if (randomFloat() < this.config.suboptimalChance) {
             result.priority *= 0.9; // Slightly lower priority
         }
 
@@ -96,8 +97,8 @@ export class AIHumanizer {
             const variation = this.config.positionVariation;
             result.params = {
                 ...params,
-                x: params.x + (Math.random() - 0.5) * variation * 2,
-                y: params.y + (Math.random() - 0.5) * variation * 2,
+                x: params.x + (randomFloat() - 0.5) * variation * 2,
+                y: params.y + (randomFloat() - 0.5) * variation * 2,
             };
         }
 

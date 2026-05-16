@@ -8,6 +8,7 @@ import { AbilityType, ABILITY_CONFIG as ABILITY_TYPE_CONFIG, GAME_CONFIG, Factio
 import type { AbilityTypeId } from '../types/constants';
 import { assertNever } from '../types/utility';
 import { AI_CONFIG, ABILITY_CONFIG } from '../config';
+import { randomFloat } from '../utils';
 import { createEnemy } from '../ecs/entityFactory';
 import type { GameWorld } from '../ecs/world';
 import { ParticleSystem } from '../rendering';
@@ -300,7 +301,7 @@ function processSplitAbility(
 
   const config = ABILITY_TYPE_CONFIG[AbilityType.SPLIT];
   const splitCount = config.splitCount ?
-    config.splitCount.min + Math.floor(Math.random() * (config.splitCount.max - config.splitCount.min + 1)) :
+    config.splitCount.min + Math.floor(randomFloat() * (config.splitCount.max - config.splitCount.min + 1)) :
     2;
 
   for (let i = 0; i < splitCount; i++) {
@@ -360,7 +361,7 @@ function processSummonAbility(
     const faction = Faction.id[entity];
 
     // Spawn reinforcements
-    const summonCount = ABILITY_CONFIG.SUMMON.COUNT.MIN + Math.floor(Math.random() * (ABILITY_CONFIG.SUMMON.COUNT.MAX - ABILITY_CONFIG.SUMMON.COUNT.MIN));
+    const summonCount = ABILITY_CONFIG.SUMMON.COUNT.MIN + Math.floor(randomFloat() * (ABILITY_CONFIG.SUMMON.COUNT.MAX - ABILITY_CONFIG.SUMMON.COUNT.MIN));
 
     for (let i = 0; i < summonCount; i++) {
       const angle = (Math.PI * 2 * i) / summonCount;
@@ -474,8 +475,8 @@ function findSafePosition(spatialHash?: SpatialHash): { x: number; y: number } {
   let attempts = 0;
 
   while (attempts < ABILITY_CONFIG.TELEPORT.MAX_ATTEMPTS) {
-    const x = margin + Math.random() * (GAME_CONFIG.WORLD_WIDTH - margin * 2);
-    const y = margin + Math.random() * (GAME_CONFIG.WORLD_HEIGHT - margin * 2);
+    const x = margin + randomFloat() * (GAME_CONFIG.WORLD_WIDTH - margin * 2);
+    const y = margin + randomFloat() * (GAME_CONFIG.WORLD_HEIGHT - margin * 2);
 
     // Check if far enough from threats
     if (isSafePosition(x, y, safeDistance, spatialHash)) {
@@ -487,8 +488,8 @@ function findSafePosition(spatialHash?: SpatialHash): { x: number; y: number } {
 
   // Fallback: edge of screen
   return {
-    x: Math.random() < 0.5 ? margin : GAME_CONFIG.WORLD_WIDTH - margin,
-    y: Math.random() * GAME_CONFIG.WORLD_HEIGHT
+    x: randomFloat() < 0.5 ? margin : GAME_CONFIG.WORLD_WIDTH - margin,
+    y: randomFloat() * GAME_CONFIG.WORLD_HEIGHT
   };
 }
 

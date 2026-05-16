@@ -1,2 +1,6 @@
+# onlyBuiltDependencies — pnpm 10 (CI). allowBuilds — pnpm 11 (local).
+# Both keys kept so the repo installs cleanly on either pnpm major.
 onlyBuiltDependencies:
   - esbuild
+allowBuilds:
+  esbuild: true

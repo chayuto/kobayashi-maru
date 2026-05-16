@@ -61,14 +61,17 @@ Used when MCP is not installed (and you don't want to ask the user to install it
 ## Preflight (run in order)
 
 1. **Path selection** — `claude mcp list 2>/dev/null | grep -i playwright`. If found → Path A (MCP). Else → Path B (script).
-2. **Dev server up on :3000?** — `curl -s -o /dev/null -w "%{http_code}" http://localhost:3000` should return 200. If not, start it in background:
+2. **Node 24 LTS** — pnpm 11 requires it. `node -v`. If wrong, `source "$NVM_DIR/nvm.sh" && nvm use 24` (install with `nvm install 24 --lts`). `package.json` pins `engines.node >=24` and `packageManager: pnpm@11.x`.
+3. **Dev server up on :3000?** — `curl -s -o /dev/null -w "%{http_code}" http://localhost:3000` should return 200. If not, start it in background:
    ```bash
-   cd /Users/chayut/repos/kobayashi-maru && pnpm run dev
+   source "$NVM_DIR/nvm.sh" && nvm use 24 && cd /Users/chayut/repos/kobayashi-maru && pnpm run dev
    ```
    (Bash `run_in_background: true`, then poll until 200.)
-3. **Path B only — Node ≥ 22.13** — pnpm 10 requires it. `node --version`. If lower, `source ~/.nvm/nvm.sh && nvm use 22.13` (install with `nvm install 22.13` if missing).
-4. **Path B only — project install fresh?** — `pnpm install --frozen-lockfile`. No-op if up to date.
-5. **Path B only — Playwright browsers cached?** — `pnpm exec playwright install chromium` (~300MB one-time download into `~/Library/Caches/ms-playwright/`). Skip if `ls ~/Library/Caches/ms-playwright/ | grep -q chromium`.
+4. **Path B only — project install fresh?** — `pnpm install`. No-op if up to date.
+5. **Playwright browser cached?** — Playwright 1.57+ uses **Chrome for Testing**, not Chromium.
+   - Path A (MCP): `npx @playwright/mcp@latest install-browser chrome-for-testing`
+   - Path B (script): `npx playwright install chromium chromium-headless-shell`
+   One-time ~100MB download into `~/Library/Caches/ms-playwright/`.
 6. **Bridge present** — verify `window.__GAME__?.isReady()` resolves before driving the game (Path A: `browser_evaluate`. Path B: `await page.waitForFunction(...)`). The bridge is dev-mode only — see `src/testing/e2eTestBridge.ts`.
 
 If any preflight step fails, **report it and stop** — don't paper over it.
@@ -149,14 +152,48 @@ Available in dev mode. See `src/testing/e2eTestBridge.ts` for source of truth.
 |---|---|
 | `isReady()` | Returns true once game is initialized |
 | `startGame()` / `pause()` / `resume()` / `restart()` | Game lifecycle |
+| `startDeterministic()` | Start a game with the wall-clock ticker **frozen** — advance only via `stepFrames()` |
+| `seedRandom(seed)` | Seed the gameplay RNG — makes spawns/combat reproducible |
+| `stepFrames(n, deltaMs?)` | Advance exactly `n` fixed-delta frames (default 1/60s) |
 | `getSnapshot()` | `{ state, wave, waveState, activeEnemies, resources, score, kmHealth, kmMaxHealth }` |
 | `setResources(amount)` | Force-set player resources |
 | `setKMHealth(health)` | Force-set Kobayashi Maru hull health |
 | `placeTurret(type, x, y)` | Place a turret. type 0=phaser, 1=torpedo. world coords (KM at 960,540) |
-| `toggleGodMode()` / `toggleAI()` | Cheats |
+| `toggleGodMode()` / `toggleAI()` / `isAIEnabled()` | Cheats / AI control |
 | `freezeStarfield()` | **ALWAYS call this before screenshots** — animated starfield otherwise causes spurious diffs |
 | `getEvents()` / `getEventsByType(type)` / `clearEvents()` | Captured event log |
 | `getEntityCounts()` | `{ turrets, enemies }` |
+
+## Deterministic screenshots — reproducible visual states
+
+For visual debugging you usually want the **exact same game state every time**,
+so a screenshot diff reflects *your code change* and nothing else. Use the
+deterministic trio instead of `startGame()` + a real-time wait:
+
+```
+1. browser_navigate("http://localhost:3000")
+2. browser_evaluate(() => window.__GAME__.isReady())            → expect true
+3. browser_evaluate(() => window.__GAME__.seedRandom(424242))   → seed BEFORE start
+4. browser_evaluate(() => window.__GAME__.startDeterministic()) → start + freeze ticker
+5. browser_evaluate(() => window.__GAME__.freezeStarfield())
+6. browser_evaluate(() => window.__GAME__.setResources(5000))
+7. browser_evaluate(() => window.__GAME__.placeTurret(1, 960, 540))
+8. browser_evaluate(() => window.__GAME__.stepFrames(600))      → advance 10s instantly
+9. browser_take_screenshot({ filename: "verify__wave-in-progress.png" })
+10. browser_console_messages() → expect [] (no errors)
+11. Read the PNG, describe what you saw.
+```
+
+Why this beats a wall-clock wait:
+- **Instant** — `stepFrames(600)` simulates 10 seconds in milliseconds.
+- **Reproducible** — same seed + same frame count = pixel-identical game state.
+  Re-run after a code change and any visual diff is purely your change.
+- **No flake** — no animation mid-capture, no "did enough time pass" guessing.
+
+Caveat: the AI Commander autoplay is on by default and has small residual
+nondeterminism. For a perfectly reproducible state, disable it right after
+`startDeterministic()`:
+`browser_evaluate(() => { if (window.__GAME__.isAIEnabled()) window.__GAME__.toggleAI(); })`.
 
 ## Gotchas (from prior pain)
 
